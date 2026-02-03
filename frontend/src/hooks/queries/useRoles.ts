@@ -64,3 +64,14 @@ export function useDeleteRole() {
     },
   });
 }
+
+export function useBulkDeleteRoles() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => rolesApi.bulkDeleteRoles(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: roleKeys.all });
+    },
+  });
+}

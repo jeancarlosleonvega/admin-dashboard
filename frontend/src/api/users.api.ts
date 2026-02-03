@@ -53,5 +53,9 @@ export const usersApi = {
   async deleteUser(id: string): Promise<void> {
     await apiClient.delete(`/users/${id}`);
   },
+
+  async bulkDeleteUsers(ids: string[]): Promise<void> {
+    await apiClient.post('/users/bulk-delete', { ids });
+  },
 };
 

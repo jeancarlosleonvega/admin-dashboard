@@ -30,4 +30,9 @@ export async function rolesRoutes(fastify: FastifyInstance) {
     preHandler: [authorize('roles.manage')],
     handler: rolesController.delete.bind(rolesController),
   });
+
+  fastify.post('/bulk-delete', {
+    preHandler: [authorize('roles.manage')],
+    handler: rolesController.bulkDelete.bind(rolesController),
+  });
 }

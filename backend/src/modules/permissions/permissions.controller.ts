@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { permissionsService } from './permissions.service.js';
-import { createPermissionSchema, updatePermissionSchema, permissionFiltersSchema } from './permissions.schema.js';
+import { createPermissionSchema, updatePermissionSchema, permissionFiltersSchema, bulkDeletePermissionsSchema } from './permissions.schema.js';
 import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
@@ -50,6 +50,16 @@ export class PermissionsController {
   async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     await permissionsService.delete(request.params.id);
     return reply.send(successResponse({ message: 'Permission deleted successfully' }));
+  }
+
+  async bulkDelete(request: FastifyRequest, reply: FastifyReply) {
+    const parsed = bulkDeletePermissionsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new ValidationError('Validation failed', parsed.error.errors);
+    }
+
+    const count = await permissionsService.bulkDelete(parsed.data.ids);
+    return reply.send(successResponse({ message: `${count} permissions deleted successfully`, count }));
   }
 
   async getResources(request: FastifyRequest, reply: FastifyReply) {

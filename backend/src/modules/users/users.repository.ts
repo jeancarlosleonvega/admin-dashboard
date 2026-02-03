@@ -202,6 +202,11 @@ export class UsersRepository {
     await prisma.user.delete({ where: { id } });
   }
 
+  async bulkDelete(ids: string[]): Promise<number> {
+    const result = await prisma.user.deleteMany({ where: { id: { in: ids } } });
+    return result.count;
+  }
+
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     await prisma.user.update({
       where: { id },

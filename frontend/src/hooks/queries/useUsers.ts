@@ -59,3 +59,14 @@ export function useDeleteUser() {
     },
   });
 }
+
+export function useBulkDeleteUsers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => usersApi.bulkDeleteUsers(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}

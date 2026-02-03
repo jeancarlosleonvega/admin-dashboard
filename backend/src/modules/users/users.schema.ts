@@ -34,6 +34,10 @@ export const userFiltersSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
+export const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, 'At least one ID is required'),
+});
+
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type UserFiltersInput = z.infer<typeof userFiltersSchema>;

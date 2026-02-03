@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useUsers, useDeleteUser } from '@/hooks/queries/useUsers';
+import { useUsers, useDeleteUser, useBulkDeleteUsers } from '@/hooks/queries/useUsers';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
@@ -11,6 +11,7 @@ import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { UserFilters, UserWithRoles } from '@/types/user.types';
 import { UserStatus } from '@/types/user.types';
+import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
 
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -41,11 +42,13 @@ export default function UsersListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<UserFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<UserWithRoles | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('users-columns', columns);
 
   const { data, isLoading, isError } = useUsers(filters);
   const deleteUser = useDeleteUser();
+  const bulkDelete = useBulkDeleteUsers();
 
   const users = data?.data ?? [];
   const meta = data?.meta ?? { page: 1, limit: 10, total: 0, totalPages: 0 };
@@ -63,6 +66,34 @@ export default function UsersListPage() {
 
   const handlePage = (page: number) => {
     setFilters((f) => ({ ...f, page }));
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === users.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(users.map((u) => u.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDelete.mutateAsync([...selectedIds]);
+      toast.success(`${selectedIds.size} users deleted successfully`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to delete users');
+    }
   };
 
   return (
@@ -109,9 +140,45 @@ export default function UsersListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        onExport={() => {
+          const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
+          const rows = users.map((u) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
+            if (c.key === 'user') return `${u.firstName} ${u.lastName} (${u.email})`;
+            if (c.key === 'status') return u.status;
+            if (c.key === 'roles') return u.roles.map((r) => r.name).join(', ');
+            if (c.key === 'created') return new Date(u.createdAt).toLocaleDateString();
+            return '';
+          }));
+          exportToCsv('users', headers, rows);
+        }}
       />
 
       {/* Table */}
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 flex items-center gap-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+          <span className="text-sm font-medium text-blue-700">
+            {selectedIds.size} selected
+          </span>
+          <PermissionGate permission="users.delete">
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkDelete.isPending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              {bulkDelete.isPending ? 'Deleting...' : 'Delete Selected'}
+            </button>
+          </PermissionGate>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       <div className="card overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -132,6 +199,14 @@ export default function UsersListPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    <th className="px-6 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={users.length > 0 && selectedIds.size === users.length}
+                        onChange={toggleSelectAll}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
                     {visibleColumns.includes('user') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         User
@@ -162,6 +237,14 @@ export default function UsersListPage() {
                 <tbody className="divide-y divide-gray-200">
                   {users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(user.id)}
+                          onChange={() => toggleSelect(user.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
                       {visibleColumns.includes('user') && (
                         <td className="px-6 py-4">
                           <div className="flex items-center">

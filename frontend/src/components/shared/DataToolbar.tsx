@@ -6,6 +6,7 @@ import {
   ArrowDown,
   Columns3,
   SlidersHorizontal,
+  Download,
   X,
   Plus,
   RotateCcw,
@@ -31,6 +32,7 @@ interface DataToolbarProps {
   visibleColumns: string[];
   onToggleColumn: (key: string) => void;
   onResetColumns: () => void;
+  onExport?: () => void;
 }
 
 const OPERATORS: Record<string, { label: string; value: string }[]> = {
@@ -82,6 +84,7 @@ export default function DataToolbar({
   visibleColumns,
   onToggleColumn,
   onResetColumns,
+  onExport,
 }: DataToolbarProps) {
   const [searchValue, setSearchValue] = useState('');
   const [sort, setSort] = useState<SortState | null>(null);
@@ -271,6 +274,17 @@ export default function DataToolbar({
             </div>
           )}
         </div>
+
+        {/* Export */}
+        {onExport && (
+          <button
+            onClick={onExport}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        )}
 
         {/* Filters */}
         {filterableColumns.length > 0 && (

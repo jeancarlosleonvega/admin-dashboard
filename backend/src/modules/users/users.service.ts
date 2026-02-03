@@ -78,6 +78,10 @@ export class UsersService {
 
     await usersRepository.delete(id);
   }
+
+  async bulkDelete(ids: string[]): Promise<number> {
+    return usersRepository.bulkDelete(ids);
+  }
 }
 
 export const usersService = new UsersService();

@@ -55,6 +55,10 @@ export const rolesApi = {
   async deleteRole(id: string): Promise<void> {
     await apiClient.delete(`/roles/${id}`);
   },
+
+  async bulkDeleteRoles(ids: string[]): Promise<void> {
+    await apiClient.post('/roles/bulk-delete', { ids });
+  },
 };
 
 // Permissions API
@@ -101,5 +105,9 @@ export const permissionsApi = {
 
   async deletePermission(id: string): Promise<void> {
     await apiClient.delete(`/permissions/${id}`);
+  },
+
+  async bulkDeletePermissions(ids: string[]): Promise<void> {
+    await apiClient.post('/permissions/bulk-delete', { ids });
   },
 };

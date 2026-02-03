@@ -69,6 +69,10 @@ export class PermissionsService {
     await permissionsRepository.delete(id);
   }
 
+  async bulkDelete(ids: string[]): Promise<number> {
+    return permissionsRepository.bulkDelete(ids);
+  }
+
   async getResources(): Promise<string[]> {
     return permissionsRepository.getDistinctResources();
   }

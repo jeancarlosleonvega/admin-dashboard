@@ -143,6 +143,11 @@ export class RolesRepository {
     await prisma.role.delete({ where: { id } });
   }
 
+  async bulkDelete(ids: string[]): Promise<number> {
+    const result = await prisma.role.deleteMany({ where: { id: { in: ids } } });
+    return result.count;
+  }
+
   async hasUsers(id: string): Promise<boolean> {
     const count = await prisma.userRole.count({ where: { roleId: id } });
     return count > 0;

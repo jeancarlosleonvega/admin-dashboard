@@ -68,6 +68,11 @@ export class PermissionsRepository {
     await prisma.permission.delete({ where: { id } });
   }
 
+  async bulkDelete(ids: string[]): Promise<number> {
+    const result = await prisma.permission.deleteMany({ where: { id: { in: ids } } });
+    return result.count;
+  }
+
   async isAssignedToRoles(id: string): Promise<boolean> {
     const count = await prisma.rolePermission.count({ where: { permissionId: id } });
     return count > 0;

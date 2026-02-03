@@ -73,3 +73,14 @@ export function useDeletePermission() {
     },
   });
 }
+
+export function useBulkDeletePermissions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => permissionsApi.bulkDeletePermissions(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: permissionKeys.all });
+    },
+  });
+}

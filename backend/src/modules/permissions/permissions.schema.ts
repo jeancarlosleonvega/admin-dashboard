@@ -23,6 +23,10 @@ export const permissionFiltersSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
+export const bulkDeletePermissionsSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, 'At least one ID is required'),
+});
+
 export type CreatePermissionInput = z.infer<typeof createPermissionSchema>;
 export type UpdatePermissionInput = z.infer<typeof updatePermissionSchema>;
 export type PermissionFiltersInput = z.infer<typeof permissionFiltersSchema>;

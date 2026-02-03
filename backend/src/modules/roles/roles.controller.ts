@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { rolesService } from './roles.service.js';
-import { createRoleSchema, updateRoleSchema, roleFiltersSchema } from './roles.schema.js';
+import { createRoleSchema, updateRoleSchema, roleFiltersSchema, bulkDeleteRolesSchema } from './roles.schema.js';
 import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
@@ -50,6 +50,16 @@ export class RolesController {
   async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     await rolesService.delete(request.params.id);
     return reply.send(successResponse({ message: 'Role deleted successfully' }));
+  }
+
+  async bulkDelete(request: FastifyRequest, reply: FastifyReply) {
+    const parsed = bulkDeleteRolesSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new ValidationError('Validation failed', parsed.error.errors);
+    }
+
+    const count = await rolesService.bulkDelete(parsed.data.ids);
+    return reply.send(successResponse({ message: `${count} roles deleted successfully`, count }));
   }
 }
 

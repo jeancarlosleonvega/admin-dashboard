@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Shield, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRoles, useDeleteRole } from '@/hooks/queries/useRoles';
+import { useRoles, useDeleteRole, useBulkDeleteRoles } from '@/hooks/queries/useRoles';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import DataToolbar from '@components/shared/DataToolbar';
@@ -10,6 +10,7 @@ import { Spinner } from '@components/ui/Spinner';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { RoleFilters, RoleWithPermissions } from '@/types/role.types';
+import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
 
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -33,9 +34,11 @@ export default function RolesListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<RoleFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<RoleWithPermissions | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isError } = useRoles(filters);
   const deleteRole = useDeleteRole();
+  const bulkDelete = useBulkDeleteRoles();
 
   const roles = data?.data ?? [];
   const meta = data?.meta ?? { page: 1, limit: 10, total: 0, totalPages: 0 };
@@ -55,6 +58,34 @@ export default function RolesListPage() {
 
   const handlePage = (page: number) => {
     setFilters((f) => ({ ...f, page }));
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === roles.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(roles.map((r) => r.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDelete.mutateAsync([...selectedIds]);
+      toast.success(`${selectedIds.size} roles deleted successfully`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Failed to delete roles');
+    }
   };
 
   return (
@@ -103,6 +134,18 @@ export default function RolesListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        onExport={() => {
+          const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
+          const rows = roles.map((r) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
+            if (c.key === 'name') return r.name;
+            if (c.key === 'description') return r.description || '';
+            if (c.key === 'permissions') return `${r.permissions.length}`;
+            if (c.key === 'system') return r.isSystem ? 'Yes' : 'No';
+            if (c.key === 'created') return new Date(r.createdAt).toLocaleDateString();
+            return '';
+          }));
+          exportToCsv('roles', headers, rows);
+        }}
       />
 
       {/* Table */}

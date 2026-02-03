@@ -23,6 +23,10 @@ export const roleFiltersSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
+export const bulkDeleteRolesSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, 'At least one ID is required'),
+});
+
 export type CreateRoleInput = z.infer<typeof createRoleSchema>;
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type RoleFiltersInput = z.infer<typeof roleFiltersSchema>;

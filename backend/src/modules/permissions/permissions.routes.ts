@@ -35,4 +35,9 @@ export async function permissionsRoutes(fastify: FastifyInstance) {
     preHandler: [authorize('roles.manage')],
     handler: permissionsController.delete.bind(permissionsController),
   });
+
+  fastify.post('/bulk-delete', {
+    preHandler: [authorize('roles.manage')],
+    handler: permissionsController.bulkDelete.bind(permissionsController),
+  });
 }

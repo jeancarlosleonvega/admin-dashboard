@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Shield, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { usePermissions, useDeletePermission } from '@/hooks/queries/usePermissions';
+import { usePermissions, useDeletePermission, useBulkDeletePermissions } from '@/hooks/queries/usePermissions';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import DataToolbar from '@components/shared/DataToolbar';
@@ -10,6 +10,7 @@ import { Spinner } from '@components/ui/Spinner';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { Permission, PermissionFilters } from '@/types/role.types';
+import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
 
 const SORT_FIELD_MAP: Record<string, string> = {
@@ -30,9 +31,11 @@ export default function PermissionsListPage() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<PermissionFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isError } = usePermissions(filters);
   const deletePermission = useDeletePermission();
+  const bulkDelete = useBulkDeletePermissions();
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('permissions-columns', columns);
 
   const permissions = data?.data ?? [];
@@ -51,6 +54,7 @@ export default function PermissionsListPage() {
 
   const handlePage = (page: number) => {
     setFilters((f) => ({ ...f, page }));
+    setSelectedIds(new Set());
   };
 
   return (
@@ -99,6 +103,17 @@ export default function PermissionsListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        onExport={() => {
+          const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
+          const rows = permissions.map((p) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
+            if (c.key === 'resource') return p.resource;
+            if (c.key === 'action') return p.action;
+            if (c.key === 'description') return p.description || '';
+            if (c.key === 'created') return new Date(p.createdAt).toLocaleDateString();
+            return '';
+          }));
+          exportToCsv('permissions', headers, rows);
+        }}
       />
 
       {/* Table */}

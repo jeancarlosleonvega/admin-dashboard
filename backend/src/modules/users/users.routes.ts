@@ -31,4 +31,9 @@ export async function usersRoutes(fastify: FastifyInstance) {
     preHandler: [authorize('users.delete')],
     handler: usersController.delete.bind(usersController),
   });
+
+  fastify.post('/bulk-delete', {
+    preHandler: [authorize('users.delete')],
+    handler: usersController.bulkDelete.bind(usersController),
+  });
 }

@@ -80,6 +80,20 @@ export class RolesService {
 
     await rolesRepository.delete(id);
   }
+
+  async bulkDelete(ids: string[]): Promise<number> {
+    // Filter out system roles
+    const roles = await Promise.all(ids.map((id) => rolesRepository.findById(id)));
+    const deletableIds = roles
+      .filter((r) => r && !r.isSystem)
+      .map((r) => r!.id);
+
+    if (deletableIds.length === 0) {
+      throw new ValidationError('No deletable roles found. System roles cannot be deleted.');
+    }
+
+    return rolesRepository.bulkDelete(deletableIds);
+  }
 }
 
 export const rolesService = new RolesService();

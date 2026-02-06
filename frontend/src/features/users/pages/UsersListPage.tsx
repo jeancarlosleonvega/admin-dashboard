@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Users, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUsers, useDeleteUser, useBulkDeleteUsers } from '@/hooks/queries/useUsers';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
@@ -292,9 +292,16 @@ export default function UsersListPage() {
                       {visibleColumns.includes('actions') && (
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => navigate(`/users/${user.id}`)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                              title="View user"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <PermissionGate permission="users.edit">
                               <button
-                                onClick={() => navigate(`/users/${user.id}/edit`)}
+                                onClick={() => navigate(`/users/${user.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Edit user"
                               >

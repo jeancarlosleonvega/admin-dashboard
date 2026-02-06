@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Shield, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Shield, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePermissions, useDeletePermission, useBulkDeletePermissions } from '@/hooks/queries/usePermissions';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
@@ -194,9 +194,16 @@ export default function PermissionsListPage() {
                       {visibleColumns.includes('actions') && (
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => navigate(`/permissions/${permission.id}`)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                              title="View permission"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <PermissionGate permission="roles.manage">
                               <button
-                                onClick={() => navigate(`/permissions/${permission.id}/edit`)}
+                                onClick={() => navigate(`/permissions/${permission.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Edit permission"
                               >

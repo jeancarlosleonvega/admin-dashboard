@@ -14,14 +14,15 @@ import ResetPasswordPage from '@features/auth/pages/ResetPasswordPage';
 
 // Protected pages
 import DashboardPage from '@features/dashboard/pages/DashboardPage';
-import UsersListPage from '@features/users/pages/UsersListPage';
+import SettingsPage from '@features/settings/pages/SettingsPage';
 import UserCreatePage from '@features/users/pages/UserCreatePage';
+import UserDetailPage from '@features/users/pages/UserDetailPage';
 import UserEditPage from '@features/users/pages/UserEditPage';
-import RolesListPage from '@features/roles/pages/RolesListPage';
 import RoleCreatePage from '@features/roles/pages/RoleCreatePage';
+import RoleDetailPage from '@features/roles/pages/RoleDetailPage';
 import RoleEditPage from '@features/roles/pages/RoleEditPage';
-import PermissionsListPage from '@features/permissions/pages/PermissionsListPage';
 import PermissionCreatePage from '@features/permissions/pages/PermissionCreatePage';
+import PermissionDetailPage from '@features/permissions/pages/PermissionDetailPage';
 import PermissionEditPage from '@features/permissions/pages/PermissionEditPage';
 
 // Route guards
@@ -83,18 +84,28 @@ function App() {
           }
         />
         <Route
+          path="/settings"
+          element={<SettingsPage />}
+        />
+
+        {/* Users CRUD */}
+        <Route
           path="/users"
-          element={
-            <PermissionRoute permission="users.view">
-              <UsersListPage />
-            </PermissionRoute>
-          }
+          element={<Navigate to="/settings?tab=users" replace />}
         />
         <Route
           path="/users/create"
           element={
             <PermissionRoute permission="users.create">
               <UserCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/users/:id"
+          element={
+            <PermissionRoute permission="users.view">
+              <UserDetailPage />
             </PermissionRoute>
           }
         />
@@ -106,19 +117,25 @@ function App() {
             </PermissionRoute>
           }
         />
+
+        {/* Roles CRUD */}
         <Route
           path="/roles"
-          element={
-            <PermissionRoute permission="roles.view">
-              <RolesListPage />
-            </PermissionRoute>
-          }
+          element={<Navigate to="/settings?tab=roles" replace />}
         />
         <Route
           path="/roles/create"
           element={
             <PermissionRoute permission="roles.manage">
               <RoleCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/roles/:id"
+          element={
+            <PermissionRoute permission="roles.view">
+              <RoleDetailPage />
             </PermissionRoute>
           }
         />
@@ -130,19 +147,25 @@ function App() {
             </PermissionRoute>
           }
         />
+
+        {/* Permissions CRUD */}
         <Route
           path="/permissions"
-          element={
-            <PermissionRoute permission="roles.view">
-              <PermissionsListPage />
-            </PermissionRoute>
-          }
+          element={<Navigate to="/settings?tab=permissions" replace />}
         />
         <Route
           path="/permissions/create"
           element={
             <PermissionRoute permission="roles.manage">
               <PermissionCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/permissions/:id"
+          element={
+            <PermissionRoute permission="roles.view">
+              <PermissionDetailPage />
             </PermissionRoute>
           }
         />
@@ -154,6 +177,7 @@ function App() {
             </PermissionRoute>
           }
         />
+
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Route>
 

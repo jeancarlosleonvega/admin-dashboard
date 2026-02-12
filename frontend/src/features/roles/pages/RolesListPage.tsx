@@ -22,7 +22,7 @@ const SORT_FIELD_MAP: Record<string, string> = {
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Name', sortable: true, filterable: true, type: 'text' },
   { key: 'description', label: 'Description', sortable: false, filterable: true, type: 'text' },
-  { key: 'permissions', label: 'Permissions', sortable: true, filterable: false },
+  { key: 'permissions', label: 'Permissions', sortable: false, filterable: false },
   { key: 'system', label: 'System', sortable: true, filterable: true, type: 'select', options: [
     { label: 'Yes', value: 'true' }, { label: 'No', value: 'false' },
   ]},

@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Key, FileText } from 'lucide-react';
 import { useCreatePermission } from '@/hooks/queries/usePermissions';
 import { Spinner } from '@components/ui/Spinner';
+import { Tabs } from '@components/ui/Tabs';
+import type { TabDef } from '@components/ui/Tabs';
+import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
 
 const createPermissionSchema = z.object({
@@ -15,9 +19,15 @@ const createPermissionSchema = z.object({
 
 type CreatePermissionFormData = z.infer<typeof createPermissionSchema>;
 
+const tabs: TabDef[] = [
+  { id: 'definition', label: 'Definition', icon: Key },
+  { id: 'details', label: 'Details', icon: FileText },
+];
+
 export default function PermissionCreatePage() {
   const navigate = useNavigate();
   const createPermission = useCreatePermission();
+  const [activeTab, setActiveTab] = useState('definition');
 
   const {
     register,
@@ -55,57 +65,75 @@ export default function PermissionCreatePage() {
         <p className="text-gray-500">Add a new permission to the system</p>
       </div>
 
-      <div className="card p-6 max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <label htmlFor="resource" className="label">
-              Resource
-            </label>
-            <input
-              id="resource"
-              type="text"
-              placeholder="e.g. users, roles, reports"
-              className={`input ${errors.resource ? 'input-error' : ''}`}
-              {...register('resource')}
-            />
-            {errors.resource && (
-              <p className="mt-1 text-sm text-red-600">{errors.resource.message}</p>
-            )}
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="px-6 pt-4">
+          <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="px-6">
+            {/* Tab: Definition */}
+            <div className={activeTab === 'definition' ? '' : 'hidden'}>
+              <DetailSection title="Permission Definition" description="Resource and action that this permission controls" noBorder>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="resource" className="label">
+                      Resource
+                    </label>
+                    <input
+                      id="resource"
+                      type="text"
+                      placeholder="e.g. users, roles, reports"
+                      className={`input ${errors.resource ? 'input-error' : ''}`}
+                      {...register('resource')}
+                    />
+                    {errors.resource && (
+                      <p className="mt-1 text-sm text-red-600">{errors.resource.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="action" className="label">
+                      Action
+                    </label>
+                    <input
+                      id="action"
+                      type="text"
+                      placeholder="e.g. view, create, edit, delete"
+                      className={`input ${errors.action ? 'input-error' : ''}`}
+                      {...register('action')}
+                    />
+                    {errors.action && (
+                      <p className="mt-1 text-sm text-red-600">{errors.action.message}</p>
+                    )}
+                  </div>
+                </div>
+              </DetailSection>
+            </div>
+
+            {/* Tab: Details */}
+            <div className={activeTab === 'details' ? '' : 'hidden'}>
+              <DetailSection title="Additional Details" description="Optional description of what this permission allows" noBorder>
+                <div>
+                  <label htmlFor="description" className="label">
+                    Description <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    rows={3}
+                    placeholder="Describe what this permission allows"
+                    className={`input ${errors.description ? 'input-error' : ''}`}
+                    {...register('description')}
+                  />
+                  {errors.description && (
+                    <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+                  )}
+                </div>
+              </DetailSection>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="action" className="label">
-              Action
-            </label>
-            <input
-              id="action"
-              type="text"
-              placeholder="e.g. view, create, edit, delete"
-              className={`input ${errors.action ? 'input-error' : ''}`}
-              {...register('action')}
-            />
-            {errors.action && (
-              <p className="mt-1 text-sm text-red-600">{errors.action.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="description" className="label">
-              Description <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <textarea
-              id="description"
-              rows={3}
-              placeholder="Describe what this permission allows"
-              className={`input ${errors.description ? 'input-error' : ''}`}
-              {...register('description')}
-            />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate('/permissions')}

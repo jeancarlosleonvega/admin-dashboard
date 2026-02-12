@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, User, Shield } from 'lucide-react';
 import { useCreateUser } from '@/hooks/queries/useUsers';
 import { useRolesList } from '@/hooks/queries/useRoles';
 import { Spinner } from '@components/ui/Spinner';
+import { Tabs } from '@components/ui/Tabs';
+import type { TabDef } from '@components/ui/Tabs';
+import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
 
 const createUserSchema = z.object({
@@ -23,10 +27,16 @@ const createUserSchema = z.object({
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 
+const tabs: TabDef[] = [
+  { id: 'general', label: 'General', icon: User },
+  { id: 'roles', label: 'Roles', icon: Shield },
+];
+
 export default function UserCreatePage() {
   const navigate = useNavigate();
   const createUser = useCreateUser();
   const { data: roles, isLoading: rolesLoading } = useRolesList();
+  const [activeTab, setActiveTab] = useState('general');
 
   const {
     register,
@@ -66,97 +76,114 @@ export default function UserCreatePage() {
         <p className="text-gray-500">Add a new user to the system</p>
       </div>
 
-      <div className="card p-6 max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="firstName" className="label">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                className={`input ${errors.firstName ? 'input-error' : ''}`}
-                {...register('firstName')}
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="lastName" className="label">
-                Last Name
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                className={`input ${errors.lastName ? 'input-error' : ''}`}
-                {...register('lastName')}
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-              )}
-            </div>
-          </div>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="px-6 pt-4">
+          <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
 
-          <div>
-            <label htmlFor="email" className="label">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className={`input ${errors.email ? 'input-error' : ''}`}
-              {...register('email')}
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="password" className="label">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              className={`input ${errors.password ? 'input-error' : ''}`}
-              {...register('password')}
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              Must be at least 8 characters with uppercase, lowercase, and number
-            </p>
-          </div>
-
-          <div>
-            <label className="label">Roles</label>
-            {rolesLoading ? (
-              <Spinner size="sm" />
-            ) : (
-              <div className="space-y-2">
-                {roles?.map((role) => (
-                  <label key={role.id} className="flex items-center gap-2">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="px-6">
+            {/* Tab: General */}
+            <div className={activeTab === 'general' ? '' : 'hidden'}>
+              <DetailSection title="Personal Information" description="User's name and identity">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="label">
+                      First Name
+                    </label>
                     <input
-                      type="checkbox"
-                      value={role.id}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      {...register('roleIds')}
+                      id="firstName"
+                      type="text"
+                      className={`input ${errors.firstName ? 'input-error' : ''}`}
+                      {...register('firstName')}
                     />
-                    <span className="text-sm text-gray-700">{role.name}</span>
-                    {role.description && (
-                      <span className="text-xs text-gray-400">- {role.description}</span>
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
                     )}
-                  </label>
-                ))}
-              </div>
-            )}
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="label">
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      className={`input ${errors.lastName ? 'input-error' : ''}`}
+                      {...register('lastName')}
+                    />
+                    {errors.lastName && (
+                      <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                    )}
+                  </div>
+                </div>
+              </DetailSection>
+
+              <DetailSection title="Credentials" description="Email and password for authentication" noBorder>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="label">
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      className={`input ${errors.email ? 'input-error' : ''}`}
+                      {...register('email')}
+                    />
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="label">
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      className={`input ${errors.password ? 'input-error' : ''}`}
+                      {...register('password')}
+                    />
+                    {errors.password && (
+                      <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">
+                      Must be at least 8 characters with uppercase, lowercase, and number
+                    </p>
+                  </div>
+                </div>
+              </DetailSection>
+            </div>
+
+            {/* Tab: Roles */}
+            <div className={activeTab === 'roles' ? '' : 'hidden'}>
+              <DetailSection title="Roles" description="Assign roles to this user" noBorder>
+                {rolesLoading ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <div className="space-y-2">
+                    {roles?.map((role) => (
+                      <label key={role.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          value={role.id}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          {...register('roleIds')}
+                        />
+                        <span className="text-sm text-gray-700">{role.name}</span>
+                        {role.description && (
+                          <span className="text-xs text-gray-400">- {role.description}</span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </DetailSection>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={() => navigate('/users')}

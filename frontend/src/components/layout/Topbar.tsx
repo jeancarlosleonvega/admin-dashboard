@@ -1,4 +1,4 @@
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useUIStore } from '@stores/uiStore';
 
@@ -24,7 +24,7 @@ function getPageTitle(pathname: string): string {
 export default function Topbar() {
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
-  const { openMobileSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, openMobileSidebar } = useUIStore();
 
   return (
     <header className="sticky top-0 z-10 bg-white border-b border-gray-200 h-16">
@@ -37,6 +37,18 @@ export default function Topbar() {
             </div>
             <span className="text-base font-bold text-gray-900">Admin</span>
           </Link>
+
+          <button
+            onClick={toggleSidebar}
+            className="hidden lg:flex text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {sidebarOpen ? (
+              <PanelLeftClose className="w-6 h-6" />
+            ) : (
+              <PanelLeft className="w-6 h-6" />
+            )}
+          </button>
 
           <h2 className="text-lg font-semibold text-gray-900 hidden lg:block">{pageTitle}</h2>
         </div>

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, Key, Settings, LogOut, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Key, Settings, LogOut } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
@@ -13,7 +13,7 @@ const tooltipClass =
 
 export default function Sidebar() {
   const { can, user, logout } = useAuthStore();
-  const { sidebarOpen, mobileSidebarOpen, closeMobileSidebar, toggleSidebar } = useUIStore();
+  const { sidebarOpen, mobileSidebarOpen, closeMobileSidebar } = useUIStore();
   const navigate = useNavigate();
 
   const filteredNav = navigation.filter(
@@ -76,18 +76,6 @@ export default function Sidebar() {
               Admin
             </span>
           </Link>
-          {/* Desktop toggle button */}
-          <button
-            onClick={toggleSidebar}
-            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 items-center justify-center hidden lg:flex"
-            title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {expanded ? (
-              <PanelLeftClose className="w-4 h-4" />
-            ) : (
-              <PanelLeft className="w-4 h-4" />
-            )}
-          </button>
         </div>
 
         {/* Section label */}

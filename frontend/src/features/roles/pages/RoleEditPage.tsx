@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +21,7 @@ type UpdateRoleFormData = z.infer<typeof updateRoleSchema>;
 export default function RoleEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  usePageHeader({});
   const { data: role, isLoading, isError } = useRole(id!);
   const { data: permissions, isLoading: permissionsLoading } = useAllPermissions();
   const updateRole = useUpdateRole();
@@ -96,17 +98,13 @@ export default function RoleEditPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/roles')}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Roles
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Role</h1>
-        <p className="text-gray-500">Editing {role.name}</p>
-      </div>
+      <button
+        onClick={() => navigate('/roles')}
+        className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Roles
+      </button>
 
       {role.isSystem && (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3">

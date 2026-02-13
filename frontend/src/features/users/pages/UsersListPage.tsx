@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { Plus, Users, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUsers, useDeleteUser, useBulkDeleteUsers } from '@/hooks/queries/useUsers';
 import PermissionGate from '@components/shared/PermissionGate';
@@ -40,6 +41,17 @@ const columns: ColumnDef[] = [
 
 export default function UsersListPage() {
   const navigate = useNavigate();
+
+  const headerActions = useMemo(() => (
+    <PermissionGate permission="users.create">
+      <button className="btn-primary" onClick={() => navigate('/users/create')}>
+        <Plus className="w-4 h-4 mr-2" />
+        Add User
+      </button>
+    </PermissionGate>
+  ), [navigate]);
+  usePageHeader({ subtitle: 'Manage user accounts and permissions', actions: headerActions });
+
   const [filters, setFilters] = useState<UserFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<UserWithRoles | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -98,19 +110,7 @@ export default function UsersListPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-500">Manage user accounts and permissions</p>
-        </div>
-        <PermissionGate permission="users.create">
-          <button className="btn-primary" onClick={() => navigate('/users/create')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </button>
-        </PermissionGate>
-      </div>
+      {/* Header managed by Topbar */}
 
       {/* Toolbar */}
       <DataToolbar

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,12 +14,6 @@ import { DetailSection } from '@components/ui/DetailSection';
 import type { TabDef } from '@components/ui/Tabs';
 import { UserStatus } from '@/types/user.types';
 import toast from 'react-hot-toast';
-
-const STATUS_BADGE: Record<UserStatus, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  INACTIVE: 'bg-gray-100 text-gray-700',
-  SUSPENDED: 'bg-red-100 text-red-700',
-};
 
 const tabs: TabDef[] = [
   { id: 'general', label: 'General', icon: User },
@@ -46,6 +41,7 @@ export default function UserDetailPage() {
   const { data: user, isLoading, isError } = useUser(id!);
   const { data: roles, isLoading: rolesLoading } = useRolesList();
   const updateUser = useUpdateUser();
+  usePageHeader({});
 
   const {
     register,
@@ -116,22 +112,8 @@ export default function UserDetailPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Users
+        Back to Users
       </button>
-
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {user.firstName} {user.lastName}
-          </h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="text-sm text-gray-500">{user.email}</span>
-            <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_BADGE[user.status]}`}>
-              {user.status}
-            </span>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 pt-4">

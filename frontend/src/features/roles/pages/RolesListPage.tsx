@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { Plus, Shield, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRoles, useDeleteRole, useBulkDeleteRoles } from '@/hooks/queries/useRoles';
 import PermissionGate from '@components/shared/PermissionGate';
@@ -32,6 +33,17 @@ const columns: ColumnDef[] = [
 
 export default function RolesListPage() {
   const navigate = useNavigate();
+
+  const headerActions = useMemo(() => (
+    <PermissionGate permission="roles.manage">
+      <button className="btn-primary" onClick={() => navigate('/roles/create')}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create Role
+      </button>
+    </PermissionGate>
+  ), [navigate]);
+  usePageHeader({ subtitle: 'Manage roles and their permissions', actions: headerActions });
+
   const [filters, setFilters] = useState<RoleFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<RoleWithPermissions | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -90,19 +102,7 @@ export default function RolesListPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Roles</h1>
-          <p className="text-gray-500">Manage roles and their permissions</p>
-        </div>
-        <PermissionGate permission="roles.manage">
-          <button className="btn-primary" onClick={() => navigate('/roles/create')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Role
-          </button>
-        </PermissionGate>
-      </div>
+      {/* Header managed by Topbar */}
 
       {/* Toolbar */}
       <DataToolbar

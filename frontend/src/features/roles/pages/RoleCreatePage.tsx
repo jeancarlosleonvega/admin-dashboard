@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ const tabs: TabDef[] = [
 
 export default function RoleCreatePage() {
   const navigate = useNavigate();
+  usePageHeader({ subtitle: 'Add a new role to the system' });
   const createRole = useCreateRole();
   const { data: permissions, isLoading: permissionsLoading } = useAllPermissions();
   const [activeTab, setActiveTab] = useState('general');
@@ -70,17 +72,13 @@ export default function RoleCreatePage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/roles')}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Roles
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Create Role</h1>
-        <p className="text-gray-500">Add a new role to the system</p>
-      </div>
+      <button
+        onClick={() => navigate('/roles')}
+        className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Roles
+      </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 pt-4">

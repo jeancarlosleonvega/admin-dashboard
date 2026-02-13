@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,6 +20,7 @@ type UpdatePermissionFormData = z.infer<typeof updatePermissionSchema>;
 export default function PermissionEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  usePageHeader({});
   const { data: permission, isLoading, isError } = usePermission(id!);
   const updatePermission = useUpdatePermission();
 
@@ -80,19 +82,13 @@ export default function PermissionEditPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/permissions')}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Permissions
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Permission</h1>
-        <p className="text-gray-500">
-          Editing {permission.resource}.{permission.action}
-        </p>
-      </div>
+      <button
+        onClick={() => navigate('/permissions')}
+        className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Permissions
+      </button>
 
       <div className="card p-6 max-w-2xl">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

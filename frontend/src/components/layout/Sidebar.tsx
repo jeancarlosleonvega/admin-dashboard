@@ -58,7 +58,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div
           className={cn(
-            'flex items-center h-16 border-b border-gray-200 flex-shrink-0 transition-all duration-300',
+            'flex items-center h-20 border-b border-gray-200 flex-shrink-0 transition-all duration-300',
             'px-4 gap-3',
             expanded ? 'lg:px-4 lg:gap-3' : 'lg:px-2 lg:gap-0 lg:justify-center'
           )}

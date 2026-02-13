@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,6 +35,7 @@ const tabs: TabDef[] = [
 
 export default function UserCreatePage() {
   const navigate = useNavigate();
+  usePageHeader({ subtitle: 'Add a new user to the system' });
   const createUser = useCreateUser();
   const { data: roles, isLoading: rolesLoading } = useRolesList();
   const [activeTab, setActiveTab] = useState('general');
@@ -64,17 +66,13 @@ export default function UserCreatePage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <button
-          onClick={() => navigate('/users')}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Users
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Create User</h1>
-        <p className="text-gray-500">Add a new user to the system</p>
-      </div>
+      <button
+        onClick={() => navigate('/users')}
+        className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" />
+        Back to Users
+      </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 pt-4">

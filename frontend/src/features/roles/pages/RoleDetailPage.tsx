@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,6 +36,7 @@ export default function RoleDetailPage() {
   const canManage = can('roles.manage');
 
   const { data: role, isLoading, isError } = useRole(id!);
+  usePageHeader({});
   const { data: permissions, isLoading: permissionsLoading } = useAllPermissions();
   const updateRole = useUpdateRole();
 
@@ -116,23 +118,8 @@ export default function RoleDetailPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Roles
+        Back to Roles
       </button>
-
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{role.name}</h1>
-          <div className="flex items-center gap-3 mt-1">
-            {role.description && <span className="text-sm text-gray-500">{role.description}</span>}
-            {role.isSystem && (
-              <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">System</span>
-            )}
-            <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded bg-blue-50 text-blue-700">
-              {role.permissions.length} permission{role.permissions.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </div>
-      </div>
 
       {role.isSystem && (
         <div className="mb-6 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3">

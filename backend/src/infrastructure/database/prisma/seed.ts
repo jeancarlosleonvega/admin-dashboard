@@ -97,7 +97,8 @@ async function main() {
   console.log('Roles created');
 
   // Create default admin user
-  const passwordHash = await bcrypt.hash('admin123', 12);
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
   const adminRole = await prisma.role.findUnique({ where: { name: 'Super Admin' } });
 
   const adminUser = await prisma.user.upsert({

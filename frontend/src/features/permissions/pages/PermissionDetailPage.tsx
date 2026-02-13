@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,6 +35,7 @@ export default function PermissionDetailPage() {
 
   const { data: permission, isLoading, isError } = usePermission(id!);
   const updatePermission = useUpdatePermission();
+  usePageHeader({});
 
   const {
     register,
@@ -98,19 +100,8 @@ export default function PermissionDetailPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Permissions
+        Back to Permissions
       </button>
-
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {permission.resource}.{permission.action}
-          </h1>
-          {permission.description && (
-            <p className="text-sm text-gray-500 mt-1">{permission.description}</p>
-          )}
-        </div>
-      </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 pt-4">

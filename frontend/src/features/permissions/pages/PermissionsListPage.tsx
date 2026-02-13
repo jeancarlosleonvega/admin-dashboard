@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageHeader } from '@/hooks/usePageHeader';
 import { Plus, Shield, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePermissions, useDeletePermission, useBulkDeletePermissions } from '@/hooks/queries/usePermissions';
 import PermissionGate from '@components/shared/PermissionGate';
@@ -29,6 +30,17 @@ const columns: ColumnDef[] = [
 
 export default function PermissionsListPage() {
   const navigate = useNavigate();
+
+  const headerActions = useMemo(() => (
+    <PermissionGate permission="roles.manage">
+      <button className="btn-primary" onClick={() => navigate('/permissions/create')}>
+        <Plus className="w-4 h-4 mr-2" />
+        Create Permission
+      </button>
+    </PermissionGate>
+  ), [navigate]);
+  usePageHeader({ subtitle: 'Manage system permissions and access controls', actions: headerActions });
+
   const [filters, setFilters] = useState<PermissionFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -59,19 +71,7 @@ export default function PermissionsListPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Permissions</h1>
-          <p className="text-gray-500">Manage system permissions and access controls</p>
-        </div>
-        <PermissionGate permission="roles.manage">
-          <button className="btn-primary" onClick={() => navigate('/permissions/create')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Permission
-          </button>
-        </PermissionGate>
-      </div>
+      {/* Header managed by Topbar */}
 
       {/* Toolbar */}
       <DataToolbar

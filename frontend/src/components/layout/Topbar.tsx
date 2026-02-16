@@ -4,14 +4,14 @@ import { useUIStore } from '@stores/uiStore';
 import { usePageHeaderStore } from '@stores/pageHeaderStore';
 
 const routeTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/users': 'Users',
-  '/users/create': 'Create User',
+  '/dashboard': 'Inicio',
+  '/users': 'Usuarios',
+  '/users/create': 'Crear Usuario',
   '/roles': 'Roles',
-  '/roles/create': 'Create Role',
-  '/permissions': 'Permissions',
-  '/permissions/create': 'Create Permission',
-  '/settings': 'Settings',
+  '/roles/create': 'Crear Rol',
+  '/permissions': 'Permisos',
+  '/permissions/create': 'Crear Permiso',
+  '/settings': 'Configuración',
 };
 
 function getPageTitle(pathname: string): string {

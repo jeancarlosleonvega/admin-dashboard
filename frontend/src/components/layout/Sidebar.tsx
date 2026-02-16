@@ -5,7 +5,7 @@ import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
+  { name: 'Inicio', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
 ];
 
 const tooltipClass =
@@ -86,8 +86,8 @@ export default function Sidebar() {
               expanded ? 'lg:text-left' : 'lg:text-center'
             )}
           >
-            {expanded ? <span className="hidden lg:inline">Main Navigation</span> : <span className="hidden lg:inline">Main</span>}
-            <span className="lg:hidden">Main Navigation</span>
+            {expanded ? <span className="hidden lg:inline">Menú principal</span> : <span className="hidden lg:inline">Menú</span>}
+            <span className="lg:hidden">Menú principal</span>
           </span>
         </div>
 
@@ -160,10 +160,10 @@ export default function Sidebar() {
                     expanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0'
                   )}
                 >
-                  Settings
+                  Configuración
                 </span>
                 {!expanded && (
-                  <span className={cn(tooltipClass, 'hidden lg:block')}>Settings</span>
+                  <span className={cn(tooltipClass, 'hidden lg:block')}>Configuración</span>
                 )}
               </>
             )}
@@ -184,10 +184,10 @@ export default function Sidebar() {
                 expanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0'
               )}
             >
-              Logout
+              Salir
             </span>
             {!expanded && (
-              <span className={cn(tooltipClass, 'hidden lg:block')}>Logout</span>
+              <span className={cn(tooltipClass, 'hidden lg:block')}>Salir</span>
             )}
           </button>
         </div>

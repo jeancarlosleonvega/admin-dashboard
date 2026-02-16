@@ -28,15 +28,17 @@ const STATUS_BADGE: Record<UserStatus, string> = {
 };
 
 const columns: ColumnDef[] = [
-  { key: 'user', label: 'User', sortable: true, filterable: true, type: 'text' },
-  { key: 'status', label: 'Status', sortable: true, filterable: true, type: 'select', options: [
-    { label: 'Active', value: 'ACTIVE' },
-    { label: 'Inactive', value: 'INACTIVE' },
-    { label: 'Suspended', value: 'SUSPENDED' },
-  ]},
+  { key: 'user', label: 'Usuario', sortable: true, filterable: true, type: 'text' },
+  {
+    key: 'status', label: 'Estado', sortable: true, filterable: true, type: 'select', options: [
+      { label: 'Activo', value: 'ACTIVE' },
+      { label: 'Inactivo', value: 'INACTIVE' },
+      { label: 'Suspendido', value: 'SUSPENDED' },
+    ]
+  },
   { key: 'roles', label: 'Roles', sortable: false, filterable: false },
-  { key: 'created', label: 'Created', sortable: true, filterable: true, type: 'date' },
-  { key: 'actions', label: 'Actions', sortable: false, filterable: false },
+  { key: 'created', label: 'Fecha de creación', sortable: true, filterable: true, type: 'date' },
+  { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
 
 export default function UsersListPage() {
@@ -46,11 +48,11 @@ export default function UsersListPage() {
     <PermissionGate permission="users.create">
       <button className="btn-primary" onClick={() => navigate('/users/create')}>
         <Plus className="w-4 h-4 mr-2" />
-        Add User
+        Agregar Usuario
       </button>
     </PermissionGate>
   ), [navigate]);
-  usePageHeader({ subtitle: 'Manage user accounts and permissions', actions: headerActions });
+  usePageHeader({ subtitle: 'Gestionar cuentas de usuario y permisos', actions: headerActions });
 
   const [filters, setFilters] = useState<UserFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<UserWithRoles | null>(null);
@@ -101,10 +103,10 @@ export default function UsersListPage() {
   const handleBulkDelete = async () => {
     try {
       await bulkDelete.mutateAsync([...selectedIds]);
-      toast.success(`${selectedIds.size} users deleted successfully`);
+      toast.success(`${selectedIds.size} usuarios eliminados exitosamente`);
       setSelectedIds(new Set());
     } catch {
-      toast.error('Failed to delete users');
+      toast.error('Error al eliminar usuarios');
     }
   };
 
@@ -158,7 +160,7 @@ export default function UsersListPage() {
       {selectedIds.size > 0 && (
         <div className="mb-4 flex items-center gap-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
           <span className="text-sm font-medium text-blue-700">
-            {selectedIds.size} selected
+            {selectedIds.size} seleccionados
           </span>
           <PermissionGate permission="users.delete">
             <button
@@ -167,14 +169,14 @@ export default function UsersListPage() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-lg hover:bg-red-200 disabled:opacity-50 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              {bulkDelete.isPending ? 'Deleting...' : 'Delete Selected'}
+              {bulkDelete.isPending ? 'Borrando...' : 'Borrar seleccionados'}
             </button>
           </PermissionGate>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="text-sm text-blue-600 hover:text-blue-800"
           >
-            Clear selection
+            Limpiar selección
           </button>
         </div>
       )}
@@ -186,12 +188,12 @@ export default function UsersListPage() {
           </div>
         ) : isError ? (
           <div className="px-6 py-12 text-center text-red-500">
-            <p>Failed to load users. Please try again.</p>
+            <p>No se pudieron cargar los usuarios. Por favor, inténtalo de nuevo.</p>
           </div>
         ) : users.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No users found</p>
+            <p>No se encontraron usuarios</p>
           </div>
         ) : (
           <>
@@ -209,12 +211,12 @@ export default function UsersListPage() {
                     </th>
                     {visibleColumns.includes('user') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
+                        Usuarios
                       </th>
                     )}
                     {visibleColumns.includes('status') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        Estado
                       </th>
                     )}
                     {visibleColumns.includes('roles') && (
@@ -224,12 +226,12 @@ export default function UsersListPage() {
                     )}
                     {visibleColumns.includes('created') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
+                        Fecha de creación
                       </th>
                     )}
                     {visibleColumns.includes('actions') && (
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        Acciones
                       </th>
                     )}
                   </tr>
@@ -295,7 +297,7 @@ export default function UsersListPage() {
                             <button
                               onClick={() => navigate(`/users/${user.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                              title="View user"
+                              title="Ver usuario"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -303,7 +305,7 @@ export default function UsersListPage() {
                               <button
                                 onClick={() => navigate(`/users/${user.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                                title="Edit user"
+                                title="Editar usuario"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -312,7 +314,7 @@ export default function UsersListPage() {
                               <button
                                 onClick={() => setDeleteTarget(user)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                                title="Delete user"
+                                title="Eliminar usuario"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -330,8 +332,8 @@ export default function UsersListPage() {
             {meta.totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Showing {(meta.page - 1) * meta.limit + 1} to{' '}
-                  {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} users
+                  Mostrando {(meta.page - 1) * meta.limit + 1} a{' '}
+                  {Math.min(meta.page * meta.limit, meta.total)} de {meta.total} usuarios
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -345,11 +347,10 @@ export default function UsersListPage() {
                     <button
                       key={page}
                       onClick={() => handlePage(page)}
-                      className={`px-3 py-1 text-sm rounded ${
-                        page === meta.page
+                      className={`px-3 py-1 text-sm rounded ${page === meta.page
                           ? 'bg-blue-600 text-white'
                           : 'border border-gray-300 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
@@ -371,9 +372,9 @@ export default function UsersListPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        title="Delete User"
-        message={`Are you sure you want to delete ${deleteTarget?.firstName} ${deleteTarget?.lastName}? This action cannot be undone.`}
-        confirmLabel="Delete"
+        title="Eliminar Usuario"
+        message={`¿Estás seguro de que quieres eliminar a ${deleteTarget?.firstName} ${deleteTarget?.lastName}? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
         variant="danger"
         isLoading={deleteUser.isPending}
         onConfirm={handleDelete}

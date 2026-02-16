@@ -62,11 +62,11 @@ export default function DashboardPage() {
               <Users className="w-6 h-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Users</p>
+              <p className="text-sm font-medium text-gray-500">Usuarios totales</p>
               <p className="text-2xl font-semibold text-gray-900">0</p>
             </div>
           </div>
-          <p className="text-xs text-green-600 mt-2">0 active</p>
+          <p className="text-xs text-green-600 mt-2">0 activos</p>
         </div>
 
         <div className="card p-6">
@@ -75,11 +75,11 @@ export default function DashboardPage() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Active Roles</p>
+              <p className="text-sm font-medium text-gray-500">Roles activos</p>
               <p className="text-2xl font-semibold text-gray-900">0</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">System roles configured</p>
+          <p className="text-xs text-gray-500 mt-2">Roles del sistema configurados</p>
         </div>
 
         <div className="card p-6">
@@ -88,11 +88,11 @@ export default function DashboardPage() {
               <Key className="w-6 h-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Permissions</p>
+              <p className="text-sm font-medium text-gray-500">Permisos</p>
               <p className="text-2xl font-semibold text-gray-900">0</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Resource-action pairs</p>
+          <p className="text-xs text-gray-500 mt-2">Pares recurso-acción</p>
         </div>
 
         <div className="card p-6">
@@ -101,27 +101,27 @@ export default function DashboardPage() {
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Sessions This Month</p>
+              <p className="text-sm font-medium text-gray-500">Sesiones este mes</p>
               <p className="text-2xl font-semibold text-gray-900">0</p>
             </div>
           </div>
-          <p className="text-xs text-blue-600 mt-2">Current period</p>
+          <p className="text-xs text-blue-600 mt-2">Periodo actual</p>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="card p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Users by Status</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Usuarios por estado</h2>
           <StatBar data={usersByStatus} total={totalUsers} />
           <StatLegend data={usersByStatus} />
         </div>
 
         <div className="card p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Recent Activity</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Actividad reciente</h2>
           <div className="text-center py-8 text-gray-500">
             <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No recent activity</p>
+            <p className="text-sm">No hay actividad reciente</p>
           </div>
         </div>
       </div>

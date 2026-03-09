@@ -1,0 +1,98 @@
+import { prisma } from '../../infrastructure/database/client.js';
+import type { CreateVenueScheduleInput, UpdateVenueScheduleInput } from './venue-schedules.schema.js';
+
+const scheduleInclude = {
+  venue: {
+    select: {
+      id: true,
+      name: true,
+      intervalMinutes: true,
+      openTime: true,
+      closeTime: true,
+      sportType: {
+        select: {
+          id: true,
+          name: true,
+          defaultIntervalMinutes: true,
+          defaultOpenTime: true,
+          defaultCloseTime: true,
+        },
+      },
+    },
+  },
+};
+
+export class VenueSchedulesRepository {
+  async findAll(venueId?: string, page = 1, limit = 20) {
+    const where: any = {};
+    if (venueId) where.venueId = venueId;
+
+    const [items, total] = await Promise.all([
+      prisma.venueSchedule.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: scheduleInclude,
+      }),
+      prisma.venueSchedule.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async findById(id: string) {
+    return prisma.venueSchedule.findUnique({
+      where: { id },
+      include: scheduleInclude,
+    });
+  }
+
+  async create(data: CreateVenueScheduleInput) {
+    return prisma.venueSchedule.create({
+      data: {
+        venueId: data.venueId,
+        name: data.name,
+        startDate: new Date(data.startDate),
+        endDate: data.endDate ? new Date(data.endDate) : null,
+        daysOfWeek: data.daysOfWeek,
+        openTime: data.openTime ?? null,
+        closeTime: data.closeTime ?? null,
+        intervalMinutes: data.intervalMinutes ?? null,
+        active: data.active,
+      },
+      include: scheduleInclude,
+    });
+  }
+
+  async update(id: string, data: UpdateVenueScheduleInput) {
+    return prisma.venueSchedule.update({
+      where: { id },
+      data: {
+        venueId: data.venueId,
+        name: data.name,
+        startDate: data.startDate ? new Date(data.startDate) : undefined,
+        endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
+        daysOfWeek: data.daysOfWeek,
+        openTime: data.openTime !== undefined ? (data.openTime ?? null) : undefined,
+        closeTime: data.closeTime !== undefined ? (data.closeTime ?? null) : undefined,
+        intervalMinutes: data.intervalMinutes !== undefined ? (data.intervalMinutes ?? null) : undefined,
+        active: data.active,
+      },
+      include: scheduleInclude,
+    });
+  }
+
+  async updateGeneratedUntil(id: string, generatedUntil: Date) {
+    await prisma.venueSchedule.update({
+      where: { id },
+      data: { generatedUntil },
+    });
+  }
+
+  async delete(id: string) {
+    await prisma.venueSchedule.delete({ where: { id } });
+  }
+}
+
+export const venueSchedulesRepository = new VenueSchedulesRepository();

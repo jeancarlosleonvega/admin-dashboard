@@ -32,6 +32,36 @@ const permissions = [
   // Membership Plans
   { resource: 'membership-plans', action: 'view', description: 'Ver planes de membresía' },
   { resource: 'membership-plans', action: 'manage', description: 'Gestionar planes de membresía' },
+
+  // User Memberships
+  { resource: 'user-memberships', action: 'view', description: 'Ver membresías de socios' },
+  { resource: 'user-memberships', action: 'manage', description: 'Gestionar membresías de socios' },
+
+  // Blocked Periods
+  { resource: 'blocked-periods', action: 'view', description: 'Ver períodos bloqueados' },
+  { resource: 'blocked-periods', action: 'manage', description: 'Gestionar períodos bloqueados' },
+
+  // Venue Schedules
+  { resource: 'venue-schedules', action: 'view', description: 'Ver schedules de espacios' },
+  { resource: 'venue-schedules', action: 'manage', description: 'Gestionar schedules de espacios' },
+
+  // Slots
+  { resource: 'slots', action: 'view', description: 'Ver disponibilidad de slots' },
+
+  // Additional Services
+  { resource: 'additional-services', action: 'view', description: 'Ver servicios adicionales' },
+  { resource: 'additional-services', action: 'manage', description: 'Gestionar servicios adicionales' },
+
+  // Bookings
+  { resource: 'bookings', action: 'view', description: 'Ver reservas' },
+  { resource: 'bookings', action: 'manage', description: 'Gestionar reservas' },
+
+  // Payments
+  { resource: 'payments', action: 'view', description: 'Ver pagos' },
+  { resource: 'payments', action: 'manage', description: 'Gestionar pagos' },
+
+  // QR
+  { resource: 'qr', action: 'validate', description: 'Validar QR de acceso' },
 ];
 
 const roles = [
@@ -57,6 +87,20 @@ const roles = [
       'venues.manage',
       'membership-plans.view',
       'membership-plans.manage',
+      'user-memberships.view',
+      'user-memberships.manage',
+      'blocked-periods.view',
+      'blocked-periods.manage',
+      'venue-schedules.view',
+      'venue-schedules.manage',
+      'slots.view',
+      'additional-services.view',
+      'additional-services.manage',
+      'bookings.view',
+      'bookings.manage',
+      'payments.view',
+      'payments.manage',
+      'qr.validate',
     ],
   },
   {
@@ -67,6 +111,10 @@ const roles = [
       'dashboard.view',
       'venues.view',
       'membership-plans.view',
+      'slots.view',
+      'bookings.view',
+      'qr.validate',
+      'additional-services.view',
     ],
   },
   {
@@ -76,6 +124,8 @@ const roles = [
     permissions: [
       'dashboard.view',
       'membership-plans.view',
+      'slots.view',
+      'additional-services.view',
     ],
   },
   {

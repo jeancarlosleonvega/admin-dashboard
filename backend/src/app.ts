@@ -18,6 +18,14 @@ import { systemConfigRoutes } from './modules/system-config/system-config.routes
 import { sportTypesRoutes } from './modules/sport-types/sport-types.routes.js';
 import { venuesRoutes } from './modules/venues/venues.routes.js';
 import { membershipPlansRoutes } from './modules/membership-plans/membership-plans.routes.js';
+import { userMembershipsRoutes } from './modules/user-memberships/user-memberships.routes.js';
+import { blockedPeriodsRoutes } from './modules/blocked-periods/blocked-periods.routes.js';
+import { venueSchedulesRoutes } from './modules/venue-schedules/venue-schedules.routes.js';
+import { slotsRoutes } from './modules/slots/slots.routes.js';
+import { additionalServicesRoutes } from './modules/additional-services/additional-services.routes.js';
+import { bookingsRoutes } from './modules/bookings/bookings.routes.js';
+import { paymentsRoutes } from './modules/payments/payments.routes.js';
+import { qrRoutes } from './modules/qr/qr.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -60,6 +68,14 @@ export async function buildApp(): Promise<FastifyInstance> {
     api.register(sportTypesRoutes, { prefix: '/sport-types' });
     api.register(venuesRoutes, { prefix: '/venues' });
     api.register(membershipPlansRoutes, { prefix: '/membership-plans' });
+    api.register(userMembershipsRoutes, { prefix: '/user-memberships' });
+    api.register(blockedPeriodsRoutes, { prefix: '/blocked-periods' });
+    api.register(venueSchedulesRoutes, { prefix: '/venue-schedules' });
+    api.register(slotsRoutes, { prefix: '/slots' });
+    api.register(additionalServicesRoutes, { prefix: '/additional-services' });
+    api.register(bookingsRoutes, { prefix: '/bookings' });
+    api.register(paymentsRoutes, { prefix: '/payments' });
+    api.register(qrRoutes, { prefix: '/qr' });
   }, { prefix: '/api' });
 
   return app;

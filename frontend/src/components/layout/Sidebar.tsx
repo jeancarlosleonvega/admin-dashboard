@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, Key, Settings, LogOut, Activity, MapPin, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
@@ -9,6 +9,15 @@ const navigation = [
   { name: 'Tipos de Deporte', href: '/sport-types', icon: Activity, permission: 'sport-types.view' },
   { name: 'Espacios', href: '/venues', icon: MapPin, permission: 'venues.view' },
   { name: 'Planes de Membresía', href: '/membership-plans', icon: CreditCard, permission: 'membership-plans.view' },
+  { name: 'Membresías Socios', href: '/user-memberships', icon: UserCheck, permission: 'user-memberships.view' },
+  { name: 'Schedules', href: '/venue-schedules', icon: Clock, permission: 'venue-schedules.view' },
+  { name: 'Períodos Bloqueados', href: '/blocked-periods', icon: Ban, permission: 'blocked-periods.view' },
+  { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
+  { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },
+  { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle, permission: 'slots.view' },
+  { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen, permission: undefined },
+  { name: 'Transferencias', href: '/payments/transfers', icon: DollarSign, permission: 'payments.view' },
+  { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
 ];
 
 const tooltipClass =

@@ -33,6 +33,17 @@ import VenueEditPage from '@features/venues/pages/VenueEditPage';
 import MembershipPlansListPage from '@features/membership-plans/pages/MembershipPlansListPage';
 import MembershipPlanCreatePage from '@features/membership-plans/pages/MembershipPlanCreatePage';
 import MembershipPlanEditPage from '@features/membership-plans/pages/MembershipPlanEditPage';
+import VenueSchedulesPage from '@features/venue-schedules/pages/VenueSchedulesPage';
+import VenueScheduleCreatePage from '@features/venue-schedules/pages/VenueScheduleCreatePage';
+import VenueScheduleEditPage from '@features/venue-schedules/pages/VenueScheduleEditPage';
+import BlockedPeriodsPage from '@features/blocked-periods/pages/BlockedPeriodsPage';
+import AdditionalServicesPage from '@features/additional-services/pages/AdditionalServicesPage';
+import AdminBookingsPage from '@features/bookings/pages/AdminBookingsPage';
+import BookingFlowPage from '@features/bookings/pages/BookingFlowPage';
+import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
+import PendingTransfersPage from '@features/payments/pages/PendingTransfersPage';
+import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
+import QRValidatorPage from '@features/qr/pages/QRValidatorPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -261,6 +272,94 @@ function App() {
           element={
             <PermissionRoute permission="membership-plans.manage">
               <MembershipPlanEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Venue Schedules */}
+        <Route
+          path="/venue-schedules"
+          element={
+            <PermissionRoute permission="venue-schedules.view">
+              <VenueSchedulesPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venue-schedules/create"
+          element={
+            <PermissionRoute permission="venue-schedules.manage">
+              <VenueScheduleCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venue-schedules/:id/edit"
+          element={
+            <PermissionRoute permission="venue-schedules.manage">
+              <VenueScheduleEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Blocked Periods */}
+        <Route
+          path="/blocked-periods"
+          element={
+            <PermissionRoute permission="blocked-periods.view">
+              <BlockedPeriodsPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Additional Services */}
+        <Route
+          path="/additional-services"
+          element={
+            <PermissionRoute permission="additional-services.view">
+              <AdditionalServicesPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Bookings */}
+        <Route
+          path="/bookings"
+          element={
+            <PermissionRoute permission="bookings.view">
+              <AdminBookingsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route path="/bookings/new" element={<BookingFlowPage />} />
+        <Route path="/bookings/my" element={<MyBookingsPage />} />
+
+        {/* Payments */}
+        <Route
+          path="/payments/transfers"
+          element={
+            <PermissionRoute permission="payments.view">
+              <PendingTransfersPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* User Memberships */}
+        <Route
+          path="/user-memberships"
+          element={
+            <PermissionRoute permission="user-memberships.view">
+              <UserMembershipsPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* QR Validator */}
+        <Route
+          path="/qr-validator"
+          element={
+            <PermissionRoute permission="qr.validate">
+              <QRValidatorPage />
             </PermissionRoute>
           }
         />

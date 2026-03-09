@@ -53,10 +53,10 @@ export default function PermissionEditPage() {
           description: data.description || null,
         },
       });
-      toast.success('Permission updated successfully');
+      toast.success('Permiso actualizado exitosamente');
       navigate('/permissions');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to update permission';
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to update permission';
       toast.error(message);
     }
   };
@@ -74,7 +74,7 @@ export default function PermissionEditPage() {
       <div className="text-center py-12">
         <p className="text-red-500">Permission not found</p>
         <button onClick={() => navigate('/permissions')} className="mt-4 text-blue-600 hover:underline">
-          Back to Permissions
+          Volver a Permisos
         </button>
       </div>
     );
@@ -87,7 +87,7 @@ export default function PermissionEditPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Permissions
+        Volver a Permisos
       </button>
 
       <div className="card p-6 max-w-2xl">

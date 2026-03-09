@@ -69,10 +69,10 @@ export default function RoleEditPage() {
           permissionIds: permissionIds && permissionIds.length > 0 ? permissionIds : undefined,
         },
       });
-      toast.success('Role updated successfully');
+      toast.success('Rol actualizado exitosamente');
       navigate('/roles');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to update role';
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to update role';
       toast.error(message);
     }
   };
@@ -90,7 +90,7 @@ export default function RoleEditPage() {
       <div className="text-center py-12">
         <p className="text-red-500">Role not found</p>
         <button onClick={() => navigate('/roles')} className="mt-4 text-blue-600 hover:underline">
-          Back to Roles
+          Volver a Roles
         </button>
       </div>
     );
@@ -103,7 +103,7 @@ export default function RoleEditPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Roles
+        Volver a Roles
       </button>
 
       {role.isSystem && (

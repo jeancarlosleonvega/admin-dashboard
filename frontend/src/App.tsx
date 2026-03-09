@@ -27,22 +27,29 @@ import PermissionEditPage from '@features/permissions/pages/PermissionEditPage';
 import SportTypesListPage from '@features/sport-types/pages/SportTypesListPage';
 import SportTypeCreatePage from '@features/sport-types/pages/SportTypeCreatePage';
 import SportTypeEditPage from '@features/sport-types/pages/SportTypeEditPage';
+import SportTypeDetailPage from '@features/sport-types/pages/SportTypeDetailPage';
 import VenuesListPage from '@features/venues/pages/VenuesListPage';
 import VenueCreatePage from '@features/venues/pages/VenueCreatePage';
 import VenueEditPage from '@features/venues/pages/VenueEditPage';
+import VenueDetailPage from '@features/venues/pages/VenueDetailPage';
 import MembershipPlansListPage from '@features/membership-plans/pages/MembershipPlansListPage';
 import MembershipPlanCreatePage from '@features/membership-plans/pages/MembershipPlanCreatePage';
 import MembershipPlanEditPage from '@features/membership-plans/pages/MembershipPlanEditPage';
 import VenueSchedulesPage from '@features/venue-schedules/pages/VenueSchedulesPage';
 import VenueScheduleCreatePage from '@features/venue-schedules/pages/VenueScheduleCreatePage';
 import VenueScheduleEditPage from '@features/venue-schedules/pages/VenueScheduleEditPage';
-import BlockedPeriodsPage from '@features/blocked-periods/pages/BlockedPeriodsPage';
-import AdditionalServicesPage from '@features/additional-services/pages/AdditionalServicesPage';
+import BlockedPeriodsListPage from '@features/blocked-periods/pages/BlockedPeriodsListPage';
+import BlockedPeriodCreatePage from '@features/blocked-periods/pages/BlockedPeriodCreatePage';
+import BlockedPeriodEditPage from '@features/blocked-periods/pages/BlockedPeriodEditPage';
+import AdditionalServicesListPage from '@features/additional-services/pages/AdditionalServicesListPage';
+import AdditionalServiceCreatePage from '@features/additional-services/pages/AdditionalServiceCreatePage';
+import AdditionalServiceEditPage from '@features/additional-services/pages/AdditionalServiceEditPage';
 import AdminBookingsPage from '@features/bookings/pages/AdminBookingsPage';
 import BookingFlowPage from '@features/bookings/pages/BookingFlowPage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
 import PendingTransfersPage from '@features/payments/pages/PendingTransfersPage';
 import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
+import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
 import QRValidatorPage from '@features/qr/pages/QRValidatorPage';
 
 // Route guards
@@ -216,6 +223,14 @@ function App() {
           }
         />
         <Route
+          path="/sport-types/:id"
+          element={
+            <PermissionRoute permission="sport-types.view">
+              <SportTypeDetailPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
           path="/sport-types/:id/edit"
           element={
             <PermissionRoute permission="sport-types.manage">
@@ -238,6 +253,14 @@ function App() {
           element={
             <PermissionRoute permission="venues.manage">
               <VenueCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venues/:id"
+          element={
+            <PermissionRoute permission="venues.view">
+              <VenueDetailPage />
             </PermissionRoute>
           }
         />
@@ -307,7 +330,23 @@ function App() {
           path="/blocked-periods"
           element={
             <PermissionRoute permission="blocked-periods.view">
-              <BlockedPeriodsPage />
+              <BlockedPeriodsListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/blocked-periods/create"
+          element={
+            <PermissionRoute permission="blocked-periods.manage">
+              <BlockedPeriodCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/blocked-periods/:id/edit"
+          element={
+            <PermissionRoute permission="blocked-periods.manage">
+              <BlockedPeriodEditPage />
             </PermissionRoute>
           }
         />
@@ -317,7 +356,23 @@ function App() {
           path="/additional-services"
           element={
             <PermissionRoute permission="additional-services.view">
-              <AdditionalServicesPage />
+              <AdditionalServicesListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/additional-services/create"
+          element={
+            <PermissionRoute permission="additional-services.manage">
+              <AdditionalServiceCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/additional-services/:id/edit"
+          element={
+            <PermissionRoute permission="additional-services.manage">
+              <AdditionalServiceEditPage />
             </PermissionRoute>
           }
         />
@@ -350,6 +405,14 @@ function App() {
           element={
             <PermissionRoute permission="user-memberships.view">
               <UserMembershipsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/user-memberships/create"
+          element={
+            <PermissionRoute permission="user-memberships.manage">
+              <UserMembershipCreatePage />
             </PermissionRoute>
           }
         />

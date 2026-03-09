@@ -79,9 +79,9 @@ export default function UserDetailPage() {
           roleIds: roleIds && roleIds.length > 0 ? roleIds : undefined,
         },
       });
-      toast.success('User updated successfully');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to update user';
+      toast.success('Usuario actualizado exitosamente');
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to update user';
       toast.error(message);
     }
   };
@@ -99,7 +99,7 @@ export default function UserDetailPage() {
       <div className="text-center py-12">
         <p className="text-red-500">User not found</p>
         <button onClick={() => navigate('/users')} className="mt-4 text-blue-600 hover:underline">
-          Back to Users
+          Volver a Usuarios
         </button>
       </div>
     );
@@ -112,7 +112,7 @@ export default function UserDetailPage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Users
+        Volver a Usuarios
       </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -147,9 +147,9 @@ export default function UserDetailPage() {
                   <div>
                     <label htmlFor="status" className="label">Status</label>
                     <select id="status" className={`input ${errors.status ? 'input-error' : ''}`} disabled={!canEdit} {...register('status')}>
-                      <option value="ACTIVE">Active</option>
-                      <option value="INACTIVE">Inactive</option>
-                      <option value="SUSPENDED">Suspended</option>
+                      <option value="ACTIVE">Activo</option>
+                      <option value="INACTIVE">Inactivo</option>
+                      <option value="SUSPENDED">Suspendido</option>
                     </select>
                     {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status.message}</p>}
                   </div>

@@ -1,34 +1,24 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { Plus, Activity, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Activity, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSportTypes, useDeleteSportType } from '@/hooks/queries/useSportTypes';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
 import DataToolbar from '@components/shared/DataToolbar';
-import type { FilterRule } from '@components/shared/DataToolbar';
+import type { FilterRule, SortState } from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { SportType, SportTypeFilters } from '@/types/sport-type.types';
+import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
-
-const DAYS_MAP: Record<number, string> = {
-  1: 'Lun',
-  2: 'Mar',
-  3: 'Mié',
-  4: 'Jue',
-  5: 'Vie',
-  6: 'Sáb',
-  7: 'Dom',
-};
 
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Nombre', sortable: true, filterable: true, type: 'text' },
-  { key: 'interval', label: 'Intervalo', sortable: false, filterable: false },
-  { key: 'players', label: 'Jugadores/slot', sortable: false, filterable: false },
+  { key: 'interval', label: 'Intervalo por defecto', sortable: false, filterable: false },
+  { key: 'players', label: 'Jugadores/turno', sortable: false, filterable: false },
   { key: 'schedule', label: 'Horario', sortable: false, filterable: false },
-  { key: 'days', label: 'Días', sortable: false, filterable: false },
   {
     key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
       { label: 'Activo', value: 'true' },
@@ -37,6 +27,10 @@ const columns: ColumnDef[] = [
   },
   { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
+
+const SORT_FIELD_MAP: Record<string, string> = {
+  name: 'name',
+};
 
 export default function SportTypesListPage() {
   const navigate = useNavigate();
@@ -82,7 +76,14 @@ export default function SportTypesListPage() {
       <DataToolbar
         columns={columns}
         onSearchChange={useCallback((search: string) => setFilters((f) => ({ ...f, search: search || undefined, page: 1 })), [])}
-        onSortChange={useCallback(() => { /* no sort */ }, [])}
+        onSortChange={useCallback((sort: SortState | null) => {
+          setFilters((f) => ({
+            ...f,
+            sortBy: sort ? SORT_FIELD_MAP[sort.field] || sort.field : undefined,
+            sortDirection: sort?.direction,
+            page: 1,
+          }));
+        }, [])}
         onFiltersChange={useCallback((rules: FilterRule[]) => {
           setFilters((f) => {
             const next: SportTypeFilters = { search: f.search, page: 1, limit: f.limit };
@@ -97,6 +98,18 @@ export default function SportTypesListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        onExport={() => {
+          const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
+          const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
+            if (c.key === 'name') return item.name;
+            if (c.key === 'interval') return `${item.defaultIntervalMinutes} min`;
+            if (c.key === 'players') return String(item.defaultPlayersPerSlot);
+            if (c.key === 'schedule') return `${item.defaultOpenTime} - ${item.defaultCloseTime}`;
+            if (c.key === 'status') return item.active ? 'Activo' : 'Inactivo';
+            return '';
+          }));
+          exportToCsv('tipos-de-deporte', headers, rows);
+        }}
       />
 
       <div className="card overflow-hidden">
@@ -120,39 +133,22 @@ export default function SportTypesListPage() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     {visibleColumns.includes('name') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nombre
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                     )}
                     {visibleColumns.includes('interval') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Intervalo
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intervalo por defecto</th>
                     )}
                     {visibleColumns.includes('players') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Jugadores/slot
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jugadores/turno</th>
                     )}
                     {visibleColumns.includes('schedule') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Horario
-                      </th>
-                    )}
-                    {visibleColumns.includes('days') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Días
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
                     )}
                     {visibleColumns.includes('status') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     )}
                     {visibleColumns.includes('actions') && (
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Acciones
-                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                     )}
                   </tr>
                 </thead>
@@ -184,17 +180,6 @@ export default function SportTypesListPage() {
                           {item.defaultOpenTime} - {item.defaultCloseTime}
                         </td>
                       )}
-                      {visibleColumns.includes('days') && (
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {item.defaultEnabledDays.map((d) => (
-                              <span key={d} className="inline-flex px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded">
-                                {DAYS_MAP[d] ?? d}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      )}
                       {visibleColumns.includes('status') && (
                         <td className="px-6 py-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -205,11 +190,18 @@ export default function SportTypesListPage() {
                       {visibleColumns.includes('actions') && (
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => navigate(`/sport-types/${item.id}`)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                              title="Ver tipo de deporte"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <PermissionGate permission="sport-types.manage">
                               <button
                                 onClick={() => navigate(`/sport-types/${item.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                                title="Editar"
+                                title="Editar tipo de deporte"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -218,7 +210,7 @@ export default function SportTypesListPage() {
                               <button
                                 onClick={() => setDeleteTarget(item)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                                title="Eliminar"
+                                title="Eliminar tipo de deporte"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -250,10 +242,7 @@ export default function SportTypesListPage() {
                     <button
                       key={page}
                       onClick={() => handlePage(page)}
-                      className={`px-3 py-1 text-sm rounded ${page === meta.page
-                        ? 'bg-blue-600 text-white'
-                        : 'border border-gray-300 hover:bg-gray-50'
-                      }`}
+                      className={`px-3 py-1 text-sm rounded ${page === meta.page ? 'bg-blue-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}`}
                     >
                       {page}
                     </button>
@@ -275,7 +264,7 @@ export default function SportTypesListPage() {
       <ConfirmDialog
         isOpen={!!deleteTarget}
         title="Eliminar Tipo de Deporte"
-        message={`¿Estás seguro de que quieres eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que querés eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar"
         variant="danger"
         isLoading={deleteSportType.isPending}
@@ -285,3 +274,4 @@ export default function SportTypesListPage() {
     </div>
   );
 }
+

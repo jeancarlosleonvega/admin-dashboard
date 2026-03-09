@@ -4,7 +4,7 @@ import { additionalServicesApi } from '@api/additionalServices.api';
 export const additionalServiceKeys = {
   all: ['additional-services'] as const,
   lists: () => [...additionalServiceKeys.all, 'list'] as const,
-  list: (filters: any) => [...additionalServiceKeys.lists(), filters] as const,
+  list: (filters?: Record<string, unknown>) => [...additionalServiceKeys.lists(), filters] as const,
   detail: (id: string) => [...additionalServiceKeys.all, 'detail', id] as const,
 };
 

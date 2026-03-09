@@ -9,7 +9,7 @@ import { CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Email inválido'),
 });
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
       await apiClient.post('/auth/forgot-password', data);
       setIsSubmitted(true);
     } catch {
-      toast.error('Something went wrong. Please try again.');
+      toast.error('Ocurrió un error. Por favor, intentá de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -45,17 +45,17 @@ export default function ForgotPasswordPage() {
           <CheckCircle className="w-16 h-16 text-green-500" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Revisá tu email</h2>
           <p className="mt-2 text-sm text-gray-600">
-            If an account exists with that email, we've sent a password reset link.
-            The link will expire in 1 hour.
+            Si existe una cuenta con ese email, te enviamos un enlace para restablecer tu contraseña.
+            El enlace vence en 1 hora.
           </p>
         </div>
         <Link
           to="/login"
           className="inline-block text-blue-600 hover:text-blue-500 font-medium text-sm"
         >
-          Back to Sign in
+          Volver al inicio de sesión
         </Link>
       </div>
     );
@@ -64,9 +64,9 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
+        <h2 className="text-2xl font-bold text-gray-900">¿Olvidaste tu contraseña?</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your email and we'll send you a reset link.
+          Ingresá tu email y te enviamos un enlace para restablecerla.
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
           disabled={isLoading}
           className="btn-primary w-full"
         >
-          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Send reset link'}
+          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Enviar enlace'}
         </button>
       </form>
 
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
           to="/login"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          Back to Sign in
+          Volver al inicio de sesión
         </Link>
       </div>
     </div>

@@ -49,7 +49,7 @@ export function useUpdateRole() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRoleInput }) =>
       rolesApi.updateRole(id, data),
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: roleKeys.all });
     },
   });

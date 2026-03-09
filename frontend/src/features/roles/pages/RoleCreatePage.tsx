@@ -28,7 +28,7 @@ const tabs: TabDef[] = [
 
 export default function RoleCreatePage() {
   const navigate = useNavigate();
-  usePageHeader({ subtitle: 'Add a new role to the system' });
+  usePageHeader({ subtitle: 'Agregar un nuevo rol al sistema' });
   const createRole = useCreateRole();
   const { data: permissions, isLoading: permissionsLoading } = useAllPermissions();
   const [activeTab, setActiveTab] = useState('general');
@@ -62,10 +62,10 @@ export default function RoleCreatePage() {
         description: data.description || undefined,
         permissionIds: permissionIds && permissionIds.length > 0 ? permissionIds : undefined,
       });
-      toast.success('Role created successfully');
+      toast.success('Rol creado exitosamente');
       navigate('/roles');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to create role';
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to create role';
       toast.error(message);
     }
   };
@@ -77,7 +77,7 @@ export default function RoleCreatePage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Roles
+        Volver a Roles
       </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -181,7 +181,7 @@ export default function RoleCreatePage() {
               {createRole.isPending ? (
                 <Spinner size="sm" className="text-white" />
               ) : (
-                'Create Role'
+                'Crear Rol'
               )}
             </button>
           </div>

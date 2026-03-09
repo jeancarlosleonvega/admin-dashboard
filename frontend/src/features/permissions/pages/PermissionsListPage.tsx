@@ -24,8 +24,8 @@ const columns: ColumnDef[] = [
   { key: 'resource', label: 'Resource', sortable: true, filterable: true, type: 'text' },
   { key: 'action', label: 'Action', sortable: true, filterable: true, type: 'text' },
   { key: 'description', label: 'Description', sortable: false, filterable: true, type: 'text' },
-  { key: 'created', label: 'Created At', sortable: true, filterable: true, type: 'date' },
-  { key: 'actions', label: 'Actions', sortable: false, filterable: false },
+  { key: 'created', label: 'Creado', sortable: true, filterable: true, type: 'date' },
+  { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
 
 export default function PermissionsListPage() {
@@ -35,19 +35,19 @@ export default function PermissionsListPage() {
     <PermissionGate permission="roles.manage">
       <button className="btn-primary" onClick={() => navigate('/permissions/create')}>
         <Plus className="w-4 h-4 mr-2" />
-        Create Permission
+        Crear Permiso
       </button>
     </PermissionGate>
   ), [navigate]);
-  usePageHeader({ subtitle: 'Manage system permissions and access controls', actions: headerActions });
+  usePageHeader({ subtitle: 'Gestionar permisos del sistema', actions: headerActions });
 
   const [filters, setFilters] = useState<PermissionFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isError } = usePermissions(filters);
   const deletePermission = useDeletePermission();
-  const bulkDelete = useBulkDeletePermissions();
+  useBulkDeletePermissions();
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('permissions-columns', columns);
 
   const permissions = data?.data ?? [];
@@ -57,10 +57,10 @@ export default function PermissionsListPage() {
     if (!deleteTarget) return;
     try {
       await deletePermission.mutateAsync(deleteTarget.id);
-      toast.success('Permission deleted successfully');
+      toast.success('Permiso eliminado exitosamente');
       setDeleteTarget(null);
     } catch {
-      toast.error('Failed to delete permission');
+      toast.error('Error al eliminar el permiso');
     }
   };
 
@@ -124,12 +124,12 @@ export default function PermissionsListPage() {
           </div>
         ) : isError ? (
           <div className="px-6 py-12 text-center text-red-500">
-            <p>Failed to load permissions. Please try again.</p>
+            <p>No se pudieron cargar los permisos. Por favor, inténtalo de nuevo.</p>
           </div>
         ) : permissions.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-500">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No permissions found</p>
+            <p>No hay permisos registrados</p>
           </div>
         ) : (
           <>
@@ -154,7 +154,7 @@ export default function PermissionsListPage() {
                     )}
                     {visibleColumns.includes('created') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created At
+                        Creado
                       </th>
                     )}
                     {visibleColumns.includes('actions') && (
@@ -273,9 +273,9 @@ export default function PermissionsListPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        title="Delete Permission"
+        title="Eliminar Permiso"
         message={`Are you sure you want to delete the permission "${deleteTarget?.resource}.${deleteTarget?.action}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        confirmLabel="Eliminar"
         variant="danger"
         isLoading={deletePermission.isPending}
         onConfirm={handleDelete}

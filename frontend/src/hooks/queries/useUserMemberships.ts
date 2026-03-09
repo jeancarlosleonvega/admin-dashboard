@@ -4,7 +4,7 @@ import { userMembershipsApi } from '@api/userMemberships.api';
 export const userMembershipKeys = {
   all: ['user-memberships'] as const,
   lists: () => [...userMembershipKeys.all, 'list'] as const,
-  list: (filters: any) => [...userMembershipKeys.lists(), filters] as const,
+  list: (filters?: Record<string, unknown>) => [...userMembershipKeys.lists(), filters] as const,
   my: () => [...userMembershipKeys.all, 'my'] as const,
   detail: (id: string) => [...userMembershipKeys.all, 'detail', id] as const,
 };

@@ -1,23 +1,24 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { Plus, MapPin, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, MapPin, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useVenues, useDeleteVenue } from '@/hooks/queries/useVenues';
 import { useSportTypes } from '@/hooks/queries/useSportTypes';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
 import DataToolbar from '@components/shared/DataToolbar';
-import type { FilterRule } from '@components/shared/DataToolbar';
+import type { FilterRule, SortState } from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { Venue, VenueFilters } from '@/types/venue.types';
+import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
 
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Nombre', sortable: true, filterable: true, type: 'text' },
   { key: 'sportType', label: 'Tipo de Deporte', sortable: false, filterable: false },
-  { key: 'players', label: 'Jugadores/slot', sortable: false, filterable: false },
+  { key: 'players', label: 'Jugadores/turno', sortable: false, filterable: false },
   { key: 'schedule', label: 'Horario', sortable: false, filterable: false },
   {
     key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
@@ -27,6 +28,10 @@ const columns: ColumnDef[] = [
   },
   { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
+
+const SORT_FIELD_MAP: Record<string, string> = {
+  name: 'name',
+};
 
 export default function VenuesListPage() {
   const navigate = useNavigate();
@@ -94,7 +99,14 @@ export default function VenuesListPage() {
       <DataToolbar
         columns={columns}
         onSearchChange={useCallback((search: string) => setFilters((f) => ({ ...f, search: search || undefined, page: 1 })), [])}
-        onSortChange={useCallback(() => { /* no sort */ }, [])}
+        onSortChange={useCallback((sort: SortState | null) => {
+          setFilters((f) => ({
+            ...f,
+            sortBy: sort ? SORT_FIELD_MAP[sort.field] || sort.field : undefined,
+            sortDirection: sort?.direction,
+            page: 1,
+          }));
+        }, [])}
         onFiltersChange={useCallback((rules: FilterRule[]) => {
           setFilters((f) => {
             const next: VenueFilters = { search: f.search, page: 1, limit: f.limit, sportTypeId: f.sportTypeId };
@@ -109,6 +121,18 @@ export default function VenuesListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        onExport={() => {
+          const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
+          const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
+            if (c.key === 'name') return item.name;
+            if (c.key === 'sportType') return item.sportType.name;
+            if (c.key === 'players') return String(item.playersPerSlot);
+            if (c.key === 'schedule') return `${item.openTime} - ${item.closeTime}`;
+            if (c.key === 'status') return item.active ? 'Activo' : 'Inactivo';
+            return '';
+          }));
+          exportToCsv('espacios', headers, rows);
+        }}
       />
 
       <div className="card overflow-hidden">
@@ -138,7 +162,7 @@ export default function VenuesListPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Deporte</th>
                     )}
                     {visibleColumns.includes('players') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jugadores/slot</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jugadores/turno</th>
                     )}
                     {visibleColumns.includes('schedule') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
@@ -191,11 +215,18 @@ export default function VenuesListPage() {
                       {visibleColumns.includes('actions') && (
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => navigate(`/venues/${item.id}`)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                              title="Ver espacio"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <PermissionGate permission="venues.manage">
                               <button
                                 onClick={() => navigate(`/venues/${item.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                                title="Editar"
+                                title="Editar espacio"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -204,7 +235,7 @@ export default function VenuesListPage() {
                               <button
                                 onClick={() => setDeleteTarget(item)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                                title="Eliminar"
+                                title="Eliminar espacio"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -258,7 +289,7 @@ export default function VenuesListPage() {
       <ConfirmDialog
         isOpen={!!deleteTarget}
         title="Eliminar Espacio"
-        message={`¿Estás seguro de que quieres eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que querés eliminar "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar"
         variant="danger"
         isLoading={deleteVenue.isPending}

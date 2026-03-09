@@ -9,22 +9,21 @@ import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
 
 const registerSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Email inválido'),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[a-z]/, 'Debe contener al menos una minúscula')
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
+  firstName: z.string().min(1, 'El nombre es obligatorio'),
+  lastName: z.string().min(1, 'El apellido es obligatorio'),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const { setAccessToken, setUser } = useAuthStore();
   const navigate = useNavigate();
 
   const {
@@ -41,7 +40,6 @@ export default function RegisterPage() {
       const response = await apiClient.post('/auth/register', data);
       const { user, permissions, accessToken } = response.data.data;
 
-      // Set auth state
       useAuthStore.setState({
         user,
         permissions,
@@ -49,11 +47,11 @@ export default function RegisterPage() {
         isAuthenticated: true,
       });
 
-      toast.success('Account created successfully!');
+      toast.success('¡Cuenta creada exitosamente!');
       navigate('/dashboard', { replace: true });
-    } catch (error: any) {
+    } catch (error) {
       const message =
-        error.response?.data?.error?.message || 'Registration failed';
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al registrarse';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -63,11 +61,11 @@ export default function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Crear cuenta</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Already have an account?{' '}
+          ¿Ya tenés cuenta?{' '}
           <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-            Sign in
+            Iniciá sesión
           </Link>
         </p>
       </div>
@@ -76,7 +74,7 @@ export default function RegisterPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="firstName" className="label">
-              First Name
+              Nombre
             </label>
             <input
               id="firstName"
@@ -92,7 +90,7 @@ export default function RegisterPage() {
 
           <div>
             <label htmlFor="lastName" className="label">
-              Last Name
+              Apellido
             </label>
             <input
               id="lastName"
@@ -125,7 +123,7 @@ export default function RegisterPage() {
 
         <div>
           <label htmlFor="password" className="label">
-            Password
+            Contraseña
           </label>
           <input
             id="password"
@@ -138,7 +136,7 @@ export default function RegisterPage() {
             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
           )}
           <p className="mt-1 text-xs text-gray-500">
-            Must be at least 8 characters with uppercase, lowercase, and number
+            Mínimo 8 caracteres con mayúscula, minúscula y número
           </p>
         </div>
 
@@ -147,7 +145,7 @@ export default function RegisterPage() {
           disabled={isLoading}
           className="btn-primary w-full"
         >
-          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Create account'}
+          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Crear cuenta'}
         </button>
       </form>
     </div>

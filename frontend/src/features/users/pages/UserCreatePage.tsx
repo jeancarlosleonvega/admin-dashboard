@@ -35,7 +35,7 @@ const tabs: TabDef[] = [
 
 export default function UserCreatePage() {
   const navigate = useNavigate();
-  usePageHeader({ subtitle: 'Add a new user to the system' });
+  usePageHeader({ subtitle: 'Agregar un nuevo usuario al sistema' });
   const createUser = useCreateUser();
   const { data: roles, isLoading: rolesLoading } = useRolesList();
   const [activeTab, setActiveTab] = useState('general');
@@ -56,10 +56,10 @@ export default function UserCreatePage() {
         ...data,
         roleIds: roleIds && roleIds.length > 0 ? roleIds : undefined,
       });
-      toast.success('User created successfully');
+      toast.success('Usuario creado exitosamente');
       navigate('/users');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to create user';
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to create user';
       toast.error(message);
     }
   };
@@ -71,7 +71,7 @@ export default function UserCreatePage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Users
+        Volver a Usuarios
       </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">

@@ -23,12 +23,12 @@ const SORT_FIELD_MAP: Record<string, string> = {
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Name', sortable: true, filterable: true, type: 'text' },
   { key: 'description', label: 'Description', sortable: false, filterable: true, type: 'text' },
-  { key: 'permissions', label: 'Permissions', sortable: false, filterable: false },
+  { key: 'permissions', label: 'Permisos', sortable: false, filterable: false },
   { key: 'system', label: 'System', sortable: true, filterable: true, type: 'select', options: [
     { label: 'Yes', value: 'true' }, { label: 'No', value: 'false' },
   ]},
-  { key: 'created', label: 'Created At', sortable: true, filterable: true, type: 'date' },
-  { key: 'actions', label: 'Actions', sortable: false, filterable: false },
+  { key: 'created', label: 'Creado', sortable: true, filterable: true, type: 'date' },
+  { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
 
 export default function RolesListPage() {
@@ -38,19 +38,19 @@ export default function RolesListPage() {
     <PermissionGate permission="roles.manage">
       <button className="btn-primary" onClick={() => navigate('/roles/create')}>
         <Plus className="w-4 h-4 mr-2" />
-        Create Role
+        Crear Rol
       </button>
     </PermissionGate>
   ), [navigate]);
-  usePageHeader({ subtitle: 'Manage roles and their permissions', actions: headerActions });
+  usePageHeader({ subtitle: 'Gestionar roles y sus permisos', actions: headerActions });
 
   const [filters, setFilters] = useState<RoleFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<RoleWithPermissions | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading, isError } = useRoles(filters);
   const deleteRole = useDeleteRole();
-  const bulkDelete = useBulkDeleteRoles();
+  useBulkDeleteRoles();
 
   const roles = data?.data ?? [];
   const meta = data?.meta ?? { page: 1, limit: 10, total: 0, totalPages: 0 };
@@ -61,43 +61,16 @@ export default function RolesListPage() {
     if (!deleteTarget) return;
     try {
       await deleteRole.mutateAsync(deleteTarget.id);
-      toast.success('Role deleted successfully');
+      toast.success('Rol eliminado exitosamente');
       setDeleteTarget(null);
     } catch {
-      toast.error('Failed to delete role');
+      toast.error('Error al eliminar el rol');
     }
   };
 
   const handlePage = (page: number) => {
     setFilters((f) => ({ ...f, page }));
     setSelectedIds(new Set());
-  };
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.size === roles.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(roles.map((r) => r.id)));
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    try {
-      await bulkDelete.mutateAsync([...selectedIds]);
-      toast.success(`${selectedIds.size} roles deleted successfully`);
-      setSelectedIds(new Set());
-    } catch {
-      toast.error('Failed to delete roles');
-    }
   };
 
   return (
@@ -156,12 +129,12 @@ export default function RolesListPage() {
           </div>
         ) : isError ? (
           <div className="px-6 py-12 text-center text-red-500">
-            <p>Failed to load roles. Please try again.</p>
+            <p>No se pudieron cargar los roles. Por favor, inténtalo de nuevo.</p>
           </div>
         ) : roles.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-500">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No roles found</p>
+            <p>No hay roles registrados</p>
           </div>
         ) : (
           <>
@@ -191,7 +164,7 @@ export default function RolesListPage() {
                     )}
                     {visibleColumns.includes('created') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created At
+                        Creado
                       </th>
                     )}
                     {visibleColumns.includes('actions') && (
@@ -330,9 +303,9 @@ export default function RolesListPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
-        title="Delete Role"
+        title="Eliminar Rol"
         message={`Are you sure you want to delete the role "${deleteTarget?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        confirmLabel="Eliminar"
         variant="danger"
         isLoading={deleteRole.isPending}
         onConfirm={handleDelete}

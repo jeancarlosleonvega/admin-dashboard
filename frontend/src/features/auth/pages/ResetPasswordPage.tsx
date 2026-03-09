@@ -12,14 +12,14 @@ const resetPasswordSchema = z
   .object({
     password: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-      .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-      .regex(/[0-9]/, 'Must contain at least one number'),
+      .min(8, 'Mínimo 8 caracteres')
+      .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+      .regex(/[a-z]/, 'Debe contener al menos una minúscula')
+      .regex(/[0-9]/, 'Debe contener al menos un número'),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'Las contraseñas no coinciden',
     path: ['confirmPassword'],
   });
 
@@ -42,15 +42,15 @@ export default function ResetPasswordPage() {
   if (!token) {
     return (
       <div className="space-y-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Invalid reset link</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Enlace inválido</h2>
         <p className="text-sm text-gray-600">
-          This password reset link is invalid or has expired.
+          Este enlace para restablecer la contraseña es inválido o ha expirado.
         </p>
         <Link
           to="/forgot-password"
           className="inline-block text-blue-600 hover:text-blue-500 font-medium text-sm"
         >
-          Request a new reset link
+          Solicitar un nuevo enlace
         </Link>
       </div>
     );
@@ -64,9 +64,9 @@ export default function ResetPasswordPage() {
         password: data.password,
       });
       setIsReset(true);
-    } catch (error: any) {
+    } catch (error) {
       const message =
-        error.response?.data?.error?.message || 'Failed to reset password';
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al restablecer la contraseña';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -80,16 +80,16 @@ export default function ResetPasswordPage() {
           <CheckCircle className="w-16 h-16 text-green-500" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Password reset!</h2>
+          <h2 className="text-2xl font-bold text-gray-900">¡Contraseña restablecida!</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Your password has been reset successfully. You can now sign in with your new password.
+            Tu contraseña fue restablecida exitosamente. Ya podés iniciar sesión con tu nueva contraseña.
           </p>
         </div>
         <Link
           to="/login"
           className="inline-block btn-primary"
         >
-          Sign in
+          Iniciar sesión
         </Link>
       </div>
     );
@@ -98,16 +98,16 @@ export default function ResetPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Reset your password</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Restablecer contraseña</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your new password below.
+          Ingresá tu nueva contraseña.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
           <label htmlFor="password" className="label">
-            New Password
+            Nueva contraseña
           </label>
           <input
             id="password"
@@ -120,13 +120,13 @@ export default function ResetPasswordPage() {
             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
           )}
           <p className="mt-1 text-xs text-gray-500">
-            Must be at least 8 characters with uppercase, lowercase, and number
+            Mínimo 8 caracteres con mayúscula, minúscula y número
           </p>
         </div>
 
         <div>
           <label htmlFor="confirmPassword" className="label">
-            Confirm Password
+            Confirmar contraseña
           </label>
           <input
             id="confirmPassword"
@@ -145,7 +145,7 @@ export default function ResetPasswordPage() {
           disabled={isLoading}
           className="btn-primary w-full"
         >
-          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Reset password'}
+          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Restablecer contraseña'}
         </button>
       </form>
     </div>

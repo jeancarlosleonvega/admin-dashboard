@@ -8,8 +8,8 @@ import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(1, 'La contraseña es obligatoria'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -34,10 +34,10 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      toast.success('Welcome back!');
+      toast.success('¡Bienvenido!');
       navigate(from, { replace: true });
-    } catch (error) {
-      toast.error('Invalid email or password');
+    } catch {
+      toast.error('Email o contraseña incorrectos');
     } finally {
       setIsLoading(false);
     }
@@ -46,11 +46,11 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Iniciar sesión</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Don't have an account?{' '}
+          ¿No tenés cuenta?{' '}
           <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
-            Create one
+            Crear una
           </Link>
         </p>
       </div>
@@ -60,50 +60,50 @@ export default function LoginPage() {
           <label htmlFor="email" className="label">
             Email
           </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          className={`input ${errors.email ? 'input-error' : ''}`}
-          {...register('email')}
-        />
-        {errors.email && (
-          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-        )}
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="label">
-            Password
-          </label>
-          <Link
-            to="/forgot-password"
-            className="text-sm text-blue-600 hover:text-blue-500"
-          >
-            Forgot password?
-          </Link>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className={`input ${errors.email ? 'input-error' : ''}`}
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+          )}
         </div>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          className={`input ${errors.password ? 'input-error' : ''}`}
-          {...register('password')}
-        />
-        {errors.password && (
-          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-        )}
-      </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="btn-primary w-full"
-      >
-        {isLoading ? <Spinner size="sm" className="text-white" /> : 'Sign in'}
-      </button>
-    </form>
+        <div>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="label">
+              Contraseña
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+          <input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            className={`input ${errors.password ? 'input-error' : ''}`}
+            {...register('password')}
+          />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="btn-primary w-full"
+        >
+          {isLoading ? <Spinner size="sm" className="text-white" /> : 'Ingresar'}
+        </button>
+      </form>
     </div>
   );
 }

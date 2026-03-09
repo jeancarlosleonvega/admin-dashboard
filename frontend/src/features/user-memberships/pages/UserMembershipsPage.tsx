@@ -1,10 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { Plus, UserCheck } from 'lucide-react';
-import { useUserMemberships, useCreateUserMembership, useUpdateUserMembership } from '@/hooks/queries/useUserMemberships';
+import { useUserMemberships, useUpdateUserMembership } from '@/hooks/queries/useUserMemberships';
+import PermissionGate from '@components/shared/PermissionGate';
+import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
-import toast from 'react-hot-toast';
+import DataToolbar from '@components/shared/DataToolbar';
+import { useColumnVisibility } from '@/hooks/useColumnVisibility';
+import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { UserMembership } from '@/types/user-membership.types';
+import toast from 'react-hot-toast';
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE: 'bg-green-100 text-green-700',
@@ -20,116 +26,77 @@ const STATUS_LABEL: Record<string, string> = {
   EXPIRED: 'Expirada',
 };
 
-function AssignMembershipModal({
-  onClose,
-  onSave,
-  isSaving,
-}: {
-  onClose: () => void;
-  onSave: (data: Record<string, unknown>) => void;
-  isSaving: boolean;
-}) {
-  const [form, setForm] = useState({
-    userId: '',
-    membershipPlanId: '',
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: '',
-    notes: '',
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({
-      userId: form.userId,
-      membershipPlanId: form.membershipPlanId,
-      startDate: new Date(form.startDate).toISOString(),
-      endDate: form.endDate ? new Date(form.endDate).toISOString() : undefined,
-      notes: form.notes || undefined,
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-        <h2 className="text-lg font-semibold mb-4">Asignar membresía a socio</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ID de Usuario <span className="text-red-500">*</span></label>
-            <input type="text" value={form.userId} onChange={(e) => setForm((f) => ({ ...f, userId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required placeholder="UUID del usuario" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ID de Plan <span className="text-red-500">*</span></label>
-            <input type="text" value={form.membershipPlanId} onChange={(e) => setForm((f) => ({ ...f, membershipPlanId: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required placeholder="UUID del plan de membresía" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha inicio <span className="text-red-500">*</span></label>
-              <input type="date" value={form.startDate} onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha fin (opcional)</label>
-              <input type="date" value={form.endDate} onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
-            <input type="text" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-          </div>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="btn-secondary">Cancelar</button>
-            <button type="submit" disabled={isSaving} className="btn-primary disabled:opacity-50 flex items-center gap-2">
-              {isSaving && <Spinner size="sm" />}
-              Asignar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+const columns: ColumnDef[] = [
+  { key: 'user', label: 'Socio', sortable: false, filterable: false },
+  { key: 'plan', label: 'Plan', sortable: false, filterable: false },
+  { key: 'startDate', label: 'Inicio', sortable: false, filterable: false },
+  { key: 'endDate', label: 'Vencimiento', sortable: false, filterable: false },
+  { key: 'reservations', label: 'Reservas mes', sortable: false, filterable: false },
+  {
+    key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
+      { label: 'Activa', value: 'ACTIVE' },
+      { label: 'Inactiva', value: 'INACTIVE' },
+      { label: 'Cancelada', value: 'CANCELLED' },
+      { label: 'Expirada', value: 'EXPIRED' },
+    ]
+  },
+  { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
+];
 
 export default function UserMembershipsPage() {
-  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   const headerActions = useMemo(() => (
-    <button className="btn-primary" onClick={() => setShowModal(true)}>
-      <Plus className="w-4 h-4 mr-2" />
-      Asignar Membresía
-    </button>
-  ), []);
-
+    <PermissionGate permission="user-memberships.manage">
+      <button className="btn-primary" onClick={() => navigate('/user-memberships/create')}>
+        <Plus className="w-4 h-4 mr-2" />
+        Asignar Membresía
+      </button>
+    </PermissionGate>
+  ), [navigate]);
   usePageHeader({ subtitle: 'Membresías activas de socios', actions: headerActions });
 
-  const { data, isLoading } = useUserMemberships();
-  const createMembership = useCreateUserMembership();
+  const [cancelTarget, setCancelTarget] = useState<UserMembership | null>(null);
+
+  const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('user-memberships-columns', columns);
+
+  const { data, isLoading, isError } = useUserMemberships();
   const updateMembership = useUpdateUserMembership();
 
   const memberships = data?.data ?? [];
 
-  const handleSave = async (formData: Record<string, unknown>) => {
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
     try {
-      await createMembership.mutateAsync(formData);
-      toast.success('Membresía asignada. La membresía anterior fue cancelada automáticamente.');
-      setShowModal(false);
-    } catch (err: unknown) {
-      toast.error(err?.response?.data?.error?.message ?? 'Error al asignar membresía');
-    }
-  };
-
-  const handleCancel = async (membership: UserMembership) => {
-    try {
-      await updateMembership.mutateAsync({ id: membership.id, data: { status: 'CANCELLED' } });
-      toast.success('Membresía cancelada');
+      await updateMembership.mutateAsync({ id: cancelTarget.id, data: { status: 'CANCELLED' } });
+      toast.success('Membresía cancelada exitosamente');
+      setCancelTarget(null);
     } catch {
-      toast.error('Error al cancelar membresía');
+      toast.error('Error al cancelar la membresía');
     }
   };
 
   return (
     <div>
+      <DataToolbar
+        columns={columns}
+        onSearchChange={useCallback(() => {}, [])}
+        onSortChange={useCallback(() => {}, [])}
+        onFiltersChange={useCallback(() => {}, [])}
+        visibleColumns={visibleColumns}
+        onToggleColumn={toggleColumn}
+        onResetColumns={resetColumns}
+      />
+
       <div className="card overflow-hidden">
         {isLoading ? (
-          <div className="flex justify-center py-12"><Spinner size="lg" /></div>
+          <div className="flex justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : isError ? (
+          <div className="px-6 py-12 text-center text-red-500">
+            <p>No se pudieron cargar las membresías. Por favor, inténtalo de nuevo.</p>
+          </div>
         ) : memberships.length === 0 ? (
           <div className="px-6 py-12 text-center text-gray-500">
             <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -140,43 +107,79 @@ export default function UserMembershipsPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Socio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Inicio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimiento</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reservas mes</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                  {visibleColumns.includes('user') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socio</th>
+                  )}
+                  {visibleColumns.includes('plan') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
+                  )}
+                  {visibleColumns.includes('startDate') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inicio</th>
+                  )}
+                  {visibleColumns.includes('endDate') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                  )}
+                  {visibleColumns.includes('reservations') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reservas mes</th>
+                  )}
+                  {visibleColumns.includes('status') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                  )}
+                  {visibleColumns.includes('actions') && (
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {memberships.map((m) => (
                   <tr key={m.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{m.membershipPlan.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(m.startDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{m.endDate ? new Date(m.endDate).toLocaleDateString() : 'Sin vencimiento'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {m.reservationsUsedMonth}/{m.membershipPlan.monthlyReservationLimit ?? '∞'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[m.status]}`}>
-                        {STATUS_LABEL[m.status]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {m.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => handleCancel(m)}
-                          disabled={updateMembership.isPending}
-                          className="text-xs text-red-600 hover:text-red-800 font-medium"
-                        >
-                          Cancelar
-                        </button>
-                      )}
-                    </td>
+                    {visibleColumns.includes('user') && (
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {m.user ? `${m.user.firstName} ${m.user.lastName}` : m.userId}
+                        {m.user && (
+                          <p className="text-xs text-gray-500 mt-0.5">{m.user.email}</p>
+                        )}
+                      </td>
+                    )}
+                    {visibleColumns.includes('plan') && (
+                      <td className="px-6 py-4 text-sm text-gray-500">{m.membershipPlan.name}</td>
+                    )}
+                    {visibleColumns.includes('startDate') && (
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {new Date(m.startDate).toLocaleDateString('es-AR')}
+                      </td>
+                    )}
+                    {visibleColumns.includes('endDate') && (
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {m.endDate ? new Date(m.endDate).toLocaleDateString('es-AR') : 'Sin vencimiento'}
+                      </td>
+                    )}
+                    {visibleColumns.includes('reservations') && (
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {m.reservationsUsedMonth}/{m.membershipPlan.monthlyReservationLimit ?? '∞'}
+                      </td>
+                    )}
+                    {visibleColumns.includes('status') && (
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[m.status]}`}>
+                          {STATUS_LABEL[m.status]}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.includes('actions') && (
+                      <td className="px-6 py-4 text-right">
+                        {m.status === 'ACTIVE' && (
+                          <PermissionGate permission="user-memberships.manage">
+                            <button
+                              onClick={() => setCancelTarget(m)}
+                              className="text-xs text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Cancelar
+                            </button>
+                          </PermissionGate>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -185,13 +188,16 @@ export default function UserMembershipsPage() {
         )}
       </div>
 
-      {showModal && (
-        <AssignMembershipModal
-          onClose={() => setShowModal(false)}
-          onSave={handleSave}
-          isSaving={createMembership.isPending}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={!!cancelTarget}
+        title="Cancelar Membresía"
+        message={`¿Estás seguro de cancelar la membresía de ${cancelTarget?.user ? `${cancelTarget.user.firstName} ${cancelTarget.user.lastName}` : 'este socio'}?`}
+        confirmLabel="Cancelar membresía"
+        variant="danger"
+        isLoading={updateMembership.isPending}
+        onConfirm={handleCancel}
+        onCancel={() => setCancelTarget(null)}
+      />
     </div>
   );
 }

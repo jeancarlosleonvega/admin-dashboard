@@ -71,10 +71,10 @@ export default function UsersListPage() {
     if (!deleteTarget) return;
     try {
       await deleteUser.mutateAsync(deleteTarget.id);
-      toast.success('User deleted successfully');
+      toast.success('Usuario eliminado exitosamente');
       setDeleteTarget(null);
     } catch {
-      toast.error('Failed to delete user');
+      toast.error('Error al eliminar el usuario');
     }
   };
 

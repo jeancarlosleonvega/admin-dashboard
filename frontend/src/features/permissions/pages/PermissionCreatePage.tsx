@@ -27,7 +27,7 @@ const tabs: TabDef[] = [
 
 export default function PermissionCreatePage() {
   const navigate = useNavigate();
-  usePageHeader({ subtitle: 'Add a new permission to the system' });
+  usePageHeader({ subtitle: 'Agregar un nuevo permiso al sistema' });
   const createPermission = useCreatePermission();
   const [activeTab, setActiveTab] = useState('definition');
 
@@ -45,10 +45,10 @@ export default function PermissionCreatePage() {
         ...data,
         description: data.description || undefined,
       });
-      toast.success('Permission created successfully');
+      toast.success('Permiso creado exitosamente');
       navigate('/permissions');
-    } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Failed to create permission';
+    } catch (error) {
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to create permission';
       toast.error(message);
     }
   };
@@ -60,7 +60,7 @@ export default function PermissionCreatePage() {
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
-        Back to Permissions
+        Volver a Permisos
       </button>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -147,7 +147,7 @@ export default function PermissionCreatePage() {
               {createPermission.isPending ? (
                 <Spinner size="sm" className="text-white" />
               ) : (
-                'Create Permission'
+                'Crear Permiso'
               )}
             </button>
           </div>

@@ -159,7 +159,7 @@ export default function BookingFlowPage() {
       {/* Step 1 */}
       {step === 1 && (
         <div className="card p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Paso 1: Seleccionar venue y fecha</h2>
+          <h2 className="text-lg font-semibold">Paso 1: Seleccionar espacio y fecha</h2>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Deporte</label>
             <select value={selectedSportTypeId} onChange={(e) => { setSelectedSportTypeId(e.target.value); setSelectedVenueId(''); }} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -170,7 +170,7 @@ export default function BookingFlowPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Espacio</label>
             <select value={selectedVenueId} onChange={(e) => setSelectedVenueId(e.target.value)} disabled={!selectedSportTypeId} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50">
               <option value="">Seleccionar...</option>
               {(venuesData ?? []).map((v) => (
@@ -261,7 +261,7 @@ export default function BookingFlowPage() {
           <h2 className="text-lg font-semibold">Paso 4: Confirmar reserva</h2>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-1 text-sm">
-            <p><span className="font-medium">Venue:</span> {selectedSlot.venue?.name}</p>
+            <p><span className="font-medium">Espacio:</span> {selectedSlot.venue?.name}</p>
             <p><span className="font-medium">Fecha:</span> {new Date(selectedDate).toLocaleDateString()}</p>
             <p><span className="font-medium">Horario:</span> {selectedSlot.startTime} - {selectedSlot.endTime}</p>
             {selectedServiceIds.length > 0 && (

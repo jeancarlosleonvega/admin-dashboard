@@ -24,6 +24,15 @@ import RoleEditPage from '@features/roles/pages/RoleEditPage';
 import PermissionCreatePage from '@features/permissions/pages/PermissionCreatePage';
 import PermissionDetailPage from '@features/permissions/pages/PermissionDetailPage';
 import PermissionEditPage from '@features/permissions/pages/PermissionEditPage';
+import SportTypesListPage from '@features/sport-types/pages/SportTypesListPage';
+import SportTypeCreatePage from '@features/sport-types/pages/SportTypeCreatePage';
+import SportTypeEditPage from '@features/sport-types/pages/SportTypeEditPage';
+import VenuesListPage from '@features/venues/pages/VenuesListPage';
+import VenueCreatePage from '@features/venues/pages/VenueCreatePage';
+import VenueEditPage from '@features/venues/pages/VenueEditPage';
+import MembershipPlansListPage from '@features/membership-plans/pages/MembershipPlansListPage';
+import MembershipPlanCreatePage from '@features/membership-plans/pages/MembershipPlanCreatePage';
+import MembershipPlanEditPage from '@features/membership-plans/pages/MembershipPlanEditPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -174,6 +183,84 @@ function App() {
           element={
             <PermissionRoute permission="roles.manage">
               <PermissionEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Sport Types CRUD */}
+        <Route
+          path="/sport-types"
+          element={
+            <PermissionRoute permission="sport-types.view">
+              <SportTypesListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/sport-types/create"
+          element={
+            <PermissionRoute permission="sport-types.manage">
+              <SportTypeCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/sport-types/:id/edit"
+          element={
+            <PermissionRoute permission="sport-types.manage">
+              <SportTypeEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Venues CRUD */}
+        <Route
+          path="/venues"
+          element={
+            <PermissionRoute permission="venues.view">
+              <VenuesListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venues/create"
+          element={
+            <PermissionRoute permission="venues.manage">
+              <VenueCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venues/:id/edit"
+          element={
+            <PermissionRoute permission="venues.manage">
+              <VenueEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Membership Plans CRUD */}
+        <Route
+          path="/membership-plans"
+          element={
+            <PermissionRoute permission="membership-plans.view">
+              <MembershipPlansListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/membership-plans/create"
+          element={
+            <PermissionRoute permission="membership-plans.manage">
+              <MembershipPlanCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/membership-plans/:id/edit"
+          element={
+            <PermissionRoute permission="membership-plans.manage">
+              <MembershipPlanEditPage />
             </PermissionRoute>
           }
         />

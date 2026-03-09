@@ -16,6 +16,22 @@ const permissions = [
   // Roles
   { resource: 'roles', action: 'view', description: 'View roles list' },
   { resource: 'roles', action: 'manage', description: 'Create, edit, delete roles' },
+
+  // System Config
+  { resource: 'system-config', action: 'view', description: 'Ver configuración del sistema' },
+  { resource: 'system-config', action: 'manage', description: 'Gestionar configuración del sistema' },
+
+  // Sport Types
+  { resource: 'sport-types', action: 'view', description: 'Ver tipos de deporte' },
+  { resource: 'sport-types', action: 'manage', description: 'Gestionar tipos de deporte' },
+
+  // Venues
+  { resource: 'venues', action: 'view', description: 'Ver espacios' },
+  { resource: 'venues', action: 'manage', description: 'Gestionar espacios' },
+
+  // Membership Plans
+  { resource: 'membership-plans', action: 'view', description: 'Ver planes de membresía' },
+  { resource: 'membership-plans', action: 'manage', description: 'Gestionar planes de membresía' },
 ];
 
 const roles = [
@@ -35,6 +51,31 @@ const roles = [
       'users.create',
       'users.edit',
       'roles.view',
+      'sport-types.view',
+      'sport-types.manage',
+      'venues.view',
+      'venues.manage',
+      'membership-plans.view',
+      'membership-plans.manage',
+    ],
+  },
+  {
+    name: 'Recepcionista',
+    description: 'Acceso de recepción',
+    isSystem: true,
+    permissions: [
+      'dashboard.view',
+      'venues.view',
+      'membership-plans.view',
+    ],
+  },
+  {
+    name: 'Cliente',
+    description: 'Acceso básico de cliente',
+    isSystem: true,
+    permissions: [
+      'dashboard.view',
+      'membership-plans.view',
     ],
   },
   {
@@ -130,6 +171,69 @@ async function main() {
   }
 
   console.log('Admin user created: admin@example.com / admin123');
+
+  // Seed initial SportType: Golf
+  const golfSportType = await prisma.sportType.upsert({
+    where: { name: 'Golf' },
+    update: {},
+    create: {
+      name: 'Golf',
+      description: 'Campo de golf del club',
+      defaultIntervalMinutes: 10,
+      defaultPlayersPerSlot: 4,
+      defaultOpenTime: '07:00',
+      defaultCloseTime: '18:00',
+      defaultEnabledDays: [1, 2, 3, 4, 5, 6, 7],
+      active: true,
+    },
+  });
+  console.log('SportType Golf creado');
+
+  // Seed MembershipPlans
+  await prisma.membershipPlan.upsert({
+    where: { name: 'Membresía Golf' },
+    update: {},
+    create: {
+      name: 'Membresía Golf',
+      description: 'Acceso preferencial al campo de golf con tarifa fija por reserva',
+      price: 0,
+      monthlyReservationLimit: 8,
+      sportTypeId: golfSportType.id,
+      active: true,
+    },
+  });
+
+  await prisma.membershipPlan.upsert({
+    where: { name: 'Sin Membresía' },
+    update: {},
+    create: {
+      name: 'Sin Membresía',
+      description: 'Acceso sin suscripción, precio dinámico por reserva',
+      price: 0,
+      monthlyReservationLimit: null,
+      sportTypeId: golfSportType.id,
+      active: true,
+    },
+  });
+  console.log('MembershipPlans creados');
+
+  // Seed SystemConfig defaults
+  const defaultConfigs = [
+    { key: 'cancellations_enabled', value: 'true', label: 'Cancelaciones habilitadas', group: 'reservas' },
+    { key: 'max_absences_before_suspension', value: '3', label: 'Máximo de ausencias antes de suspensión', group: 'ausencias' },
+    { key: 'suspension_duration_days', value: '30', label: 'Duración de suspensión (días)', group: 'ausencias' },
+    { key: 'transfer_payment_deadline_hours', value: '24', label: 'Horas límite para confirmar transferencia', group: 'pagos' },
+    { key: 'golf_member_tee_time_price', value: '3000', label: 'Precio fijo tee time para socios Golf', group: 'precios' },
+  ];
+  for (const config of defaultConfigs) {
+    await prisma.systemConfig.upsert({
+      where: { key: config.key },
+      update: {},
+      create: config,
+    });
+  }
+  console.log('SystemConfig defaults creados');
+
   console.log('Seeding completed!');
 }
 

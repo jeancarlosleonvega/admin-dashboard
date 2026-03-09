@@ -96,3 +96,69 @@ model PasswordReset {
 
   @@map("password_resets")
 }
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  label     String?
+  group     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+
+model SportType {
+  id                    String   @id @default(uuid())
+  name                  String   @unique
+  description           String?
+  defaultIntervalMinutes Int     @default(10) @map("default_interval_minutes")
+  defaultPlayersPerSlot  Int     @default(4) @map("default_players_per_slot")
+  defaultOpenTime        String  @default("08:00") @map("default_open_time")
+  defaultCloseTime       String  @default("18:00") @map("default_close_time")
+  defaultEnabledDays     Int[]   @default([1,2,3,4,5,6,7]) @map("default_enabled_days")
+  active                 Boolean @default(true)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  venues          Venue[]
+  membershipPlans MembershipPlan[]
+
+  @@map("sport_types")
+}
+
+model Venue {
+  id                    String   @id @default(uuid())
+  sportTypeId           String   @map("sport_type_id")
+  name                  String
+  description           String?
+  intervalMinutes       Int?     @map("interval_minutes")
+  playersPerSlot        Int?     @map("players_per_slot")
+  openTime              String?  @map("open_time")
+  closeTime             String?  @map("close_time")
+  enabledDays           Int[]    @default([]) @map("enabled_days")
+  active                Boolean  @default(true)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  sportType SportType @relation(fields: [sportTypeId], references: [id])
+
+  @@map("venues")
+}
+
+model MembershipPlan {
+  id                     String   @id @default(uuid())
+  name                   String   @unique
+  description            String?
+  price                  Decimal  @db.Decimal(10, 2)
+  monthlyReservationLimit Int?    @map("monthly_reservation_limit")
+  sportTypeId            String?  @map("sport_type_id")
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  sportType SportType? @relation(fields: [sportTypeId], references: [id])
+
+  @@map("membership_plans")
+}

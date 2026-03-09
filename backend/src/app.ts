@@ -14,6 +14,10 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { usersRoutes } from './modules/users/users.routes.js';
 import { rolesRoutes } from './modules/roles/roles.routes.js';
 import { permissionsRoutes } from './modules/permissions/permissions.routes.js';
+import { systemConfigRoutes } from './modules/system-config/system-config.routes.js';
+import { sportTypesRoutes } from './modules/sport-types/sport-types.routes.js';
+import { venuesRoutes } from './modules/venues/venues.routes.js';
+import { membershipPlansRoutes } from './modules/membership-plans/membership-plans.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -52,6 +56,10 @@ export async function buildApp(): Promise<FastifyInstance> {
     api.register(usersRoutes, { prefix: '/users' });
     api.register(rolesRoutes, { prefix: '/roles' });
     api.register(permissionsRoutes, { prefix: '/permissions' });
+    api.register(systemConfigRoutes, { prefix: '/system-config' });
+    api.register(sportTypesRoutes, { prefix: '/sport-types' });
+    api.register(venuesRoutes, { prefix: '/venues' });
+    api.register(membershipPlansRoutes, { prefix: '/membership-plans' });
   }, { prefix: '/api' });
 
   return app;

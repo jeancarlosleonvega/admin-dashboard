@@ -1,11 +1,14 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Shield, Key, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, Key, Settings, LogOut, Activity, MapPin, CreditCard } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
 
 const navigation = [
   { name: 'Inicio', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
+  { name: 'Tipos de Deporte', href: '/sport-types', icon: Activity, permission: 'sport-types.view' },
+  { name: 'Espacios', href: '/venues', icon: MapPin, permission: 'venues.view' },
+  { name: 'Planes de Membresía', href: '/membership-plans', icon: CreditCard, permission: 'membership-plans.view' },
 ];
 
 const tooltipClass =

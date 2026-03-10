@@ -304,12 +304,6 @@ export default function SlotsViewPage() {
             </div>
           ) : slotsLoading ? (
             <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-          ) : !slots || slots.length === 0 ? (
-            <div className="px-6 py-16 text-center text-gray-400">
-              <Clock className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No hay turnos generados para este día</p>
-              <p className="text-xs mt-1">Generá turnos desde la vista de Horarios</p>
-            </div>
           ) : (
             <>
               {partialBlocks.length > 0 && (
@@ -323,30 +317,38 @@ export default function SlotsViewPage() {
                   ))}
                 </div>
               )}
-              <div className="overflow-y-auto max-h-96">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {slots.map((slot) => (
-                      <tr key={slot.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {slot.startTime} — {slot.endTime}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                            {STATUS_LABEL[slot.status] ?? slot.status}
-                          </span>
-                        </td>
+              {!slots || slots.length === 0 ? (
+                <div className="px-6 py-16 text-center text-gray-400">
+                  <Clock className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">No hay turnos generados para este día</p>
+                  <p className="text-xs mt-1">Generá turnos desde la vista de Horarios</p>
+                </div>
+              ) : (
+                <div className="overflow-y-auto max-h-96">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {slots.map((slot) => (
+                        <tr key={slot.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {slot.startTime} — {slot.endTime}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                              {STATUS_LABEL[slot.status] ?? slot.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
         </div>

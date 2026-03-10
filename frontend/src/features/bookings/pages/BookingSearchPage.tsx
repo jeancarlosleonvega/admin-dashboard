@@ -278,7 +278,7 @@ export default function BookingSearchPage() {
   const [endTime, setEndTime] = useState('');
   const [venueId, setVenueId] = useState('');
   const [numPlayers, setNumPlayers] = useState(1);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(true);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
   // Booking modal

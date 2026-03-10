@@ -52,6 +52,10 @@ import PendingTransfersPage from '@features/payments/pages/PendingTransfersPage'
 import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
 import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
 import QRValidatorPage from '@features/qr/pages/QRValidatorPage';
+import ConditionTypesListPage from '@features/condition-types/pages/ConditionTypesListPage';
+import ConditionTypeCreatePage from '@features/condition-types/pages/ConditionTypeCreatePage';
+import ConditionTypeEditPage from '@features/condition-types/pages/ConditionTypeEditPage';
+import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -438,8 +442,44 @@ function App() {
           }
         />
 
+        {/* Condition Types CRUD */}
+        <Route
+          path="/condition-types"
+          element={
+            <PermissionRoute permission="condition-types.view">
+              <ConditionTypesListPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/condition-types/create"
+          element={
+            <PermissionRoute permission="condition-types.manage">
+              <ConditionTypeCreatePage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/condition-types/:id/edit"
+          element={
+            <PermissionRoute permission="condition-types.manage">
+              <ConditionTypeEditPage />
+            </PermissionRoute>
+          }
+        />
+
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Route>
+
+      {/* Complete Profile */}
+      <Route
+        path="/complete-profile"
+        element={
+          <ProtectedRoute>
+            <CompleteProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

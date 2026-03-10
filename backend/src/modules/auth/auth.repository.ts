@@ -156,9 +156,13 @@ export class AuthRepository {
     updatedAt: Date;
     passwordHash?: string;
     tokenVersion?: number;
-  }): SafeUser {
+    sex?: string | null;
+    birthDate?: Date | null;
+    handicap?: number | null;
+  }): SafeUser & { profileCompleted: boolean } {
     const { passwordHash, tokenVersion, ...safeUser } = user as any;
-    return safeUser;
+    const profileCompleted = !!(safeUser.sex && safeUser.birthDate && safeUser.handicap != null);
+    return { ...safeUser, profileCompleted };
   }
 }
 

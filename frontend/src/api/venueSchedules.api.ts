@@ -1,6 +1,21 @@
 import { apiClient } from './client';
 import type { VenueSchedule } from '@/types/venue-schedule.types';
 
+export interface ScheduleRuleConditionInput {
+  conditionTypeId: string;
+  operator: 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE';
+  value: string;
+  logicalOperator?: 'AND' | 'OR' | null;
+  order: number;
+}
+
+export interface ScheduleRuleInput {
+  canBook: boolean;
+  basePrice: number;
+  revenueManagementEnabled: boolean;
+  conditions: ScheduleRuleConditionInput[];
+}
+
 interface PaginatedResponse {
   data: VenueSchedule[];
   meta: { page: number; limit: number; total: number; totalPages: number };
@@ -30,7 +45,9 @@ export const venueSchedulesApi = {
     openTime?: string | null;
     closeTime?: string | null;
     intervalMinutes?: number | null;
+    playersPerSlot?: number | null;
     active?: boolean;
+    rules?: ScheduleRuleInput[];
   }): Promise<VenueSchedule> {
     const response = await apiClient.post('/venue-schedules', data);
     return response.data.data;
@@ -45,7 +62,9 @@ export const venueSchedulesApi = {
     openTime: string | null;
     closeTime: string | null;
     intervalMinutes: number | null;
+    playersPerSlot: number | null;
     active: boolean;
+    rules: ScheduleRuleInput[];
   }>): Promise<VenueSchedule> {
     const response = await apiClient.put(`/venue-schedules/${id}`, data);
     return response.data.data;

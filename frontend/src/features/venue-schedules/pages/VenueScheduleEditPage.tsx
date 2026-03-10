@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm, Controller } from 'react-hook-form';
@@ -8,6 +8,8 @@ import { ArrowLeft } from 'lucide-react';
 import { useVenueSchedule, useUpdateVenueSchedule } from '@/hooks/queries/useVenueSchedules';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
+import ScheduleRulesEditor from '../components/ScheduleRulesEditor';
+import type { RuleFormValue } from '../components/ScheduleRulesEditor';
 import toast from 'react-hot-toast';
 
 const DAYS = [
@@ -42,6 +44,8 @@ export default function VenueScheduleEditPage() {
   const { data: schedule, isLoading, isError } = useVenueSchedule(id!);
   const updateSchedule = useUpdateVenueSchedule();
 
+  const [rules, setRules] = useState<RuleFormValue[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -69,11 +73,40 @@ export default function VenueScheduleEditPage() {
         playersPerSlot: schedule.playersPerSlot ?? null,
         active: schedule.active,
       });
+
+      // Cargar rules existentes
+      if (schedule.rules && schedule.rules.length > 0) {
+        setRules(schedule.rules.map((r) => ({
+          canBook: r.canBook,
+          basePrice: typeof r.basePrice === 'number' ? r.basePrice : parseFloat(String(r.basePrice)),
+          revenueManagementEnabled: r.revenueManagementEnabled,
+          conditions: r.conditions.map((c) => ({
+            conditionTypeId: c.conditionTypeId,
+            operator: c.operator,
+            value: c.value,
+            logicalOperator: c.logicalOperator ?? '',
+            order: c.order,
+          })),
+        })));
+      } else {
+        setRules([]);
+      }
     }
   }, [schedule, reset]);
 
   const onSubmit = async (data: FormData) => {
     if (!id) return;
+
+    // Validar reglas: todas las condiciones deben tener conditionTypeId y value
+    for (const rule of rules) {
+      for (const cond of rule.conditions) {
+        if (!cond.conditionTypeId || !cond.value) {
+          toast.error('Completá todas las condiciones de las reglas antes de guardar');
+          return;
+        }
+      }
+    }
+
     try {
       await updateSchedule.mutateAsync({
         id,
@@ -87,6 +120,18 @@ export default function VenueScheduleEditPage() {
           intervalMinutes: data.intervalMinutes || null,
           playersPerSlot: data.playersPerSlot || null,
           active: data.active,
+          rules: rules.map((r) => ({
+            canBook: r.canBook,
+            basePrice: r.basePrice,
+            revenueManagementEnabled: r.revenueManagementEnabled,
+            conditions: r.conditions.map((c, i) => ({
+              conditionTypeId: c.conditionTypeId,
+              operator: c.operator as 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE',
+              value: c.value,
+              logicalOperator: i === 0 ? null : (c.logicalOperator as 'AND' | 'OR') || 'AND',
+              order: i,
+            })),
+          })),
         },
       });
       toast.success('Horario actualizado exitosamente');
@@ -213,7 +258,7 @@ export default function VenueScheduleEditPage() {
               </div>
             </DetailSection>
 
-            <DetailSection title="Días de la semana" description="Días en que aplica este horario" noBorder>
+            <DetailSection title="Días de la semana" description="Días en que aplica este horario">
               <div>
                 <Controller
                   name="daysOfWeek"
@@ -259,6 +304,10 @@ export default function VenueScheduleEditPage() {
                   </label>
                 </div>
               </div>
+            </DetailSection>
+
+            <DetailSection title="Reglas de acceso" description="Definí quién puede reservar en este horario y a qué precio" noBorder>
+              <ScheduleRulesEditor rules={rules} onChange={setRules} />
             </DetailSection>
           </div>
 

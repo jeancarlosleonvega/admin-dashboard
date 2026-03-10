@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,6 +9,8 @@ import { useCreateVenueSchedule } from '@/hooks/queries/useVenueSchedules';
 import { useVenues } from '@/hooks/queries/useVenues';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
+import ScheduleRulesEditor from '../components/ScheduleRulesEditor';
+import type { RuleFormValue } from '../components/ScheduleRulesEditor';
 import toast from 'react-hot-toast';
 
 const DAYS = [
@@ -43,6 +45,8 @@ export default function VenueScheduleCreatePage() {
   const createSchedule = useCreateVenueSchedule();
   const { data: venuesData, isLoading: venuesLoading } = useVenues({ active: 'true', limit: 100 });
 
+  const [rules, setRules] = useState<RuleFormValue[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -74,6 +78,16 @@ export default function VenueScheduleCreatePage() {
   }, [selectedVenueId, venuesData?.data, setValue]);
 
   const onSubmit = async (data: FormData) => {
+    // Validar reglas: todas las condiciones deben tener conditionTypeId y value
+    for (const rule of rules) {
+      for (const cond of rule.conditions) {
+        if (!cond.conditionTypeId || !cond.value) {
+          toast.error('Completá todas las condiciones de las reglas antes de guardar');
+          return;
+        }
+      }
+    }
+
     try {
       await createSchedule.mutateAsync({
         venueId: data.venueId,
@@ -86,6 +100,18 @@ export default function VenueScheduleCreatePage() {
         intervalMinutes: data.intervalMinutes || null,
         playersPerSlot: data.playersPerSlot || null,
         active: data.active,
+        rules: rules.length > 0 ? rules.map((r) => ({
+          canBook: r.canBook,
+          basePrice: r.basePrice,
+          revenueManagementEnabled: r.revenueManagementEnabled,
+          conditions: r.conditions.map((c, i) => ({
+            conditionTypeId: c.conditionTypeId,
+            operator: c.operator as 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE',
+            value: c.value,
+            logicalOperator: i === 0 ? null : (c.logicalOperator as 'AND' | 'OR') || 'AND',
+            order: i,
+          })),
+        })) : undefined,
       });
       toast.success('Horario creado exitosamente');
       navigate('/venue-schedules');
@@ -216,7 +242,7 @@ export default function VenueScheduleCreatePage() {
               </div>
             </DetailSection>
 
-            <DetailSection title="Días de la semana" description="Seleccioná los días en que aplica este horario" noBorder>
+            <DetailSection title="Días de la semana" description="Seleccioná los días en que aplica este horario">
               <div>
                 <Controller
                   name="daysOfWeek"
@@ -262,6 +288,10 @@ export default function VenueScheduleCreatePage() {
                   </label>
                 </div>
               </div>
+            </DetailSection>
+
+            <DetailSection title="Reglas de acceso" description="Definí quién puede reservar en este horario y a qué precio" noBorder>
+              <ScheduleRulesEditor rules={rules} onChange={setRules} />
             </DetailSection>
           </div>
 

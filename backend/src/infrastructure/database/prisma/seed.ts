@@ -62,6 +62,13 @@ const permissions = [
 
   // QR
   { resource: 'qr', action: 'validate', description: 'Validar QR de acceso' },
+
+  // Condition Types
+  { resource: 'condition-types', action: 'view', description: 'Ver tipos de condición' },
+  { resource: 'condition-types', action: 'manage', description: 'Gestionar tipos de condición' },
+
+  // Wallet
+  { resource: 'wallet', action: 'view', description: 'Ver wallet propio' },
 ];
 
 const roles = [
@@ -101,6 +108,9 @@ const roles = [
       'payments.view',
       'payments.manage',
       'qr.validate',
+      'condition-types.view',
+      'condition-types.manage',
+      'wallet.view',
     ],
   },
   {
@@ -115,6 +125,7 @@ const roles = [
       'bookings.view',
       'qr.validate',
       'additional-services.view',
+      'wallet.view',
     ],
   },
   {
@@ -126,6 +137,7 @@ const roles = [
       'membership-plans.view',
       'slots.view',
       'additional-services.view',
+      'wallet.view',
     ],
   },
   {

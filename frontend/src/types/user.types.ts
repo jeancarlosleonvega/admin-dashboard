@@ -10,6 +10,10 @@ export interface User {
   firstName: string;
   lastName: string;
   status: UserStatus;
+  sex?: 'MALE' | 'FEMALE' | null;
+  birthDate?: string | null;
+  handicap?: number | null;
+  profileCompleted?: boolean;
   createdAt: string;
   updatedAt: string;
 }

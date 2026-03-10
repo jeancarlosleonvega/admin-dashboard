@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createBookingSchema = z.object({
   slotId: z.string().uuid(),
   serviceIds: z.array(z.string().uuid()).optional(),
-  paymentMethod: z.enum(['MERCADOPAGO', 'TRANSFER', 'CASH']),
+  paymentMethod: z.enum(['MERCADOPAGO', 'TRANSFER', 'CASH', 'WALLET']),
   notes: z.string().optional(),
   numPlayers: z.number().int().min(1).max(100).default(1),
 });

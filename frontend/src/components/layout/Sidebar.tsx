@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Membresías Socios', href: '/user-memberships', icon: UserCheck, permission: 'user-memberships.view' },
   { name: 'Horarios', href: '/venue-schedules', icon: Clock, permission: 'venue-schedules.view' },
   { name: 'Períodos Bloqueados', href: '/blocked-periods', icon: Ban, permission: 'blocked-periods.view' },
+  { name: 'Tipos de Condición', href: '/condition-types', icon: GitBranch, permission: 'condition-types.view' },
   { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },
   { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle, permission: 'slots.view' },

@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { usersService } from './users.service.js';
-import { createUserSchema, updateUserSchema, userFiltersSchema, bulkDeleteSchema } from './users.schema.js';
+import { createUserSchema, updateUserSchema, userFiltersSchema, bulkDeleteSchema, updateProfileSchema } from './users.schema.js';
 import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
@@ -60,6 +60,16 @@ export class UsersController {
 
     const count = await usersService.bulkDelete(parsed.data.ids);
     return reply.send(successResponse({ message: `${count} users deleted successfully`, count }));
+  }
+
+  async updateMyProfile(request: FastifyRequest, reply: FastifyReply) {
+    const userId = (request as any).user.id;
+    const parsed = updateProfileSchema.safeParse(request.body);
+    if (!parsed.success) {
+      throw new ValidationError('Validation failed', parsed.error.errors);
+    }
+    const user = await usersService.updateProfile(userId, parsed.data);
+    return reply.send(successResponse(user));
   }
 }
 

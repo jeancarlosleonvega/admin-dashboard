@@ -6,7 +6,7 @@ export const slotKeys = {
   byVenueDate: (venueId: string, date: string) => [...slotKeys.all, venueId, date] as const,
   availability: (venueId: string, startDate: string, endDate: string) =>
     [...slotKeys.all, 'availability', venueId, startDate, endDate] as const,
-  search: (params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string; numPlayers?: number }) =>
+  search: (params: { startDate: string; endDate?: string; venueId?: string; startTime?: string; endTime?: string; numPlayers?: number }) =>
     [...slotKeys.all, 'search', params] as const,
 };
 

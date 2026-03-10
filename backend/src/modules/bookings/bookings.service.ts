@@ -3,6 +3,7 @@ import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { AuthorizationError } from '../../shared/errors/AuthorizationError.js';
+import { walletService } from '../wallet/wallet.service.js';
 import type { CreateBookingInput, BookingFiltersInput, MyBookingFiltersInput } from './bookings.schema.js';
 
 type PaymentStatus = 'PENDING_PROOF' | 'PENDING_VALIDATION' | 'APPROVED' | 'REJECTED' | 'REFUNDED' | 'PENDING_CASH';
@@ -37,6 +38,11 @@ export class BookingsService {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('Usuario');
     if (user.status !== 'ACTIVE') throw new ValidationError('Cuenta suspendida o inactiva');
+
+    // Verificar perfil completo (requerido para reservar)
+    if (!user.sex || !user.birthDate || user.handicap == null) {
+      throw new ValidationError('Debés completar tu perfil (sexo, fecha de nacimiento y handicap) antes de reservar');
+    }
 
     // 2. Verificar slot disponible
     const slot = await prisma.slot.findUnique({
@@ -111,6 +117,18 @@ export class BookingsService {
       membershipPlanId = null;
     }
 
+    // Validar pago con WALLET
+    if (data.paymentMethod === 'WALLET') {
+      const memberPlan = activeMembership?.membershipPlan;
+      if (!memberPlan?.walletPaymentEnabled) {
+        throw new ValidationError('El pago con wallet no está habilitado para tu plan de membresía');
+      }
+      const walletBalance = await walletService.getBalance(userId);
+      if (walletBalance < precio) {
+        throw new ValidationError(`Saldo insuficiente en wallet. Saldo actual: $${walletBalance}`);
+      }
+    }
+
     // 4. Calcular servicios adicionales
     let services: any[] = [];
     let servicesTotalPrice = 0;
@@ -129,14 +147,20 @@ export class BookingsService {
 
     // 6. Crear booking en transacción
     const booking = await prisma.$transaction(async (tx) => {
-      // 1. Marcar slot como BOOKED
-      await tx.slot.update({
-        where: { id: data.slotId },
+      // 1. Marcar TODOS los slots del mismo (venueId, date, startTime) como BOOKED
+      await tx.slot.updateMany({
+        where: {
+          venueId: slot.venueId,
+          date: slot.date,
+          startTime: slot.startTime,
+          status: 'AVAILABLE',
+        },
         data: { status: 'BOOKED' },
       });
 
-      // 2. Generar QR code (solo si MP - se confirma inmediatamente)
-      const qrCode = data.paymentMethod === 'MERCADOPAGO' ? crypto.randomUUID() : null;
+      // 2. Generar QR code (si es MP o WALLET - se confirma inmediatamente)
+      const confirmaInmediato = data.paymentMethod === 'MERCADOPAGO' || data.paymentMethod === 'WALLET';
+      const qrCode = confirmaInmediato ? crypto.randomUUID() : null;
 
       // 3. Crear booking
       const newBooking = await tx.booking.create({
@@ -144,7 +168,7 @@ export class BookingsService {
           userId,
           slotId: data.slotId,
           membershipPlanId,
-          status: data.paymentMethod === 'MERCADOPAGO' ? 'CONFIRMED' : 'PENDING_PAYMENT',
+          status: confirmaInmediato ? 'CONFIRMED' : 'PENDING_PAYMENT',
           price: totalPrice,
           isMemberPrice,
           qrCode,
@@ -180,6 +204,8 @@ export class BookingsService {
         });
         const hours = parseInt(deadlineConfig?.value ?? '24');
         expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000);
+      } else if (data.paymentMethod === 'WALLET') {
+        paymentStatus = 'APPROVED';
       } else {
         paymentStatus = 'PENDING_CASH';
       }
@@ -194,8 +220,8 @@ export class BookingsService {
         },
       });
 
-      // 6. Si es MP, incrementar reservationsUsedMonth
-      if (data.paymentMethod === 'MERCADOPAGO' && activeMembership) {
+      // 6. Si es MP o WALLET, incrementar reservationsUsedMonth
+      if (confirmaInmediato && activeMembership) {
         await tx.userMembership.update({
           where: { id: activeMembership.id },
           data: {
@@ -207,6 +233,11 @@ export class BookingsService {
 
       return newBooking;
     });
+
+    // 7. Si pagó con WALLET, debitar fuera de la transacción principal (puede lanzar error si no hay saldo)
+    if (data.paymentMethod === 'WALLET') {
+      await walletService.debit(userId, totalPrice, 'BOOKING', booking.id, `Reserva #${booking.id}`);
+    }
 
     return bookingsRepository.findById(booking.id);
   }
@@ -256,6 +287,11 @@ export class BookingsService {
         },
       });
     });
+
+    // Si era WALLET y estaba confirmada, reintegrar saldo
+    if (booking.payment?.method === 'WALLET' && booking.status === 'CONFIRMED') {
+      await walletService.credit(booking.userId, parseFloat(booking.price.toString()), 'BOOKING_CANCEL', id, `Reintegro cancelación reserva #${id}`);
+    }
   }
 }
 

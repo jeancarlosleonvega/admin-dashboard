@@ -22,6 +22,17 @@ const scheduleInclude = {
       },
     },
   },
+  rules: {
+    include: {
+      conditions: {
+        include: {
+          conditionType: true,
+        },
+        orderBy: { order: 'asc' as const },
+      },
+    },
+    orderBy: { createdAt: 'asc' as const },
+  },
 };
 
 export class VenueSchedulesRepository {
@@ -51,7 +62,7 @@ export class VenueSchedulesRepository {
   }
 
   async create(data: CreateVenueScheduleInput) {
-    return prisma.venueSchedule.create({
+    const schedule = await prisma.venueSchedule.create({
       data: {
         venueId: data.venueId,
         name: data.name,
@@ -66,10 +77,16 @@ export class VenueSchedulesRepository {
       },
       include: scheduleInclude,
     });
+
+    if (data.rules && data.rules.length > 0) {
+      await this.upsertRules(schedule.id, data.rules);
+    }
+
+    return prisma.venueSchedule.findUnique({ where: { id: schedule.id }, include: scheduleInclude });
   }
 
   async update(id: string, data: UpdateVenueScheduleInput) {
-    return prisma.venueSchedule.update({
+    await prisma.venueSchedule.update({
       where: { id },
       data: {
         venueId: data.venueId,
@@ -83,8 +100,39 @@ export class VenueSchedulesRepository {
         playersPerSlot: data.playersPerSlot !== undefined ? (data.playersPerSlot ?? null) : undefined,
         active: data.active,
       },
-      include: scheduleInclude,
     });
+
+    if (data.rules !== undefined) {
+      await this.upsertRules(id, data.rules ?? []);
+    }
+
+    return prisma.venueSchedule.findUnique({ where: { id }, include: scheduleInclude });
+  }
+
+  private async upsertRules(scheduleId: string, rules: NonNullable<CreateVenueScheduleInput['rules']>) {
+    // Delete existing rules (cascade deletes conditions)
+    await prisma.scheduleRule.deleteMany({ where: { scheduleId } });
+
+    // Re-create
+    for (const rule of rules) {
+      await prisma.scheduleRule.create({
+        data: {
+          scheduleId,
+          canBook: rule.canBook,
+          basePrice: rule.basePrice,
+          revenueManagementEnabled: rule.revenueManagementEnabled,
+          conditions: {
+            create: rule.conditions.map((c) => ({
+              conditionTypeId: c.conditionTypeId,
+              operator: c.operator,
+              value: c.value,
+              logicalOperator: c.logicalOperator ?? null,
+              order: c.order,
+            })),
+          },
+        },
+      });
+    }
   }
 
   async updateGeneratedUntil(id: string, generatedUntil: Date) {

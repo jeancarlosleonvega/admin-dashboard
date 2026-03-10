@@ -38,6 +38,13 @@ export const bulkDeleteSchema = z.object({
   ids: z.array(z.string().uuid()).min(1, 'At least one ID is required'),
 });
 
+export const updateProfileSchema = z.object({
+  sex: z.enum(['MALE', 'FEMALE']),
+  birthDate: z.string().datetime(),
+  handicap: z.number().int().min(0).max(54),
+});
+
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type UserFiltersInput = z.infer<typeof userFiltersSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

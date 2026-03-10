@@ -3,7 +3,8 @@ import { hashPassword } from '../../shared/utils/password.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { invalidateUserPermissions } from '../../shared/middlewares/authorize.js';
-import type { CreateUserInput, UpdateUserInput, UserFiltersInput } from './users.schema.js';
+import { prisma } from '../../infrastructure/database/client.js';
+import type { CreateUserInput, UpdateUserInput, UserFiltersInput, UpdateProfileInput } from './users.schema.js';
 import type { PaginatedUsers, UserWithRoles, SafeUser } from './users.types.js';
 
 export class UsersService {
@@ -81,6 +82,35 @@ export class UsersService {
 
   async bulkDelete(ids: string[]): Promise<number> {
     return usersRepository.bulkDelete(ids);
+  }
+
+  async updateProfile(userId: string, data: UpdateProfileInput) {
+    const user = await usersRepository.findById(userId);
+    if (!user) throw new NotFoundError('Usuario');
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        sex: data.sex as any,
+        birthDate: new Date(data.birthDate),
+        handicap: data.handicap,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        status: true,
+        sex: true,
+        birthDate: true,
+        handicap: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const profileCompleted = !!(updated.sex && updated.birthDate && updated.handicap != null);
+    return { ...updated, profileCompleted };
   }
 }
 

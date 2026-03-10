@@ -191,9 +191,11 @@ export class VenueSchedulesService {
       closeTime: data.closeTime ?? venue.closeTime ?? st.defaultCloseTime,
       intervalMinutes: data.intervalMinutes ?? venue.intervalMinutes ?? st.defaultIntervalMinutes,
       playersPerSlot: data.playersPerSlot ?? venue.playersPerSlot ?? st.defaultPlayersPerSlot,
+      rules: data.rules,
     };
 
     const item = await venueSchedulesRepository.create(resolved);
+    if (!item) throw new ValidationError('Error al crear el schedule');
 
     // Si tiene fecha de fin usar esa; si no, generar 60 días adelante
     const today = new Date();
@@ -211,7 +213,9 @@ export class VenueSchedulesService {
       const venue = await prisma.venue.findUnique({ where: { id: data.venueId } });
       if (!venue) throw new ValidationError('Venue no encontrado');
     }
-    return venueSchedulesRepository.update(id, data);
+    const updated = await venueSchedulesRepository.update(id, data);
+    if (!updated) throw new ValidationError('Error al actualizar el schedule');
+    return updated;
   }
 
   async delete(id: string) {

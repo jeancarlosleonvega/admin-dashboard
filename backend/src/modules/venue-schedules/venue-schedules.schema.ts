@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+const scheduleRuleConditionSchema = z.object({
+  conditionTypeId: z.string().uuid(),
+  operator: z.enum(['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE']),
+  value: z.string().min(1),
+  logicalOperator: z.enum(['AND', 'OR']).optional().nullable(),
+  order: z.number().int().min(0),
+});
+
+const scheduleRuleSchema = z.object({
+  canBook: z.boolean().default(true),
+  basePrice: z.number().min(0),
+  revenueManagementEnabled: z.boolean().default(false),
+  conditions: z.array(scheduleRuleConditionSchema).min(1),
+});
+
 export const createVenueScheduleSchema = z.object({
   venueId: z.string().uuid(),
   name: z.string().min(1).max(100),
@@ -11,6 +26,7 @@ export const createVenueScheduleSchema = z.object({
   intervalMinutes: z.number().int().min(5).max(240).optional().nullable(),
   playersPerSlot: z.number().int().min(1).max(100).optional().nullable(),
   active: z.boolean().default(true),
+  rules: z.array(scheduleRuleSchema).optional(),
 });
 
 export const updateVenueScheduleSchema = createVenueScheduleSchema.partial();

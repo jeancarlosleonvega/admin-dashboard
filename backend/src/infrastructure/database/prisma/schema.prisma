@@ -120,6 +120,7 @@ model SportType {
   defaultOpenTime        String   @default("08:00") @map("default_open_time")
   defaultCloseTime       String   @default("18:00") @map("default_close_time")
   defaultEnabledDays     Int[]    @default([1, 2, 3, 4, 5, 6, 7]) @map("default_enabled_days")
+  defaultMemberPrice     Decimal  @default(0) @db.Decimal(10, 2) @map("default_member_price")
   defaultNonMemberPrice  Decimal  @default(0) @db.Decimal(10, 2) @map("default_non_member_price")
   active                 Boolean  @default(true)
   createdAt              DateTime @default(now()) @map("created_at")

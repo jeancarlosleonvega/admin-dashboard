@@ -8,6 +8,8 @@ export const createSportTypeSchema = z.object({
   defaultOpenTime: z.string().regex(/^\d{2}:\d{2}$/).default('08:00'),
   defaultCloseTime: z.string().regex(/^\d{2}:\d{2}$/).default('18:00'),
   defaultEnabledDays: z.array(z.number().int().min(1).max(7)).default([1, 2, 3, 4, 5, 6, 7]),
+  defaultMemberPrice: z.coerce.number().min(0).default(0),
+  defaultNonMemberPrice: z.coerce.number().min(0).default(0),
   active: z.boolean().default(true),
 });
 

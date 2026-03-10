@@ -25,6 +25,7 @@ const schema = z.object({
   description: z.string().max(500).optional(),
   defaultIntervalMinutes: z.coerce.number().int().min(5, 'Mínimo 5 minutos').max(120, 'Máximo 120 minutos'),
   defaultPlayersPerSlot: z.coerce.number().int().min(1, 'Mínimo 1 jugador').max(20, 'Máximo 20 jugadores'),
+  defaultMemberPrice: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
   defaultNonMemberPrice: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
   defaultOpenTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
   defaultCloseTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
@@ -58,6 +59,7 @@ export default function SportTypeEditPage() {
         description: sportType.description ?? '',
         defaultIntervalMinutes: sportType.defaultIntervalMinutes,
         defaultPlayersPerSlot: sportType.defaultPlayersPerSlot,
+        defaultMemberPrice: (sportType as unknown as { defaultMemberPrice?: number }).defaultMemberPrice ?? 0,
         defaultNonMemberPrice: (sportType as unknown as { defaultNonMemberPrice?: number }).defaultNonMemberPrice ?? 0,
         defaultOpenTime: sportType.defaultOpenTime,
         defaultCloseTime: sportType.defaultCloseTime,
@@ -163,17 +165,31 @@ export default function SportTypeEditPage() {
                     {errors.defaultPlayersPerSlot && <p className="mt-1 text-sm text-red-600">{errors.defaultPlayersPerSlot.message}</p>}
                   </div>
                 </div>
-                <div>
-                  <label htmlFor="defaultNonMemberPrice" className="label">Precio para no socios</label>
-                  <input
-                    id="defaultNonMemberPrice"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    className={`input ${errors.defaultNonMemberPrice ? 'input-error' : ''}`}
-                    {...register('defaultNonMemberPrice')}
-                  />
-                  {errors.defaultNonMemberPrice && <p className="mt-1 text-sm text-red-600">{errors.defaultNonMemberPrice.message}</p>}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="defaultMemberPrice" className="label">Precio para socios</label>
+                    <input
+                      id="defaultMemberPrice"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className={`input ${errors.defaultMemberPrice ? 'input-error' : ''}`}
+                      {...register('defaultMemberPrice')}
+                    />
+                    {errors.defaultMemberPrice && <p className="mt-1 text-sm text-red-600">{errors.defaultMemberPrice.message}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="defaultNonMemberPrice" className="label">Precio para no socios</label>
+                    <input
+                      id="defaultNonMemberPrice"
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className={`input ${errors.defaultNonMemberPrice ? 'input-error' : ''}`}
+                      {...register('defaultNonMemberPrice')}
+                    />
+                    {errors.defaultNonMemberPrice && <p className="mt-1 text-sm text-red-600">{errors.defaultNonMemberPrice.message}</p>}
+                  </div>
                 </div>
               </div>
             </DetailSection>

@@ -8,7 +8,7 @@ import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
 import DataToolbar from '@components/shared/DataToolbar';
-import type { FilterRule, SortState } from '@components/shared/DataToolbar';
+import type { FilterRule, SortState, QuickFilter } from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { Venue, VenueFilters } from '@/types/venue.types';
@@ -48,7 +48,8 @@ export default function VenuesListPage() {
 
   const [filters, setFilters] = useState<VenueFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<Venue | null>(null);
-  const [selectedSportTypeId, setSelectedSportTypeId] = useState<string>('');
+  const [selectedSportTypeId, setSelectedSportTypeId] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
 
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('venues-columns', columns);
 
@@ -58,7 +59,6 @@ export default function VenuesListPage() {
 
   const items = data?.data ?? [];
   const meta = data?.meta ?? { page: 1, limit: 10, total: 0, totalPages: 0 };
-  const sportTypes = sportTypesData?.data ?? [];
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -75,27 +75,8 @@ export default function VenuesListPage() {
     setFilters((f) => ({ ...f, page }));
   };
 
-  const handleSportTypeFilter = (sportTypeId: string) => {
-    setSelectedSportTypeId(sportTypeId);
-    setFilters((f) => ({ ...f, sportTypeId: sportTypeId || undefined, page: 1 }));
-  };
-
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-sm font-medium text-gray-700">Filtrar por deporte:</label>
-        <select
-          value={selectedSportTypeId}
-          onChange={(e) => handleSportTypeFilter(e.target.value)}
-          className="input max-w-xs"
-        >
-          <option value="">Todos los deportes</option>
-          {sportTypes.map((st) => (
-            <option key={st.id} value={st.id}>{st.name}</option>
-          ))}
-        </select>
-      </div>
-
       <DataToolbar
         columns={columns}
         onSearchChange={useCallback((search: string) => setFilters((f) => ({ ...f, search: search || undefined, page: 1 })), [])}
@@ -121,6 +102,22 @@ export default function VenuesListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        quickFilters={useMemo<QuickFilter[]>(() => [
+          {
+            key: 'sportType',
+            label: 'Tipo de deporte',
+            value: selectedSportTypeId,
+            onChange: (v) => { setSelectedSportTypeId(v); setFilters((f) => ({ ...f, sportTypeId: v || undefined, page: 1 })); },
+            options: (sportTypesData?.data ?? []).map((st) => ({ label: st.name, value: st.id })),
+          },
+          {
+            key: 'active',
+            label: 'Estado',
+            value: activeFilter,
+            onChange: (v) => { setActiveFilter(v); setFilters((f) => ({ ...f, active: v as 'true' | 'false' | undefined || undefined, page: 1 })); },
+            options: [{ label: 'Activo', value: 'true' }, { label: 'Inactivo', value: 'false' }],
+          },
+        ], [selectedSportTypeId, activeFilter, sportTypesData?.data])}
         onExport={() => {
           const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
           const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {

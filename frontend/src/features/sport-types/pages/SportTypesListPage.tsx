@@ -7,7 +7,7 @@ import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
 import DataToolbar from '@components/shared/DataToolbar';
-import type { FilterRule, SortState } from '@components/shared/DataToolbar';
+import type { FilterRule, SortState, QuickFilter } from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { SportType, SportTypeFilters } from '@/types/sport-type.types';
@@ -47,6 +47,7 @@ export default function SportTypesListPage() {
 
   const [filters, setFilters] = useState<SportTypeFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<SportType | null>(null);
+  const [activeFilter, setActiveFilter] = useState('');
 
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('sport-types-columns', columns);
 
@@ -98,6 +99,15 @@ export default function SportTypesListPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+          quickFilters={useMemo<QuickFilter[]>(() => [
+          {
+            key: 'active',
+            label: 'Estado',
+            value: activeFilter,
+            onChange: (v) => { setActiveFilter(v); setFilters((f) => ({ ...f, active: v as 'true' | 'false' | undefined || undefined, page: 1 })); },
+            options: [{ label: 'Activo', value: 'true' }, { label: 'Inactivo', value: 'false' }],
+          },
+        ], [activeFilter])}
         onExport={() => {
           const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
           const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {

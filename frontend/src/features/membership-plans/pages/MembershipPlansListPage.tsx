@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { Plus, CreditCard, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMembershipPlans, useDeleteMembershipPlan } from '@/hooks/queries/useMembershipPlans';
+import { useSportTypes } from '@/hooks/queries/useSportTypes';
 import PermissionGate from '@components/shared/PermissionGate';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import { Spinner } from '@components/ui/Spinner';
 import DataToolbar from '@components/shared/DataToolbar';
-import type { FilterRule } from '@components/shared/DataToolbar';
+import type { FilterRule, QuickFilter } from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { MembershipPlan, MembershipPlanFilters } from '@/types/membership-plan.types';
@@ -42,10 +43,13 @@ export default function MembershipPlansListPage() {
 
   const [filters, setFilters] = useState<MembershipPlanFilters>({ page: 1, limit: 10 });
   const [deleteTarget, setDeleteTarget] = useState<MembershipPlan | null>(null);
+  const [sportTypeFilter, setSportTypeFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
 
   const { visibleColumns, toggleColumn, resetColumns } = useColumnVisibility('membership-plans-columns', columns);
 
   const { data, isLoading, isError } = useMembershipPlans(filters);
+  const { data: sportTypesData } = useSportTypes({ active: 'true', limit: 100 });
   const deletePlan = useDeleteMembershipPlan();
 
   const items = data?.data ?? [];
@@ -71,7 +75,23 @@ export default function MembershipPlansListPage() {
       <DataToolbar
         columns={columns}
         onSearchChange={useCallback((search: string) => setFilters((f) => ({ ...f, search: search || undefined, page: 1 })), [])}
-        onSortChange={useCallback(() => { /* no sort */ }, [])}
+        onSortChange={useCallback(() => {}, [])}
+        quickFilters={useMemo<QuickFilter[]>(() => [
+          {
+            key: 'sportType',
+            label: 'Tipo de deporte',
+            value: sportTypeFilter,
+            onChange: (v) => { setSportTypeFilter(v); setFilters((f) => ({ ...f, sportTypeId: v || undefined, page: 1 })); },
+            options: (sportTypesData?.data ?? []).map((st) => ({ label: st.name, value: st.id })),
+          },
+          {
+            key: 'active',
+            label: 'Estado',
+            value: activeFilter,
+            onChange: (v) => { setActiveFilter(v); setFilters((f) => ({ ...f, active: v as 'true' | 'false' | undefined || undefined, page: 1 })); },
+            options: [{ label: 'Activo', value: 'true' }, { label: 'Inactivo', value: 'false' }],
+          },
+        ], [sportTypeFilter, activeFilter, sportTypesData?.data])}
         onFiltersChange={useCallback((rules: FilterRule[]) => {
           setFilters((f) => {
             const next: MembershipPlanFilters = { search: f.search, page: 1, limit: f.limit };

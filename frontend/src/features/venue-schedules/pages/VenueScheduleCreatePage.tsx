@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm, Controller } from 'react-hook-form';
@@ -46,6 +47,8 @@ export default function VenueScheduleCreatePage() {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -54,6 +57,17 @@ export default function VenueScheduleCreatePage() {
       active: true,
     },
   });
+
+  // Cuando se selecciona un espacio, pre-popular días y horario con los valores del espacio
+  const selectedVenueId = watch('venueId');
+  useEffect(() => {
+    if (!selectedVenueId) return;
+    const venue = (venuesData?.data ?? []).find((v) => v.id === selectedVenueId);
+    if (!venue) return;
+    if (venue.enabledDays && venue.enabledDays.length > 0) {
+      setValue('daysOfWeek', [...venue.enabledDays].sort((a, b) => a - b));
+    }
+  }, [selectedVenueId, venuesData?.data, setValue]);
 
   const onSubmit = async (data: FormData) => {
     try {

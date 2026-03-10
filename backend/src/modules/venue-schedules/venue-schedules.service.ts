@@ -92,11 +92,9 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
 
       // Verificar si el día completo está bloqueado
       const dayBlocked = blockedPeriods.some((bp) => {
-        const bpStart = new Date(bp.startDate);
-        const bpEnd = new Date(bp.endDate);
-        bpStart.setHours(0, 0, 0, 0);
-        bpEnd.setHours(23, 59, 59, 999);
-        return !bp.startTime && dayDate >= bpStart && dayDate <= bpEnd;
+        const bpStartStr = bp.startDate.toISOString().split('T')[0];
+        const bpEndStr = bp.endDate.toISOString().split('T')[0];
+        return !bp.startTime && dateStr >= bpStartStr && dateStr <= bpEndStr;
       });
 
       if (!dayBlocked) {
@@ -108,11 +106,9 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
           // Verificar si la franja está bloqueada
           const timeBlocked = blockedPeriods.some((bp) => {
             if (!bp.startTime || !bp.endTime) return false;
-            const bpStart = new Date(bp.startDate);
-            const bpEnd = new Date(bp.endDate);
-            bpStart.setHours(0, 0, 0, 0);
-            bpEnd.setHours(23, 59, 59, 999);
-            return dayDate >= bpStart && dayDate <= bpEnd && isTimeOverlapping(slotStart, slotEnd, bp.startTime, bp.endTime);
+            const bpStartStr = bp.startDate.toISOString().split('T')[0];
+            const bpEndStr = bp.endDate.toISOString().split('T')[0];
+            return dateStr >= bpStartStr && dateStr <= bpEndStr && isTimeOverlapping(slotStart, slotEnd, bp.startTime, bp.endTime);
           });
 
           if (!timeBlocked) {
@@ -138,6 +134,30 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
       data: slotsToCreate,
       skipDuplicates: true,
     });
+  }
+
+  // Re-aplicar períodos bloqueados activos sobre slots recién generados
+  // (por si existían períodos bloqueados antes de generar)
+  for (const bp of blockedPeriods) {
+    const bpStartStr = bp.startDate.toISOString().split('T')[0];
+    const bpEndStr = bp.endDate.toISOString().split('T')[0];
+
+    const where: any = {
+      venueId: venue.id,
+      scheduleId,
+      status: 'AVAILABLE',
+      date: {
+        gte: new Date(bpStartStr + 'T00:00:00.000Z'),
+        lte: new Date(bpEndStr + 'T00:00:00.000Z'),
+      },
+    };
+
+    if (bp.startTime && bp.endTime) {
+      where.startTime = { gte: bp.startTime };
+      where.endTime = { lte: bp.endTime };
+    }
+
+    await prisma.slot.updateMany({ where, data: { status: 'BLOCKED' } });
   }
 
   await venueSchedulesRepository.updateGeneratedUntil(scheduleId, endAt);

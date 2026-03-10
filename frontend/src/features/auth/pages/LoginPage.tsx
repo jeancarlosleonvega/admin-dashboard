@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
 import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
@@ -17,10 +17,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuthStore();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
 
   const {
     register,
@@ -35,7 +31,6 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       toast.success('¡Bienvenido!');
-      navigate(from, { replace: true });
     } catch {
       toast.error('Email o contraseña incorrectos');
     } finally {
@@ -73,17 +68,9 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="label">
-              Contraseña
-            </label>
-            <Link
-              to="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-500"
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
+          <label htmlFor="password" className="label">
+            Contraseña
+          </label>
           <input
             id="password"
             type="password"
@@ -94,6 +81,14 @@ export default function LoginPage() {
           {errors.password && (
             <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
           )}
+          <div className="mt-1 text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </div>
 
         <button

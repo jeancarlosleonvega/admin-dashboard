@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
 import { useEffect } from 'react';
 
@@ -62,6 +62,8 @@ import { Spinner } from '@components/ui/Spinner';
 
 function App() {
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
+  const location = useLocation();
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     initialize();
@@ -82,13 +84,13 @@ function App() {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+            isAuthenticated ? <Navigate to={from} replace /> : <LoginPage />
           }
         />
         <Route
           path="/register"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />
+            isAuthenticated ? <Navigate to={from} replace /> : <RegisterPage />
           }
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

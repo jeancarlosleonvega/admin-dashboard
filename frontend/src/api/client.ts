@@ -30,8 +30,13 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If 401 and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const url = originalRequest?.url || '';
+
+    // Never retry auth endpoints to avoid infinite loops
+    const isAuthEndpoint = url.includes('/auth/logout') || url.includes('/auth/refresh');
+
+    // If 401 and not already retrying and not an auth endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -49,8 +54,14 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, logout user
-        useAuthStore.getState().logout();
+        // Refresh failed - clear state directly, DO NOT call logout() API (causes infinite loop)
+        useAuthStore.setState({
+          user: null,
+          accessToken: null,
+          permissions: [],
+          isAuthenticated: false,
+          isLoading: false,
+        });
         return Promise.reject(refreshError);
       }
     }

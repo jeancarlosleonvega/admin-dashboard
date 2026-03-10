@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { apiClient } from '@api/client';
 import { useAuthStore } from '@stores/authStore';
 import { Spinner } from '@components/ui/Spinner';
@@ -24,7 +24,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const { login } = useAuthStore();
 
   const {
     register,
@@ -37,18 +37,9 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      const response = await apiClient.post('/auth/register', data);
-      const { user, permissions, accessToken } = response.data.data;
-
-      useAuthStore.setState({
-        user,
-        permissions,
-        accessToken,
-        isAuthenticated: true,
-      });
-
+      await apiClient.post('/auth/register', data);
+      await login(data.email, data.password);
       toast.success('¡Cuenta creada exitosamente!');
-      navigate('/dashboard', { replace: true });
     } catch (error) {
       const message =
         (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al registrarse';

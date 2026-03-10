@@ -12,7 +12,8 @@ export const slotsAvailabilityQuerySchema = z.object({
 });
 
 export const slotsSearchSchema = z.object({
-  date: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
   venueId: z.string().uuid().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),

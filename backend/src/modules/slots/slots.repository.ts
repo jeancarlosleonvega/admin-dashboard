@@ -30,16 +30,17 @@ export class SlotsRepository {
   }
 
   async searchAvailable(input: SlotsSearchInput) {
-    const dateObj = new Date(input.date + 'T00:00:00.000Z');
+    const start = new Date(input.startDate + 'T00:00:00.000Z');
+    const end = new Date(input.endDate + 'T00:00:00.000Z');
     return prisma.slot.findMany({
       where: {
-        date: dateObj,
+        date: { gte: start, lte: end },
         status: 'AVAILABLE',
         ...(input.venueId && { venueId: input.venueId }),
         ...(input.startTime && { startTime: { gte: input.startTime } }),
         ...(input.endTime && { endTime: { lte: input.endTime } }),
       },
-      orderBy: [{ startTime: 'asc' }, { venue: { name: 'asc' } }],
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }, { venue: { name: 'asc' } }],
       select: {
         id: true,
         venueId: true,

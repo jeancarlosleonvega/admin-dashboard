@@ -272,7 +272,8 @@ export default function BookingSearchPage() {
   const today = toISODate(new Date());
 
   // Toolbar state
-  const [date, setDate] = useState(today);
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [venueId, setVenueId] = useState('');
@@ -288,56 +289,78 @@ export default function BookingSearchPage() {
 
   const searchParams = useMemo(
     () => ({
-      date,
+      startDate,
+      endDate: endDate || startDate,
       venueId: venueId || undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
     }),
-    [date, venueId, startTime, endTime],
+    [startDate, endDate, venueId, startTime, endTime],
   );
 
   const { data: slotsData, isLoading, isFetching } = useSearchSlots(searchParams, searched);
 
-  // Group by venue for card view
-  const slotsByVenue = useMemo(() => {
-    const map = new Map<string, SlotAvailability[]>();
+  // Group by date → venue for card view
+  const slotsByDateAndVenue = useMemo(() => {
+    const dateMap = new Map<string, Map<string, SlotAvailability[]>>();
     for (const s of slotsData ?? []) {
-      const key = s.venueId ?? s.venue?.id ?? 'unknown';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(s);
+      const dateKey = s.date.slice(0, 10);
+      const venueKey = s.venueId ?? s.venue?.id ?? 'unknown';
+      if (!dateMap.has(dateKey)) dateMap.set(dateKey, new Map());
+      const venueMap = dateMap.get(dateKey)!;
+      if (!venueMap.has(venueKey)) venueMap.set(venueKey, []);
+      venueMap.get(venueKey)!.push(s);
     }
-    return map;
+    return dateMap;
   }, [slotsData]);
 
-  const dateLabel = date
-    ? new Date(date + 'T12:00:00').toLocaleDateString('es-AR', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+  const isRange = startDate !== endDate && !!endDate;
+  const rangeLabel = isRange
+    ? `${new Date(startDate + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} — ${new Date(endDate + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    : startDate
+    ? new Date(startDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
   const handleSearch = () => {
-    if (!date) return;
+    if (!startDate) return;
     setSearched(true);
+  };
+
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val);
+    if (endDate && val > endDate) setEndDate(val);
+    setSearched(false);
   };
 
   return (
     <div className="space-y-5">
       {/* Search toolbar */}
       <div className="card p-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
-          {/* Fecha */}
-          <div className="col-span-2 md:col-span-1 lg:col-span-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
+          {/* Fecha desde */}
+          <div className="col-span-1">
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-              Fecha
+              Fecha desde
             </label>
             <input
               type="date"
-              value={date}
+              value={startDate}
               min={today}
-              onChange={(e) => { setDate(e.target.value); setSearched(false); }}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              className="input"
+            />
+          </div>
+
+          {/* Fecha hasta */}
+          <div className="col-span-1">
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+              Fecha hasta
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || today}
+              onChange={(e) => { setEndDate(e.target.value); setSearched(false); }}
               className="input"
             />
           </div>
@@ -345,7 +368,7 @@ export default function BookingSearchPage() {
           {/* Hora desde */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-              Desde
+              Hora desde
             </label>
             <input
               type="time"
@@ -358,7 +381,7 @@ export default function BookingSearchPage() {
           {/* Hora hasta */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-              Hasta
+              Hora hasta
             </label>
             <input
               type="time"
@@ -409,7 +432,7 @@ export default function BookingSearchPage() {
           <div>
             <button
               onClick={handleSearch}
-              disabled={!date || isFetching}
+              disabled={!startDate || isFetching}
               className="btn-primary w-full flex items-center justify-center gap-2"
             >
               {isFetching ? <Spinner size="sm" className="text-white" /> : <Search className="w-4 h-4" />}
@@ -425,7 +448,7 @@ export default function BookingSearchPage() {
           {/* Results header */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-semibold text-gray-800 capitalize">{dateLabel}</p>
+              <p className="text-sm font-semibold text-gray-800 capitalize">{rangeLabel}</p>
               {!isLoading && (
                 <p className="text-xs text-gray-500">
                   {(slotsData?.length ?? 0) === 0
@@ -463,42 +486,52 @@ export default function BookingSearchPage() {
               <p className="text-xs mt-1">Probá con otra fecha o un rango horario diferente</p>
             </div>
           ) : viewMode === 'card' ? (
-            /* Card view — agrupado por cancha */
-            <div className="space-y-4">
-              {Array.from(slotsByVenue.entries()).map(([, venueSlots]) => {
-                const venue = venueSlots[0]?.venue;
-                const maxP =
-                  venue?.playersPerSlot ?? venue?.sportType?.defaultPlayersPerSlot ?? 10;
-                return (
-                  <div key={venue?.id ?? 'unknown'} className="card overflow-hidden">
-                    <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-800">{venue?.name}</span>
-                      <span className="ml-auto flex items-center gap-1 text-xs text-gray-400">
-                        <Users className="w-3.5 h-3.5" />
-                        hasta {maxP} jugadores
-                      </span>
-                    </div>
-                    <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                      {venueSlots.map((slot) => (
-                        <button
-                          key={slot.id}
-                          onClick={() => setSelectedSlot(slot)}
-                          className="flex flex-col items-center justify-center gap-0.5 border border-gray-200 rounded-xl py-3 px-2 hover:border-primary-400 hover:bg-primary-50 transition-colors group"
-                        >
-                          <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
-                            {slot.startTime}
-                          </span>
-                          <span className="text-xs text-gray-400">{slot.endTime}</span>
-                          <span className="mt-1 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                            Disponible
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+            /* Card view — agrupado por fecha → cancha */
+            <div className="space-y-6">
+              {Array.from(slotsByDateAndVenue.entries()).map(([dateKey, venueMap]) => (
+                <div key={dateKey}>
+                  {isRange && (
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 capitalize">
+                      {new Date(dateKey + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    {Array.from(venueMap.entries()).map(([, venueSlots]) => {
+                      const venue = venueSlots[0]?.venue;
+                      const maxP = venue?.playersPerSlot ?? venue?.sportType?.defaultPlayersPerSlot ?? 10;
+                      return (
+                        <div key={venue?.id ?? 'unknown'} className="card overflow-hidden">
+                          <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm font-semibold text-gray-800">{venue?.name}</span>
+                            <span className="ml-auto flex items-center gap-1 text-xs text-gray-400">
+                              <Users className="w-3.5 h-3.5" />
+                              hasta {maxP} jugadores
+                            </span>
+                          </div>
+                          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                            {venueSlots.map((slot) => (
+                              <button
+                                key={slot.id}
+                                onClick={() => setSelectedSlot(slot)}
+                                className="flex flex-col items-center justify-center gap-0.5 border border-gray-200 rounded-xl py-3 px-2 hover:border-primary-400 hover:bg-primary-50 transition-colors group"
+                              >
+                                <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
+                                  {slot.startTime}
+                                </span>
+                                <span className="text-xs text-gray-400">{slot.endTime}</span>
+                                <span className="mt-1 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                  Disponible
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           ) : (
             /* List view */
@@ -506,6 +539,11 @@ export default function BookingSearchPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    {isRange && (
+                      <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fecha
+                      </th>
+                    )}
                     <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Cancha
                     </th>
@@ -514,9 +552,6 @@ export default function BookingSearchPage() {
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Jugadores máx.
-                    </th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado
                     </th>
                     <th className="px-5 py-3" />
                   </tr>
@@ -529,6 +564,11 @@ export default function BookingSearchPage() {
                       '—';
                     return (
                       <tr key={slot.id} className="hover:bg-gray-50">
+                        {isRange && (
+                          <td className="px-5 py-3 text-sm text-gray-500 whitespace-nowrap">
+                            {new Date(slot.date.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </td>
+                        )}
                         <td className="px-5 py-3 text-sm font-medium text-gray-900">
                           {slot.venue?.name ?? '—'}
                         </td>
@@ -536,11 +576,6 @@ export default function BookingSearchPage() {
                           {slot.startTime} — {slot.endTime}
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-600">{maxP}</td>
-                        <td className="px-5 py-3">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                            Disponible
-                          </span>
-                        </td>
                         <td className="px-5 py-3 text-right">
                           <button
                             onClick={() => setSelectedSlot(slot)}

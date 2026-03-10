@@ -14,8 +14,8 @@ export const slotsApi = {
     return response.data.data;
   },
 
-  async searchAvailable(params: { date: string; venueId?: string; startTime?: string; endTime?: string }): Promise<SlotAvailability[]> {
-    const query = new URLSearchParams({ date: params.date });
+  async searchAvailable(params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string }): Promise<SlotAvailability[]> {
+    const query = new URLSearchParams({ startDate: params.startDate, endDate: params.endDate });
     if (params.venueId) query.set('venueId', params.venueId);
     if (params.startTime) query.set('startTime', params.startTime);
     if (params.endTime) query.set('endTime', params.endTime);

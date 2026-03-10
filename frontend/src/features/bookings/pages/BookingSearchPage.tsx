@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import type { SlotAvailability } from '@/types/venue-schedule.types';
 import type { PaymentMethod } from '@/types/booking.types';
+import { formatDateLong, formatDateShort } from '@lib/formatDate';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   MERCADOPAGO: 'MercadoPago (inmediato)',
@@ -75,11 +76,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
     }
   };
 
-  const dateLabel = new Date(slot.date.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
+  const dateLabel = formatDateLong(slot.date.slice(0, 10));
 
   if (confirmed && confirmedBooking) {
     return (
@@ -288,11 +285,11 @@ export default function BookingSearchPage() {
   const searchParams = useMemo(
     () => ({
       startDate,
-      endDate: endDate || startDate,
+      endDate: endDate || undefined,
       venueId: venueId || undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
-      minPlayers: numPlayers,
+      numPlayers: numPlayers,
     }),
     [startDate, endDate, venueId, startTime, endTime, numPlayers],
   );
@@ -313,11 +310,18 @@ export default function BookingSearchPage() {
     return dateMap;
   }, [slotsData]);
 
-  const isRange = startDate !== endDate && !!endDate;
-  const rangeLabel = isRange
-    ? `${new Date(startDate + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} — ${new Date(endDate + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  const resultDates = Array.from(slotsByDateAndVenue.keys());
+  const firstResultDate = resultDates[0];
+  const lastResultDate = resultDates[resultDates.length - 1];
+  const isMultiDate = resultDates.length > 1;
+
+  const isRange = isMultiDate;
+  const rangeLabel = isMultiDate
+    ? `${formatDateShort(firstResultDate)} — ${formatDateShort(lastResultDate)}`
+    : firstResultDate
+    ? formatDateLong(firstResultDate)
     : startDate
-    ? new Date(startDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    ? formatDateLong(startDate)
     : '';
 
   const handleStartDateChange = (val: string) => {
@@ -441,9 +445,9 @@ export default function BookingSearchPage() {
               <p className="text-sm font-semibold text-gray-800 capitalize">{rangeLabel}</p>
               {!isLoading && (
                 <p className="text-xs text-gray-500">
-                  {slotsData ?? [].length === 0
+                  {(slotsData ?? []).length === 0
                     ? 'Sin turnos disponibles'
-                    : `${slotsData ?? [].length} turno${slotsData ?? [].length !== 1 ? 's' : ''} disponible${slotsData ?? [].length !== 1 ? 's' : ''}`}
+                    : `${(slotsData ?? []).length} turno${(slotsData ?? []).length !== 1 ? 's' : ''} disponible${(slotsData ?? []).length !== 1 ? 's' : ''}`}
                 </p>
               )}
             </div>
@@ -469,7 +473,7 @@ export default function BookingSearchPage() {
             <div className="card flex justify-center py-16">
               <Spinner size="lg" />
             </div>
-          ) : slotsData ?? [].length === 0 ? (
+          ) : (slotsData ?? []).length === 0 ? (
             <div className="card px-6 py-16 text-center text-gray-400">
               <Clock className="w-12 h-12 mx-auto mb-4 opacity-40" />
               <p className="text-sm font-medium">No hay turnos disponibles</p>
@@ -482,7 +486,7 @@ export default function BookingSearchPage() {
                 <div key={dateKey}>
                   {isRange && (
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 capitalize">
-                      {new Date(dateKey + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      {formatDateLong(dateKey)}
                     </p>
                   )}
                   <div className="space-y-3">
@@ -556,7 +560,7 @@ export default function BookingSearchPage() {
                       <tr key={slot.id} className="hover:bg-gray-50">
                         {isRange && (
                           <td className="px-5 py-3 text-sm text-gray-500 whitespace-nowrap">
-                            {new Date(slot.date.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                            {formatDateShort(slot.date.slice(0, 10))}
                           </td>
                         )}
                         <td className="px-5 py-3 text-sm font-medium text-gray-900">

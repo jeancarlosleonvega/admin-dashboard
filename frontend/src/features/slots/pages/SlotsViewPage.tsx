@@ -6,6 +6,7 @@ import { useVenueSchedule } from '@/hooks/queries/useVenueSchedules';
 import { useSlots, useSlotAvailability } from '@/hooks/queries/useSlots';
 import { useBlockedPeriods } from '@/hooks/queries/useBlockedPeriods';
 import { Spinner } from '@components/ui/Spinner';
+import { formatDate, formatDateLong } from '@lib/formatDate';
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo',
@@ -172,7 +173,7 @@ export default function SlotsViewPage() {
           <div>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Generado hasta</p>
             <p className="text-sm text-gray-900">
-              {schedule.generatedUntil ? new Date(schedule.generatedUntil).toLocaleDateString('es-AR') : '—'}
+              {formatDate(schedule.generatedUntil)}
             </p>
           </div>
           <div className="col-span-2 sm:col-span-1">
@@ -284,7 +285,7 @@ export default function SlotsViewPage() {
         <div className="card overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-800">
-              {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {formatDateLong(selectedDate)}
             </h3>
             {!isFullyBlocked && (
               <div className="flex gap-3 text-xs text-gray-500">

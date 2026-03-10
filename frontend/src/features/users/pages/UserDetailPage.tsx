@@ -14,6 +14,7 @@ import { DetailSection } from '@components/ui/DetailSection';
 import type { TabDef } from '@components/ui/Tabs';
 import { UserStatus } from '@/types/user.types';
 import toast from 'react-hot-toast';
+import { formatDateTime } from '@lib/formatDate';
 
 const tabs: TabDef[] = [
   { id: 'general', label: 'General', icon: User },
@@ -160,11 +161,11 @@ export default function UserDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="label">Created At</label>
-                    <input type="text" className="input bg-gray-50" value={new Date(user.createdAt).toLocaleString()} readOnly />
+                    <input type="text" className="input bg-gray-50" value={formatDateTime(user.createdAt)} readOnly />
                   </div>
                   <div>
                     <label className="label">Updated At</label>
-                    <input type="text" className="input bg-gray-50" value={new Date(user.updatedAt).toLocaleString()} readOnly />
+                    <input type="text" className="input bg-gray-50" value={formatDateTime(user.updatedAt)} readOnly />
                   </div>
                 </div>
                 {canEdit && isDirty && (

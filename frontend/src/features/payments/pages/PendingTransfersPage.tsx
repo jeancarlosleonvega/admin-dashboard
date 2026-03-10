@@ -4,6 +4,7 @@ import { DollarSign } from 'lucide-react';
 import { usePendingTransfers, useValidateTransfer } from '@/hooks/queries/usePayments';
 import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
+import { formatDate } from '@lib/formatDate';
 
 export default function PendingTransfersPage() {
   usePageHeader({ subtitle: 'Transferencias pendientes de validación' });
@@ -55,7 +56,7 @@ export default function PendingTransfersPage() {
                       <span className="text-gray-500 text-sm ml-2">({payment.booking.user.email})</span>
                     </p>
                     <p className="text-sm text-gray-500">
-                      {payment.booking.slot.venue.name} — {new Date(payment.booking.slot.date).toLocaleDateString()} {payment.booking.slot.startTime}–{payment.booking.slot.endTime}
+                      {payment.booking.slot.venue.name} — {formatDate(payment.booking.slot.date)} {payment.booking.slot.startTime}–{payment.booking.slot.endTime}
                     </p>
                     <p className="text-sm font-semibold text-gray-900">Monto: ${parseFloat(payment.amount.toString()).toLocaleString()}</p>
                     <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${payment.status === 'PENDING_PROOF' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>

@@ -14,10 +14,11 @@ export const slotsApi = {
     return response.data.data;
   },
 
-  async searchAvailable(params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string; minPlayers?: number }): Promise<SlotAvailability[]> {
-    const query = new URLSearchParams({ startDate: params.startDate, endDate: params.endDate });
+  async searchAvailable(params: { startDate: string; endDate?: string; venueId?: string; startTime?: string; endTime?: string; numPlayers?: number }): Promise<SlotAvailability[]> {
+    const query = new URLSearchParams({ startDate: params.startDate });
+    if (params.endDate) query.set('endDate', params.endDate);
     if (params.venueId) query.set('venueId', params.venueId);
-    if (params.minPlayers) query.set('minPlayers', String(params.minPlayers));
+    if (params.numPlayers) query.set('numPlayers', String(params.numPlayers));
     if (params.startTime) query.set('startTime', params.startTime);
     if (params.endTime) query.set('endTime', params.endTime);
     const response = await apiClient.get(`/slots/search?${query.toString()}`);

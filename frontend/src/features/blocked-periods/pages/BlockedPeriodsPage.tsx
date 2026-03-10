@@ -6,6 +6,7 @@ import { blockedPeriodsApi, type BlockedPeriod } from '@api/blockedPeriods.api';
 import { Spinner } from '@components/ui/Spinner';
 import ConfirmDialog from '@components/shared/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { formatDate } from '@lib/formatDate';
 
 function BlockedPeriodModal({
   item,
@@ -157,8 +158,8 @@ export default function BlockedPeriodsPage() {
                 {periods.map((period) => (
                   <tr key={period.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm text-gray-900">{period.reason ?? '-'}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(period.startDate).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(period.endDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(period.startDate)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(period.endDate)}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {period.startTime && period.endTime ? `${period.startTime} - ${period.endTime}` : 'Todo el día'}
                     </td>

@@ -13,6 +13,7 @@ import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { RoleFilters, RoleWithPermissions } from '@/types/role.types';
 import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
+import { formatDateTime } from '@lib/formatDate';
 
 const SORT_FIELD_MAP: Record<string, string> = {
   name: 'name',
@@ -114,7 +115,7 @@ export default function RolesListPage() {
             if (c.key === 'description') return r.description || '';
             if (c.key === 'permissions') return `${r.permissions.length}`;
             if (c.key === 'system') return r.isSystem ? 'Yes' : 'No';
-            if (c.key === 'created') return new Date(r.createdAt).toLocaleDateString();
+            if (c.key === 'created') return formatDateTime(r.createdAt);
             return '';
           }));
           exportToCsv('roles', headers, rows);
@@ -216,7 +217,7 @@ export default function RolesListPage() {
                       )}
                       {visibleColumns.includes('created') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(role.createdAt).toLocaleDateString()}
+                          {formatDateTime(role.createdAt)}
                         </td>
                       )}
                       {visibleColumns.includes('actions') && (

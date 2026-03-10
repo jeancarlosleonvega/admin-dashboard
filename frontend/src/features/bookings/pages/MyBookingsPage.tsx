@@ -6,6 +6,7 @@ import { useUploadTransferProof } from '@/hooks/queries/usePayments';
 import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
 import type { Booking, BookingStatus } from '@/types/booking.types';
+import { formatDate } from '@lib/formatDate';
 
 type TabKey = 'upcoming' | 'past' | 'cancelled';
 
@@ -50,7 +51,7 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
         <div className="space-y-3 text-sm">
           <div className="bg-gray-50 rounded-lg p-4 space-y-1">
             <p><span className="font-medium">Venue:</span> {booking.slot.venue?.name}</p>
-            <p><span className="font-medium">Fecha:</span> {new Date(booking.slot.date).toLocaleDateString()}</p>
+            <p><span className="font-medium">Fecha:</span> {formatDate(booking.slot.date)}</p>
             <p><span className="font-medium">Horario:</span> {booking.slot.startTime} - {booking.slot.endTime}</p>
             <p><span className="font-medium">Precio total:</span> ${parseFloat(booking.price.toString()).toLocaleString()}</p>
             {booking.isMemberPrice && <p className="text-blue-600 text-xs">Precio de socio</p>}
@@ -191,7 +192,7 @@ export default function MyBookingsPage() {
                   <div className="space-y-0.5">
                     <p className="font-medium text-gray-900">{booking.slot.venue?.name}</p>
                     <p className="text-sm text-gray-500">
-                      {new Date(booking.slot.date).toLocaleDateString()} — {booking.slot.startTime} a {booking.slot.endTime}
+                      {formatDate(booking.slot.date)} — {booking.slot.startTime} a {booking.slot.endTime}
                     </p>
                     <p className="text-sm text-gray-500">${parseFloat(booking.price.toString()).toLocaleString()}</p>
                   </div>

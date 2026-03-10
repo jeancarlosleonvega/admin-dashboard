@@ -13,11 +13,11 @@ export const slotsAvailabilityQuerySchema = z.object({
 
 export const slotsSearchSchema = z.object({
   startDate: z.string(),
-  endDate: z.string(),
+  endDate: z.string().optional(),
   venueId: z.string().uuid().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
-  minPlayers: z.coerce.number().int().min(1).optional(),
+  numPlayers: z.coerce.number().int().min(1).optional(),
 });
 
 export type SlotsQueryInput = z.infer<typeof slotsQuerySchema>;

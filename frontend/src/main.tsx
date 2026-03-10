@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
         <App />
         <Toaster
           position="top-right"
-          toastOptions={{ duration: 4000 }}
+          toastOptions={{ duration: 2500 }}
         />
       </BrowserRouter>
       <ReactQueryDevtools initialIsOpen={false} />

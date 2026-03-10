@@ -13,6 +13,7 @@ import { Tabs, TabPanel } from '@components/ui/Tabs';
 import { DetailSection } from '@components/ui/DetailSection';
 import type { TabDef } from '@components/ui/Tabs';
 import toast from 'react-hot-toast';
+import { formatDateTime } from '@lib/formatDate';
 
 const tabs: TabDef[] = [
   { id: 'general', label: 'General', icon: Shield },
@@ -154,11 +155,11 @@ export default function RoleDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="label">Created At</label>
-                    <input type="text" className="input bg-gray-50" value={new Date(role.createdAt).toLocaleString()} readOnly />
+                    <input type="text" className="input bg-gray-50" value={formatDateTime(role.createdAt)} readOnly />
                   </div>
                   <div>
                     <label className="label">Updated At</label>
-                    <input type="text" className="input bg-gray-50" value={new Date(role.updatedAt).toLocaleString()} readOnly />
+                    <input type="text" className="input bg-gray-50" value={formatDateTime(role.updatedAt)} readOnly />
                   </div>
                 </div>
                 {canManage && isDirty && (

@@ -6,7 +6,7 @@ export const slotKeys = {
   byVenueDate: (venueId: string, date: string) => [...slotKeys.all, venueId, date] as const,
   availability: (venueId: string, startDate: string, endDate: string) =>
     [...slotKeys.all, 'availability', venueId, startDate, endDate] as const,
-  search: (params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string; minPlayers?: number }) =>
+  search: (params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string; numPlayers?: number }) =>
     [...slotKeys.all, 'search', params] as const,
 };
 
@@ -19,13 +19,15 @@ export function useSlots(venueId: string, date: string) {
 }
 
 export function useSearchSlots(
-  params: { startDate: string; endDate: string; venueId?: string; startTime?: string; endTime?: string; minPlayers?: number },
+  params: { startDate: string; endDate?: string; venueId?: string; startTime?: string; endTime?: string; numPlayers?: number },
   enabled: boolean,
 ) {
   return useQuery({
     queryKey: slotKeys.search(params),
     queryFn: () => slotsApi.searchAvailable(params),
     enabled,
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 

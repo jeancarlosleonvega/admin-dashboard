@@ -3,6 +3,7 @@ import { usePageHeader } from '@/hooks/usePageHeader';
 import { QrCode } from 'lucide-react';
 import { qrApi, type QRValidationResult } from '@api/qr.api';
 import { Spinner } from '@components/ui/Spinner';
+import { formatDate } from '@lib/formatDate';
 
 export default function QRValidatorPage() {
   usePageHeader({ subtitle: 'Validar código de acceso QR' });
@@ -81,7 +82,7 @@ export default function QRValidatorPage() {
               <p className="font-medium text-gray-900">{result.booking.user.firstName} {result.booking.user.lastName}</p>
               <p className="text-gray-600">{result.booking.slot.venue.name}</p>
               <p className="text-gray-600">
-                {new Date(result.booking.slot.date).toLocaleDateString()} — {result.booking.slot.startTime} a {result.booking.slot.endTime}
+                {formatDate(result.booking.slot.date)} — {result.booking.slot.startTime} a {result.booking.slot.endTime}
               </p>
               {result.booking.services.length > 0 && (
                 <div>

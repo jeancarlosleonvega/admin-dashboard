@@ -13,6 +13,7 @@ import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { Permission, PermissionFilters } from '@/types/role.types';
 import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
+import { formatDateTime } from '@lib/formatDate';
 
 const SORT_FIELD_MAP: Record<string, string> = {
   resource: 'resource',
@@ -109,7 +110,7 @@ export default function PermissionsListPage() {
             if (c.key === 'resource') return p.resource;
             if (c.key === 'action') return p.action;
             if (c.key === 'description') return p.description || '';
-            if (c.key === 'created') return new Date(p.createdAt).toLocaleDateString();
+            if (c.key === 'created') return formatDateTime(p.createdAt);
             return '';
           }));
           exportToCsv('permissions', headers, rows);
@@ -188,7 +189,7 @@ export default function PermissionsListPage() {
                       )}
                       {visibleColumns.includes('created') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(permission.createdAt).toLocaleDateString()}
+                          {formatDateTime(permission.createdAt)}
                         </td>
                       )}
                       {visibleColumns.includes('actions') && (

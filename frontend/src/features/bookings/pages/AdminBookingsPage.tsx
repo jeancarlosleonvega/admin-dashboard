@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { useBookings } from '@/hooks/queries/useBookings';
 import { Spinner } from '@components/ui/Spinner';
 import type { BookingStatus } from '@/types/booking.types';
+import { formatDate } from '@lib/formatDate';
 
 const STATUS_BADGE: Record<BookingStatus, string> = {
   PENDING_PAYMENT: 'bg-yellow-100 text-yellow-700',
@@ -101,7 +102,7 @@ export default function AdminBookingsPage() {
                         {booking.user ? `${booking.user.firstName} ${booking.user.lastName}` : booking.userId}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{booking.slot.venue?.name ?? '-'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(booking.slot.date).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{formatDate(booking.slot.date)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{booking.slot.startTime} - {booking.slot.endTime}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[booking.status]}`}>

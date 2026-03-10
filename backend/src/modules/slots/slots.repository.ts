@@ -31,21 +31,21 @@ export class SlotsRepository {
 
   async searchAvailable(input: SlotsSearchInput) {
     const start = new Date(input.startDate + 'T00:00:00.000Z');
-    const end = new Date(input.endDate + 'T00:00:00.000Z');
+    const end = input.endDate ? new Date(input.endDate + 'T00:00:00.000Z') : undefined;
     return prisma.slot.findMany({
       where: {
-        date: { gte: start, lte: end },
+        date: end ? { gte: start, lte: end } : { gte: start },
         status: 'AVAILABLE',
         ...(input.venueId && { venueId: input.venueId }),
         ...(input.startTime && { startTime: { gte: input.startTime } }),
         ...(input.endTime && { endTime: { lte: input.endTime } }),
-        ...(input.minPlayers && {
+        ...(input.numPlayers && {
           venue: {
             OR: [
-              { playersPerSlot: { gte: input.minPlayers } },
+              { playersPerSlot: input.numPlayers },
               {
                 playersPerSlot: null,
-                sportType: { defaultPlayersPerSlot: { gte: input.minPlayers } },
+                sportType: { defaultPlayersPerSlot: input.numPlayers },
               },
             ],
           },

@@ -12,6 +12,7 @@ import DataToolbar from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import toast from 'react-hot-toast';
+import { formatDate } from '@lib/formatDate';
 
 const columns: ColumnDef[] = [
   { key: 'reason', label: 'Razón', sortable: false, filterable: true, type: 'text' },
@@ -133,12 +134,12 @@ export default function BlockedPeriodsListPage() {
                       )}
                       {visibleColumns.includes('from') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(period.startDate.slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR')}
+                          {formatDate(period.startDate)}
                         </td>
                       )}
                       {visibleColumns.includes('to') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(period.endDate.slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR')}
+                          {formatDate(period.endDate)}
                         </td>
                       )}
                       {visibleColumns.includes('timeRange') && (

@@ -12,6 +12,7 @@ import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { VenueSchedule } from '@/types/venue-schedule.types';
 import toast from 'react-hot-toast';
+import { formatDate } from '@lib/formatDate';
 
 const DAY_NAMES: Record<number, string> = {
   1: 'L', 2: 'M', 3: 'X', 4: 'J', 5: 'V', 6: 'S', 7: 'D',
@@ -196,9 +197,7 @@ export default function VenueSchedulesPage() {
                     )}
                     {visibleColumns.includes('generated') && (
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {schedule.generatedUntil
-                          ? new Date(schedule.generatedUntil).toLocaleDateString('es-AR')
-                          : '-'}
+                        {formatDate(schedule.generatedUntil) ?? '-'}
                       </td>
                     )}
                     {visibleColumns.includes('status') && (

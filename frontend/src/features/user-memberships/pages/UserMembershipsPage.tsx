@@ -11,6 +11,7 @@ import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { UserMembership } from '@/types/user-membership.types';
 import toast from 'react-hot-toast';
+import { formatDate } from '@lib/formatDate';
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE: 'bg-green-100 text-green-700',
@@ -146,12 +147,12 @@ export default function UserMembershipsPage() {
                     )}
                     {visibleColumns.includes('startDate') && (
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(m.startDate).toLocaleDateString('es-AR')}
+                        {formatDate(m.startDate)}
                       </td>
                     )}
                     {visibleColumns.includes('endDate') && (
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {m.endDate ? new Date(m.endDate).toLocaleDateString('es-AR') : 'Sin vencimiento'}
+                        {m.endDate ? formatDate(m.endDate) : 'Sin vencimiento'}
                       </td>
                     )}
                     {visibleColumns.includes('reservations') && (

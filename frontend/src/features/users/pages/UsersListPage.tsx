@@ -14,6 +14,7 @@ import type { UserFilters, UserWithRoles } from '@/types/user.types';
 import { UserStatus } from '@/types/user.types';
 import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
+import { formatDateTime } from '@lib/formatDate';
 
 const SORT_FIELD_MAP: Record<string, string> = {
   user: 'firstName',
@@ -148,7 +149,7 @@ export default function UsersListPage() {
             if (c.key === 'user') return `${u.firstName} ${u.lastName} (${u.email})`;
             if (c.key === 'status') return u.status;
             if (c.key === 'roles') return u.roles.map((r) => r.name).join(', ');
-            if (c.key === 'created') return new Date(u.createdAt).toLocaleDateString();
+            if (c.key === 'created') return formatDateTime(u.createdAt);
             return '';
           }));
           exportToCsv('users', headers, rows);
@@ -288,7 +289,7 @@ export default function UsersListPage() {
                       )}
                       {visibleColumns.includes('created') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {formatDateTime(user.createdAt)}
                         </td>
                       )}
                       {visibleColumns.includes('actions') && (

@@ -8,6 +8,7 @@ import { apiClient } from '@api/client';
 import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
 import type { PaymentMethod } from '@/types/booking.types';
+import { formatDate, formatDateLong } from '@lib/formatDate';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -106,7 +107,7 @@ export default function BookingFlowPage() {
                paymentMethod === 'TRANSFER' ? 'Reserva creada' : 'Reserva pendiente'}
             </h2>
             <p className="text-gray-500 mt-1 text-sm">
-              {new Date(confirmedBooking.slot.date).toLocaleDateString()} — {confirmedBooking.slot.startTime} a {confirmedBooking.slot.endTime}
+              {formatDate(confirmedBooking.slot.date)} — {confirmedBooking.slot.startTime} a {confirmedBooking.slot.endTime}
             </p>
             <p className="text-gray-500 text-sm">{confirmedBooking.slot.venue?.name}</p>
           </div>
@@ -215,7 +216,7 @@ export default function BookingFlowPage() {
       {step === 2 && (
         <div className="card p-6 space-y-4">
           <h2 className="text-lg font-semibold">Paso 2: Seleccionar turno</h2>
-          <p className="text-sm text-gray-500">{new Date(selectedDate).toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-sm text-gray-500">{formatDateLong(selectedDate)}</p>
           {slotsLoading ? (
             <div className="flex justify-center py-8"><Spinner size="lg" /></div>
           ) : !slots || slots.length === 0 ? (
@@ -283,7 +284,7 @@ export default function BookingFlowPage() {
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-1 text-sm">
             <p><span className="font-medium">Espacio:</span> {selectedSlot.venue?.name}</p>
-            <p><span className="font-medium">Fecha:</span> {new Date(selectedDate).toLocaleDateString()}</p>
+            <p><span className="font-medium">Fecha:</span> {formatDate(selectedDate)}</p>
             <p><span className="font-medium">Horario:</span> {selectedSlot.startTime} - {selectedSlot.endTime}</p>
             <p><span className="font-medium">Jugadores:</span> {numPlayers}</p>
             {selectedServiceIds.length > 0 && (

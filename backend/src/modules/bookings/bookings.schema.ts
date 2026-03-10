@@ -5,6 +5,7 @@ export const createBookingSchema = z.object({
   serviceIds: z.array(z.string().uuid()).optional(),
   paymentMethod: z.enum(['MERCADOPAGO', 'TRANSFER', 'CASH']),
   notes: z.string().optional(),
+  numPlayers: z.number().int().min(1).max(100).default(1),
 });
 
 export const bookingFiltersSchema = z.object({

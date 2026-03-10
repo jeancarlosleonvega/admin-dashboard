@@ -228,6 +228,7 @@ model VenueSchedule {
   openTime        String?   @map("open_time")
   closeTime       String?   @map("close_time")
   intervalMinutes Int?      @map("interval_minutes")
+  playersPerSlot  Int?      @map("players_per_slot")
   generatedUntil  DateTime? @map("generated_until")
   active          Boolean   @default(true)
   createdAt       DateTime  @default(now()) @map("created_at")
@@ -312,6 +313,7 @@ model Booking {
   qrCode           String?       @unique @map("qr_code")
   qrValidatedAt    DateTime?     @map("qr_validated_at")
   notes            String?
+  numPlayers       Int           @default(1) @map("num_players")
   cancelledAt      DateTime?     @map("cancelled_at")
   cancelledBy      String?       @map("cancelled_by")
   createdAt        DateTime      @default(now()) @map("created_at")

@@ -133,12 +133,12 @@ export default function BlockedPeriodsListPage() {
                       )}
                       {visibleColumns.includes('from') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(period.startDate).toLocaleDateString('es-AR')}
+                          {new Date(period.startDate.slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR')}
                         </td>
                       )}
                       {visibleColumns.includes('to') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {new Date(period.endDate).toLocaleDateString('es-AR')}
+                          {new Date(period.endDate.slice(0,10) + 'T12:00:00').toLocaleDateString('es-AR')}
                         </td>
                       )}
                       {visibleColumns.includes('timeRange') && (

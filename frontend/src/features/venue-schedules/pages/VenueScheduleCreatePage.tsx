@@ -28,7 +28,8 @@ const schema = z.object({
   daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1, 'Seleccioná al menos un día'),
   openTime: z.string().optional(),
   closeTime: z.string().optional(),
-  intervalMinutes: z.coerce.number().int().min(5).max(240).optional().nullable(),
+  intervalMinutes: z.union([z.literal(''), z.null(), z.undefined(), z.coerce.number().int().min(5, 'Mínimo 5 min').max(240, 'Máximo 240 min')]).transform((v) => (v === '' || v == null ? null : Number(v))).optional(),
+  playersPerSlot: z.union([z.literal(''), z.null(), z.undefined(), z.coerce.number().int().min(1, 'Mínimo 1').max(100, 'Máximo 100')]).transform((v) => (v === '' || v == null ? null : Number(v))).optional(),
   active: z.boolean(),
 });
 
@@ -65,6 +66,7 @@ export default function VenueScheduleCreatePage() {
         openTime: data.openTime || null,
         closeTime: data.closeTime || null,
         intervalMinutes: data.intervalMinutes || null,
+        playersPerSlot: data.playersPerSlot || null,
         active: data.active,
       });
       toast.success('Horario creado exitosamente');
@@ -150,7 +152,7 @@ export default function VenueScheduleCreatePage() {
             </DetailSection>
 
             <DetailSection title="Configuración (opcional)" description="Sobreescribí los valores del espacio para este horario">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
                   <label htmlFor="openTime" className="label">Hora de apertura <span className="text-gray-400 font-normal">(opcional)</span></label>
                   <input
@@ -179,6 +181,18 @@ export default function VenueScheduleCreatePage() {
                     placeholder="Ej: 10"
                     className="input"
                     {...register('intervalMinutes')}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="playersPerSlot" className="label">Jugadores por turno <span className="text-gray-400 font-normal">(opcional)</span></label>
+                  <input
+                    id="playersPerSlot"
+                    type="number"
+                    min={1}
+                    max={100}
+                    placeholder="Ej: 4"
+                    className="input"
+                    {...register('playersPerSlot')}
                   />
                 </div>
               </div>

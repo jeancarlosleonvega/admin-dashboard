@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { Plus, Clock, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Clock, Pencil, Trash2, RefreshCw, CalendarDays } from 'lucide-react';
 import { useVenueSchedules, useDeleteVenueSchedule, useGenerateSlots } from '@/hooks/queries/useVenueSchedules';
 import { useVenues } from '@/hooks/queries/useVenues';
 import PermissionGate from '@components/shared/PermissionGate';
@@ -211,6 +211,13 @@ export default function VenueSchedulesPage() {
                     {visibleColumns.includes('actions') && (
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => navigate(`/venue-schedules/slots?scheduleId=${schedule.id}`)}
+                            className="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
+                            title="Ver turnos"
+                          >
+                            <CalendarDays className="w-4 h-4" />
+                          </button>
                           <PermissionGate permission="venue-schedules.manage">
                             <button
                               onClick={() => { setGenerateTarget(schedule); setGenerateUntil(''); }}

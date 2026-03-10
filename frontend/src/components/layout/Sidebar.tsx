@@ -10,7 +10,7 @@ const navigation = [
   { name: 'Espacios', href: '/venues', icon: MapPin, permission: 'venues.view' },
   { name: 'Planes de Membresía', href: '/membership-plans', icon: CreditCard, permission: 'membership-plans.view' },
   { name: 'Membresías Socios', href: '/user-memberships', icon: UserCheck, permission: 'user-memberships.view' },
-  { name: 'Schedules', href: '/venue-schedules', icon: Clock, permission: 'venue-schedules.view' },
+  { name: 'Horarios', href: '/venue-schedules', icon: Clock, permission: 'venue-schedules.view' },
   { name: 'Períodos Bloqueados', href: '/blocked-periods', icon: Ban, permission: 'blocked-periods.view' },
   { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },

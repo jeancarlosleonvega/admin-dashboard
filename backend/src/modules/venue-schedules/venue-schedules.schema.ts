@@ -9,6 +9,7 @@ export const createVenueScheduleSchema = z.object({
   openTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
   closeTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
   intervalMinutes: z.number().int().min(5).max(240).optional().nullable(),
+  playersPerSlot: z.number().int().min(1).max(100).optional().nullable(),
   active: z.boolean().default(true),
 });
 

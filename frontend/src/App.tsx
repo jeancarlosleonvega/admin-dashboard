@@ -38,6 +38,7 @@ import MembershipPlanEditPage from '@features/membership-plans/pages/MembershipP
 import VenueSchedulesPage from '@features/venue-schedules/pages/VenueSchedulesPage';
 import VenueScheduleCreatePage from '@features/venue-schedules/pages/VenueScheduleCreatePage';
 import VenueScheduleEditPage from '@features/venue-schedules/pages/VenueScheduleEditPage';
+import SlotsViewPage from '@features/slots/pages/SlotsViewPage';
 import BlockedPeriodsListPage from '@features/blocked-periods/pages/BlockedPeriodsListPage';
 import BlockedPeriodCreatePage from '@features/blocked-periods/pages/BlockedPeriodCreatePage';
 import BlockedPeriodEditPage from '@features/blocked-periods/pages/BlockedPeriodEditPage';
@@ -321,6 +322,14 @@ function App() {
           element={
             <PermissionRoute permission="venue-schedules.manage">
               <VenueScheduleEditPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/venue-schedules/slots"
+          element={
+            <PermissionRoute permission="venue-schedules.view">
+              <SlotsViewPage />
             </PermissionRoute>
           }
         />

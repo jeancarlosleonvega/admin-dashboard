@@ -13,9 +13,11 @@ import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
 
+const nullableUuid = z.union([z.string().uuid(), z.literal(''), z.null()]).optional().transform((v) => v || null);
+
 const schema = z.object({
-  sportTypeId: z.string().uuid().optional().nullable(),
-  venueId: z.string().uuid().optional().nullable(),
+  sportTypeId: nullableUuid,
+  venueId: nullableUuid,
   startDate: z.string().min(1, 'La fecha de inicio es obligatoria'),
   endDate: z.string().min(1, 'La fecha de fin es obligatoria'),
   startTime: z.string().optional(),

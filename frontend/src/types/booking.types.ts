@@ -53,6 +53,7 @@ export interface Booking {
 
 export interface CreateBookingInput {
   slotId: string;
+  numPlayers?: number;
   serviceIds?: string[];
   paymentMethod: PaymentMethod;
   notes?: string;

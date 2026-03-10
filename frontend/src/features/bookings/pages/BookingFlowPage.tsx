@@ -19,6 +19,7 @@ export default function BookingFlowPage() {
   const [selectedVenueId, setSelectedVenueId] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlotId, setSelectedSlotId] = useState('');
+  const [numPlayers, setNumPlayers] = useState(1);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MERCADOPAGO');
   const [notes, setNotes] = useState('');
@@ -38,7 +39,7 @@ export default function BookingFlowPage() {
     queryKey: ['venues', selectedSportTypeId],
     queryFn: async () => {
       const res = await apiClient.get(`/venues?sportTypeId=${selectedSportTypeId}&active=true`);
-      return res.data.data as { id: string; name: string }[];
+      return res.data.data as { id: string; name: string; playersPerSlot?: number | null; sportType: { defaultPlayersPerSlot: number } }[];
     },
     enabled: !!selectedSportTypeId,
   });
@@ -53,6 +54,8 @@ export default function BookingFlowPage() {
   const createBooking = useCreateBooking();
 
   const selectedSlot = slots?.find((s) => s.id === selectedSlotId);
+  const selectedVenue = (venuesData ?? []).find((v) => v.id === selectedVenueId);
+  const maxPlayers = selectedVenue?.playersPerSlot ?? selectedVenue?.sportType?.defaultPlayersPerSlot ?? 10;
   const services = servicesData?.data ?? [];
 
   const toggleService = (id: string) => {
@@ -65,6 +68,7 @@ export default function BookingFlowPage() {
     try {
       const booking = await createBooking.mutateAsync({
         slotId: selectedSlotId,
+        numPlayers,
         serviceIds: selectedServiceIds.length > 0 ? selectedServiceIds : undefined,
         paymentMethod,
         notes: notes || undefined,
@@ -182,6 +186,23 @@ export default function BookingFlowPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
             <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
           </div>
+          {selectedVenueId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cantidad de jugadores
+                <span className="ml-1 text-xs text-gray-400">(máx. {maxPlayers})</span>
+              </label>
+              <select
+                value={numPlayers}
+                onChange={(e) => setNumPlayers(Number(e.target.value))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              >
+                {Array.from({ length: maxPlayers }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>{n} {n === 1 ? 'jugador' : 'jugadores'}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex justify-end">
             <button onClick={() => setStep(2)} disabled={!selectedVenueId || !selectedDate} className="btn-primary disabled:opacity-50">
               Siguiente
@@ -264,6 +285,7 @@ export default function BookingFlowPage() {
             <p><span className="font-medium">Espacio:</span> {selectedSlot.venue?.name}</p>
             <p><span className="font-medium">Fecha:</span> {new Date(selectedDate).toLocaleDateString()}</p>
             <p><span className="font-medium">Horario:</span> {selectedSlot.startTime} - {selectedSlot.endTime}</p>
+            <p><span className="font-medium">Jugadores:</span> {numPlayers}</p>
             {selectedServiceIds.length > 0 && (
               <p><span className="font-medium">Servicios:</span> {services.filter((s) => selectedServiceIds.includes(s.id)).map((s) => s.name).join(', ')}</p>
             )}

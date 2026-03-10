@@ -50,6 +50,14 @@ export class BookingsService {
     if (!slot) throw new NotFoundError('Slot');
     if (slot.status !== 'AVAILABLE') throw new ValidationError('Slot no disponible');
 
+    // Get effective maxPlayers: schedule > venue > sportType
+    const schedule = slot.scheduleId ? await prisma.venueSchedule.findUnique({ where: { id: slot.scheduleId }, select: { playersPerSlot: true } }) : null;
+    const maxPlayers = schedule?.playersPerSlot ?? slot.venue.playersPerSlot ?? slot.venue.sportType.defaultPlayersPerSlot;
+
+    if (data.numPlayers > maxPlayers) {
+      throw new ValidationError(`El máximo de jugadores por turno es ${maxPlayers}`);
+    }
+
     // 3. Verificar membresía y calcular precio
     let activeMembership: any = null;
     let precio: number;
@@ -141,6 +149,7 @@ export class BookingsService {
           isMemberPrice,
           qrCode,
           notes: data.notes,
+          numPlayers: data.numPlayers,
         },
         include: {
           slot: { include: { venue: { include: { sportType: true } } } },

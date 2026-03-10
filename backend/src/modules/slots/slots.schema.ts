@@ -17,6 +17,7 @@ export const slotsSearchSchema = z.object({
   venueId: z.string().uuid().optional(),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
+  minPlayers: z.coerce.number().int().min(1).optional(),
 });
 
 export type SlotsQueryInput = z.infer<typeof slotsQuerySchema>;

@@ -39,7 +39,15 @@ export class VenuesService {
   async create(data: CreateVenueInput): Promise<ResolvedVenue> {
     const sportType = await sportTypesRepository.findById(data.sportTypeId);
     if (!sportType) throw new ValidationError('Tipo de deporte no encontrado');
-    const item = await venuesRepository.create(data);
+    const resolved = {
+      ...data,
+      intervalMinutes: data.intervalMinutes ?? sportType.defaultIntervalMinutes,
+      playersPerSlot: data.playersPerSlot ?? sportType.defaultPlayersPerSlot,
+      openTime: data.openTime ?? sportType.defaultOpenTime,
+      closeTime: data.closeTime ?? sportType.defaultCloseTime,
+      enabledDays: data.enabledDays && data.enabledDays.length > 0 ? data.enabledDays : sportType.defaultEnabledDays,
+    };
+    const item = await venuesRepository.create(resolved);
     return resolveVenue(item);
   }
 

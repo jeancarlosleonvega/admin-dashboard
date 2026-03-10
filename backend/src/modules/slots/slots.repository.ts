@@ -39,6 +39,17 @@ export class SlotsRepository {
         ...(input.venueId && { venueId: input.venueId }),
         ...(input.startTime && { startTime: { gte: input.startTime } }),
         ...(input.endTime && { endTime: { lte: input.endTime } }),
+        ...(input.minPlayers && {
+          venue: {
+            OR: [
+              { playersPerSlot: { gte: input.minPlayers } },
+              {
+                playersPerSlot: null,
+                sportType: { defaultPlayersPerSlot: { gte: input.minPlayers } },
+              },
+            ],
+          },
+        }),
       },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }, { venue: { name: 'asc' } }],
       select: {

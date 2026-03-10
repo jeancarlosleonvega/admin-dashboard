@@ -177,11 +177,23 @@ export class VenueSchedulesService {
   }
 
   async create(data: CreateVenueScheduleInput) {
-    // Verificar que el venue existe
-    const venue = await prisma.venue.findUnique({ where: { id: data.venueId } });
+    const venue = await prisma.venue.findUnique({
+      where: { id: data.venueId },
+      include: { sportType: true },
+    });
     if (!venue) throw new ValidationError('Venue no encontrado');
 
-    const item = await venueSchedulesRepository.create(data);
+    // Copiar valores del venue (que a su vez ya heredó del sportType) si no se especificaron
+    const st = venue.sportType as { defaultOpenTime: string; defaultCloseTime: string; defaultIntervalMinutes: number; defaultPlayersPerSlot: number };
+    const resolved = {
+      ...data,
+      openTime: data.openTime ?? venue.openTime ?? st.defaultOpenTime,
+      closeTime: data.closeTime ?? venue.closeTime ?? st.defaultCloseTime,
+      intervalMinutes: data.intervalMinutes ?? venue.intervalMinutes ?? st.defaultIntervalMinutes,
+      playersPerSlot: data.playersPerSlot ?? venue.playersPerSlot ?? st.defaultPlayersPerSlot,
+    };
+
+    const item = await venueSchedulesRepository.create(resolved);
 
     // Generar slots automáticamente hasta min(endDate, today+60days)
     const today = new Date();

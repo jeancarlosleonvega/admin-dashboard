@@ -58,7 +58,7 @@ export default function VenueScheduleCreatePage() {
     },
   });
 
-  // Cuando se selecciona un espacio, pre-popular días y horario con los valores del espacio
+  // Cuando se selecciona un espacio, pre-popular todos los valores del espacio
   const selectedVenueId = watch('venueId');
   useEffect(() => {
     if (!selectedVenueId) return;
@@ -67,6 +67,10 @@ export default function VenueScheduleCreatePage() {
     if (venue.enabledDays && venue.enabledDays.length > 0) {
       setValue('daysOfWeek', [...venue.enabledDays].sort((a, b) => a - b));
     }
+    if (venue.openTime) setValue('openTime', venue.openTime);
+    if (venue.closeTime) setValue('closeTime', venue.closeTime);
+    if (venue.intervalMinutes) setValue('intervalMinutes', venue.intervalMinutes);
+    if (venue.playersPerSlot) setValue('playersPerSlot', venue.playersPerSlot);
   }, [selectedVenueId, venuesData?.data, setValue]);
 
   const onSubmit = async (data: FormData) => {

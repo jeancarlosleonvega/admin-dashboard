@@ -6,7 +6,6 @@ import { useAdditionalServices } from '@/hooks/queries/useAdditionalServices';
 import { useCreateBooking } from '@/hooks/queries/useBookings';
 import { Spinner } from '@components/ui/Spinner';
 import {
-  Search,
   LayoutGrid,
   List,
   Clock,
@@ -278,7 +277,6 @@ export default function BookingSearchPage() {
   const [endTime, setEndTime] = useState('');
   const [venueId, setVenueId] = useState('');
   const [numPlayers, setNumPlayers] = useState(1);
-  const [searched, setSearched] = useState(true);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
   // Booking modal
@@ -298,7 +296,7 @@ export default function BookingSearchPage() {
     [startDate, endDate, venueId, startTime, endTime],
   );
 
-  const { data: slotsData, isLoading, isFetching } = useSearchSlots(searchParams, searched);
+  const { data: slotsData, isLoading, isFetching } = useSearchSlots(searchParams, !!startDate);
 
   // Group by date → venue for card view
   const slotsByDateAndVenue = useMemo(() => {
@@ -321,15 +319,9 @@ export default function BookingSearchPage() {
     ? new Date(startDate + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
     : '';
 
-  const handleSearch = () => {
-    if (!startDate) return;
-    setSearched(true);
-  };
-
   const handleStartDateChange = (val: string) => {
     setStartDate(val);
     if (endDate && val > endDate) setEndDate(val);
-    setSearched(false);
   };
 
   return (
@@ -360,7 +352,7 @@ export default function BookingSearchPage() {
               type="date"
               value={endDate}
               min={startDate || today}
-              onChange={(e) => { setEndDate(e.target.value); setSearched(false); }}
+              onChange={(e) => setEndDate(e.target.value)}
               className="input"
             />
           </div>
@@ -373,7 +365,7 @@ export default function BookingSearchPage() {
             <input
               type="time"
               value={startTime}
-              onChange={(e) => { setStartTime(e.target.value); setSearched(false); }}
+              onChange={(e) => setStartTime(e.target.value)}
               className="input"
             />
           </div>
@@ -386,7 +378,7 @@ export default function BookingSearchPage() {
             <input
               type="time"
               value={endTime}
-              onChange={(e) => { setEndTime(e.target.value); setSearched(false); }}
+              onChange={(e) => setEndTime(e.target.value)}
               className="input"
             />
           </div>
@@ -416,7 +408,7 @@ export default function BookingSearchPage() {
             </label>
             <select
               value={venueId}
-              onChange={(e) => { setVenueId(e.target.value); setSearched(false); }}
+              onChange={(e) => setVenueId(e.target.value)}
               className="input"
             >
               <option value="">Todas</option>
@@ -428,23 +420,20 @@ export default function BookingSearchPage() {
             </select>
           </div>
 
-          {/* Buscar */}
-          <div>
-            <button
-              onClick={handleSearch}
-              disabled={!startDate || isFetching}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              {isFetching ? <Spinner size="sm" className="text-white" /> : <Search className="w-4 h-4" />}
-              Buscar
-            </button>
+          {/* Indicador de carga */}
+          <div className="flex items-end pb-0.5">
+            {isFetching && (
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Spinner size="sm" />
+                Buscando...
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Results */}
-      {searched && (
-        <div>
+      <div>
           {/* Results header */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -591,8 +580,7 @@ export default function BookingSearchPage() {
               </table>
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       {/* Booking modal */}
       {selectedSlot && (

@@ -195,12 +195,10 @@ export class VenueSchedulesService {
 
     const item = await venueSchedulesRepository.create(resolved);
 
-    // Generar slots automáticamente hasta min(endDate, today+60days)
+    // Si tiene fecha de fin usar esa; si no, generar 60 días adelante
     const today = new Date();
     const defaultUntil = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
-    const generateUntil = item.endDate
-      ? new Date(Math.min(item.endDate.getTime(), defaultUntil.getTime()))
-      : defaultUntil;
+    const generateUntil = item.endDate ?? defaultUntil;
 
     await generateSlots(item.id, generateUntil);
 

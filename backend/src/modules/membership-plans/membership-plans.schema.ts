@@ -7,6 +7,10 @@ export const createMembershipPlanSchema = z.object({
   monthlyReservationLimit: z.number().int().min(1).optional().nullable(),
   sportTypeId: z.string().uuid().optional().nullable(),
   active: z.boolean().default(true),
+  baseBookingPrice: z.number().min(0).default(0),
+  walletCreditEnabled: z.boolean().default(false),
+  walletCreditAmount: z.number().min(0).optional().nullable(),
+  walletPaymentEnabled: z.boolean().default(false),
 });
 
 export const updateMembershipPlanSchema = createMembershipPlanSchema.partial();

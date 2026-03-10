@@ -284,6 +284,47 @@ async function main() {
   }
   console.log('SystemConfig defaults creados');
 
+  // Seed ConditionTypes
+  const conditionTypes = [
+    {
+      name: 'Tipo de membresía',
+      key: 'membership_plan',
+      dataType: 'UUID' as const,
+      allowedOperators: ['EQ', 'NEQ'],
+      description: 'Filtra por plan de membresía del socio',
+    },
+    {
+      name: 'Sexo',
+      key: 'sex',
+      dataType: 'ENUM' as const,
+      allowedOperators: ['EQ', 'NEQ'],
+      description: 'Filtra por sexo del socio (MALE / FEMALE)',
+    },
+    {
+      name: 'Edad',
+      key: 'age',
+      dataType: 'NUMBER' as const,
+      allowedOperators: ['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE'],
+      description: 'Filtra por edad del socio en años',
+    },
+    {
+      name: 'Handicap',
+      key: 'handicap',
+      dataType: 'NUMBER' as const,
+      allowedOperators: ['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE'],
+      description: 'Filtra por handicap del socio',
+    },
+  ];
+
+  for (const ct of conditionTypes) {
+    await prisma.conditionType.upsert({
+      where: { key: ct.key },
+      update: {},
+      create: ct,
+    });
+  }
+  console.log('ConditionTypes creados');
+
   console.log('Seeding completed!');
 }
 

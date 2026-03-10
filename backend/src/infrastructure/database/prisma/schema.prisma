@@ -7,11 +7,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
 enum UserStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
 }
+
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum ConditionDataType {
+  NUMBER
+  STRING
+  UUID
+  ENUM
+}
+
+enum ConditionOperator {
+  EQ
+  NEQ
+  GT
+  GTE
+  LT
+  LTE
+}
+
+enum LogicalOperator {
+  AND
+  OR
+}
+
+enum WalletTxType {
+  CREDIT
+  DEBIT
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  BLOCKED
+}
+
+enum UserMembershipStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  MERCADOPAGO
+  TRANSFER
+  CASH
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING_PROOF
+  PENDING_VALIDATION
+  APPROVED
+  REJECTED
+  REFUNDED
+  PENDING_CASH
+}
+
+// ─── Auth / Users ─────────────────────────────────────────────────────────────
 
 model User {
   id            String     @id @default(uuid())
@@ -21,6 +92,9 @@ model User {
   lastName      String     @map("last_name")
   status        UserStatus @default(ACTIVE)
   tokenVersion  Int        @default(0) @map("token_version")
+  sex           UserSex?   @map("sex")
+  birthDate     DateTime?  @map("birth_date")
+  handicap      Int?       @map("handicap")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
@@ -28,6 +102,7 @@ model User {
   passwordResets  PasswordReset[]
   userMemberships UserMembership[]
   bookings        Booking[]
+  wallet          UserWallet?
 
   @@map("users")
 }
@@ -99,6 +174,8 @@ model PasswordReset {
   @@map("password_resets")
 }
 
+// ─── System ───────────────────────────────────────────────────────────────────
+
 model SystemConfig {
   id        String   @id @default(uuid())
   key       String   @unique
@@ -110,6 +187,8 @@ model SystemConfig {
 
   @@map("system_configs")
 }
+
+// ─── Sport Types & Venues ────────────────────────────────────────────────────
 
 model SportType {
   id                     String   @id @default(uuid())
@@ -157,28 +236,30 @@ model Venue {
   @@map("venues")
 }
 
+// ─── Memberships ──────────────────────────────────────────────────────────────
+
 model MembershipPlan {
-  id                      String   @id @default(uuid())
-  name                    String   @unique
-  description             String?
-  price                   Decimal  @db.Decimal(10, 2)
-  monthlyReservationLimit Int?     @map("monthly_reservation_limit")
-  sportTypeId             String?  @map("sport_type_id")
-  active                  Boolean  @default(true)
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  name                  String   @unique
+  description           String?
+  price                 Decimal  @db.Decimal(10, 2)
+  monthlyReservationLimit Int?   @map("monthly_reservation_limit")
+  sportTypeId           String?  @map("sport_type_id")
+  active                Boolean  @default(true)
+  // Precio base al momento de reservar (fallback cuando no hay regla específica)
+  baseBookingPrice      Decimal  @default(0) @db.Decimal(10, 2) @map("base_booking_price")
+  // Wallet: acreditación al pagar mensualidad
+  walletCreditEnabled   Boolean  @default(false) @map("wallet_credit_enabled")
+  walletCreditAmount    Decimal? @db.Decimal(10, 2) @map("wallet_credit_amount")
+  // Wallet: uso como medio de pago al reservar
+  walletPaymentEnabled  Boolean  @default(false) @map("wallet_payment_enabled")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   sportType       SportType?       @relation(fields: [sportTypeId], references: [id])
   userMemberships UserMembership[]
 
   @@map("membership_plans")
-}
-
-enum UserMembershipStatus {
-  ACTIVE
-  INACTIVE
-  CANCELLED
-  EXPIRED
 }
 
 model UserMembership {
@@ -199,6 +280,55 @@ model UserMembership {
 
   @@map("user_memberships")
 }
+
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+
+model UserWallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  balance   Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("user_wallets")
+}
+
+model WalletTransaction {
+  id            String       @id @default(uuid())
+  walletId      String       @map("wallet_id")
+  amount        Decimal      @db.Decimal(10, 2)
+  type          WalletTxType
+  description   String?
+  referenceType String?      @map("reference_type")
+  referenceId   String?      @map("reference_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  wallet UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@map("wallet_transactions")
+}
+
+// ─── Schedule Rules (Condition Types) ────────────────────────────────────────
+
+model ConditionType {
+  id               String            @id @default(uuid())
+  name             String
+  key              String            @unique
+  dataType         ConditionDataType
+  allowedOperators String[]          @map("allowed_operators")
+  description      String?
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  ruleConditions ScheduleRuleCondition[]
+
+  @@map("condition_types")
+}
+
+// ─── Venue Schedules & Slots ──────────────────────────────────────────────────
 
 model BlockedPeriod {
   id          String    @id @default(uuid())
@@ -235,16 +365,42 @@ model VenueSchedule {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  venue Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  venue Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
   slots Slot[]
+  rules ScheduleRule[]
 
   @@map("venue_schedules")
 }
 
-enum SlotStatus {
-  AVAILABLE
-  BOOKED
-  BLOCKED
+model ScheduleRule {
+  id                       String   @id @default(uuid())
+  scheduleId               String   @map("schedule_id")
+  canBook                  Boolean  @default(true) @map("can_book")
+  basePrice                Decimal  @db.Decimal(10, 2) @map("base_price")
+  revenueManagementEnabled Boolean  @default(false) @map("revenue_management_enabled")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  schedule   VenueSchedule          @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  conditions ScheduleRuleCondition[]
+
+  @@map("schedule_rules")
+}
+
+model ScheduleRuleCondition {
+  id              String            @id @default(uuid())
+  ruleId          String            @map("rule_id")
+  conditionTypeId String            @map("condition_type_id")
+  operator        ConditionOperator
+  value           String
+  logicalOperator LogicalOperator?  @map("logical_operator")
+  order           Int               @default(0)
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  rule          ScheduleRule  @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  conditionType ConditionType @relation(fields: [conditionTypeId], references: [id])
+
+  @@map("schedule_rule_conditions")
 }
 
 model Slot {
@@ -261,9 +417,12 @@ model Slot {
   schedule VenueSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   booking  Booking?
 
-  @@unique([venueId, date, startTime])
+  // Permitir múltiples slots por (venue, fecha, hora) de distintos schedules
+  @@unique([venueId, date, startTime, scheduleId])
   @@map("slots")
 }
+
+// ─── Additional Services ──────────────────────────────────────────────────────
 
 model AdditionalService {
   id          String   @id @default(uuid())
@@ -281,27 +440,7 @@ model AdditionalService {
   @@map("additional_services")
 }
 
-enum BookingStatus {
-  PENDING_PAYMENT
-  CONFIRMED
-  CANCELLED
-  NO_SHOW
-}
-
-enum PaymentMethod {
-  MERCADOPAGO
-  TRANSFER
-  CASH
-}
-
-enum PaymentStatus {
-  PENDING_PROOF
-  PENDING_VALIDATION
-  APPROVED
-  REJECTED
-  REFUNDED
-  PENDING_CASH
-}
+// ─── Bookings & Payments ──────────────────────────────────────────────────────
 
 model Booking {
   id               String        @id @default(uuid())

@@ -17,8 +17,8 @@ const nullableUuid = z.union([z.string().uuid(), z.literal(''), z.null()]).optio
 const schema = z.object({
   sportTypeId: nullableUuid,
   venueId: nullableUuid,
-  startDate: z.string().min(1, 'La fecha de inicio es obligatoria'),
-  endDate: z.string().min(1, 'La fecha de fin es obligatoria'),
+  startDate: z.string().min(1, 'La fecha de inicio es obligatoria').refine((v) => new Date(v).getFullYear() >= 2000, 'Año inválido'),
+  endDate: z.string().min(1, 'La fecha de fin es obligatoria').refine((v) => new Date(v).getFullYear() >= 2000, 'Año inválido'),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
   reason: z.string().optional(),

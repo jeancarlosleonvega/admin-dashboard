@@ -63,28 +63,32 @@ export default function SlotsViewPage() {
     return map;
   }, [availability]);
 
-  // Conjunto de fechas bloqueadas → razón (del primer período que aplique)
-  const blockedDatesMap = useMemo(() => {
-    const map: Record<string, string> = {};
+  // Separar bloqueos totales (sin horario) de parciales (con horario)
+  const { fullBlockedMap, partialBlockedMap } = useMemo(() => {
+    const full: Record<string, string> = {};
+    const partial: Record<string, { reason: string; startTime: string; endTime: string }[]> = {};
     const venueId = schedule?.venueId;
     const sportTypeId = schedule?.venue?.sportType?.id;
     for (const bp of blockedData?.data ?? []) {
       if (!bp.active) continue;
-      // Solo incluir bloques que apliquen: global, por deporte o por espacio específico
       const applies = (!bp.venueId && !bp.sportTypeId)
         || bp.venueId === venueId
         || (bp.sportTypeId && bp.sportTypeId === sportTypeId);
       if (!applies) continue;
-      // Usar solo la parte de fecha para evitar desfase de timezone
       const cur = new Date(bp.startDate.slice(0, 10) + 'T12:00:00');
       const end = new Date(bp.endDate.slice(0, 10) + 'T12:00:00');
       while (cur <= end) {
         const ds = toLocalDateString(cur);
-        if (!map[ds]) map[ds] = bp.reason || 'Período bloqueado';
+        if (bp.startTime && bp.endTime) {
+          if (!partial[ds]) partial[ds] = [];
+          partial[ds].push({ reason: bp.reason || 'Período bloqueado', startTime: bp.startTime, endTime: bp.endTime });
+        } else {
+          if (!full[ds]) full[ds] = bp.reason || 'Período bloqueado';
+        }
         cur.setDate(cur.getDate() + 1);
       }
     }
-    return map;
+    return { fullBlockedMap: full, partialBlockedMap: partial };
   }, [blockedData?.data, schedule?.venueId, schedule?.venue?.sportType?.id]);
 
   const calendarDays = useMemo(() => {
@@ -96,8 +100,9 @@ export default function SlotsViewPage() {
 
   const todayStr = toLocalDateString(today);
 
-  const isBlockedDay = selectedDate in blockedDatesMap;
-  const blockReason = blockedDatesMap[selectedDate];
+  const isFullyBlocked = selectedDate in fullBlockedMap;
+  const fullBlockReason = fullBlockedMap[selectedDate];
+  const partialBlocks = partialBlockedMap[selectedDate] ?? [];
 
   const total = slots?.length ?? 0;
   const available = slots?.filter((s) => s.status === 'AVAILABLE').length ?? 0;
@@ -233,7 +238,8 @@ export default function SlotsViewPage() {
               const count = availabilityMap[dateStr];
               const isSelected = dateStr === selectedDate;
               const isToday = dateStr === todayStr;
-              const isBlocked = dateStr in blockedDatesMap;
+              const isFullDay = dateStr in fullBlockedMap;
+              const isPartial = dateStr in partialBlockedMap;
 
               return (
                 <button
@@ -241,22 +247,23 @@ export default function SlotsViewPage() {
                   onClick={() => setSelectedDate(dateStr)}
                   className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-sm transition-colors ${
                     isSelected
-                      ? isBlocked
+                      ? isFullDay
                         ? 'bg-red-600 text-white'
                         : 'bg-primary-600 text-white'
-                      : isBlocked
+                      : isFullDay
                       ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                       : isToday
                       ? 'border border-primary-300 text-primary-700 hover:bg-primary-50'
                       : 'hover:bg-gray-50 text-gray-700'
                   }`}
-                  title={isBlocked ? blockedDatesMap[dateStr] : undefined}
+                  title={isFullDay ? fullBlockedMap[dateStr] : undefined}
                 >
                   <span className="font-medium leading-none">{day}</span>
-                  {isBlocked && !isSelected && (
-                    <Ban className="w-2.5 h-2.5 mt-0.5 text-red-400" />
+                  {isFullDay && !isSelected && <Ban className="w-2.5 h-2.5 mt-0.5 text-red-400" />}
+                  {isPartial && !isFullDay && (
+                    <span className="w-1.5 h-1.5 mt-0.5 rounded-full bg-orange-400 inline-block" />
                   )}
-                  {!isBlocked && count != null && (
+                  {!isFullDay && !isPartial && count != null && (
                     <span className={`text-[10px] mt-0.5 leading-none font-medium ${isSelected ? 'text-primary-100' : 'text-green-600'}`}>
                       {count}
                     </span>
@@ -267,7 +274,8 @@ export default function SlotsViewPage() {
           </div>
 
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 justify-center">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-100 border border-red-200 inline-block" /> Bloqueado</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-100 border border-red-200 inline-block" /> Día completo</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> Rango parcial</span>
             <span className="flex items-center gap-1"><span className="text-green-600 font-semibold">N</span> Disponibles</span>
           </div>
         </div>
@@ -278,7 +286,7 @@ export default function SlotsViewPage() {
             <h3 className="text-sm font-semibold text-gray-800">
               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </h3>
-            {!isBlockedDay && (
+            {!isFullyBlocked && (
               <div className="flex gap-3 text-xs text-gray-500">
                 <span><span className="font-semibold text-gray-900">{total}</span> total</span>
                 <span><span className="font-semibold text-green-600">{available}</span> disp.</span>
@@ -288,11 +296,11 @@ export default function SlotsViewPage() {
             )}
           </div>
 
-          {isBlockedDay ? (
+          {isFullyBlocked ? (
             <div className="px-6 py-16 text-center text-red-400">
               <Ban className="w-10 h-10 mx-auto mb-3 opacity-60" />
               <p className="text-sm font-medium text-red-600">Este día está bloqueado</p>
-              <p className="text-xs mt-1 text-gray-500">{blockReason}</p>
+              <p className="text-xs mt-1 text-gray-500">{fullBlockReason}</p>
             </div>
           ) : slotsLoading ? (
             <div className="flex justify-center py-12"><Spinner size="lg" /></div>
@@ -303,30 +311,43 @@ export default function SlotsViewPage() {
               <p className="text-xs mt-1">Generá turnos desde la vista de Horarios</p>
             </div>
           ) : (
-            <div className="overflow-y-auto max-h-96">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {slots.map((slot) => (
-                    <tr key={slot.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {slot.startTime} — {slot.endTime}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                          {STATUS_LABEL[slot.status] ?? slot.status}
-                        </span>
-                      </td>
-                    </tr>
+            <>
+              {partialBlocks.length > 0 && (
+                <div className="mx-4 mt-3 mb-1 rounded-lg bg-orange-50 border border-orange-200 px-3 py-2">
+                  <p className="text-xs font-semibold text-orange-700 mb-1">Franjas horarias bloqueadas:</p>
+                  {partialBlocks.map((pb, i) => (
+                    <p key={i} className="text-xs text-orange-600">
+                      {pb.startTime} — {pb.endTime}
+                      {pb.reason ? <span className="text-orange-400"> · {pb.reason}</span> : null}
+                    </p>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              )}
+              <div className="overflow-y-auto max-h-96">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {slots.map((slot) => (
+                      <tr key={slot.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                          {slot.startTime} — {slot.endTime}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                            {STATUS_LABEL[slot.status] ?? slot.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

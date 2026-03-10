@@ -298,10 +298,20 @@ export default function BookingSearchPage() {
 
   const { data: slotsData, isLoading, isFetching } = useSearchSlots(searchParams, !!startDate);
 
+  // Filtrar por capacidad de jugadores
+  const filteredSlots = useMemo(
+    () =>
+      (slotsData ?? []).filter((s) => {
+        const capacity = s.venue?.playersPerSlot ?? s.venue?.sportType?.defaultPlayersPerSlot ?? Infinity;
+        return capacity >= numPlayers;
+      }),
+    [slotsData, numPlayers],
+  );
+
   // Group by date → venue for card view
   const slotsByDateAndVenue = useMemo(() => {
     const dateMap = new Map<string, Map<string, SlotAvailability[]>>();
-    for (const s of slotsData ?? []) {
+    for (const s of filteredSlots) {
       const dateKey = s.date.slice(0, 10);
       const venueKey = s.venueId ?? s.venue?.id ?? 'unknown';
       if (!dateMap.has(dateKey)) dateMap.set(dateKey, new Map());
@@ -310,7 +320,7 @@ export default function BookingSearchPage() {
       venueMap.get(venueKey)!.push(s);
     }
     return dateMap;
-  }, [slotsData]);
+  }, [filteredSlots]);
 
   const isRange = startDate !== endDate && !!endDate;
   const rangeLabel = isRange
@@ -440,9 +450,9 @@ export default function BookingSearchPage() {
               <p className="text-sm font-semibold text-gray-800 capitalize">{rangeLabel}</p>
               {!isLoading && (
                 <p className="text-xs text-gray-500">
-                  {(slotsData?.length ?? 0) === 0
+                  {filteredSlots.length === 0
                     ? 'Sin turnos disponibles'
-                    : `${(slotsData?.length ?? 0)} turno${(slotsData?.length ?? 0) !== 1 ? 's' : ''} disponible${(slotsData?.length ?? 0) !== 1 ? 's' : ''}`}
+                    : `${filteredSlots.length} turno${filteredSlots.length !== 1 ? 's' : ''} disponible${filteredSlots.length !== 1 ? 's' : ''}`}
                 </p>
               )}
             </div>
@@ -468,7 +478,7 @@ export default function BookingSearchPage() {
             <div className="card flex justify-center py-16">
               <Spinner size="lg" />
             </div>
-          ) : (slotsData?.length ?? 0) === 0 ? (
+          ) : filteredSlots.length === 0 ? (
             <div className="card px-6 py-16 text-center text-gray-400">
               <Clock className="w-12 h-12 mx-auto mb-4 opacity-40" />
               <p className="text-sm font-medium">No hay turnos disponibles</p>
@@ -546,7 +556,7 @@ export default function BookingSearchPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {(slotsData ?? []).map((slot) => {
+                  {filteredSlots.map((slot) => {
                     const maxP =
                       slot.venue?.playersPerSlot ??
                       slot.venue?.sportType?.defaultPlayersPerSlot ??

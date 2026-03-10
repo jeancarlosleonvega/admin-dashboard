@@ -21,6 +21,13 @@ export interface SlotAvailability {
   startTime: string;
   endTime: string;
   status: 'AVAILABLE' | 'BOOKED' | 'BLOCKED';
+  venueId?: string;
+  venue?: {
+    id: string;
+    name: string;
+    playersPerSlot?: number | null;
+    sportType: { id: string; name: string; defaultPlayersPerSlot?: number };
+  };
 }
 
 export interface DayAvailability {

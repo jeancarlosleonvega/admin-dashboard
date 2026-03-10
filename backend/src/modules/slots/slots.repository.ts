@@ -1,4 +1,5 @@
 import { prisma } from '../../infrastructure/database/client.js';
+import type { SlotsSearchInput } from './slots.schema.js';
 
 export class SlotsRepository {
   async findByVenueAndDate(venueId: string, date: string) {
@@ -22,6 +23,36 @@ export class SlotsRepository {
             id: true,
             name: true,
             sportType: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async searchAvailable(input: SlotsSearchInput) {
+    const dateObj = new Date(input.date + 'T00:00:00.000Z');
+    return prisma.slot.findMany({
+      where: {
+        date: dateObj,
+        status: 'AVAILABLE',
+        ...(input.venueId && { venueId: input.venueId }),
+        ...(input.startTime && { startTime: { gte: input.startTime } }),
+        ...(input.endTime && { endTime: { lte: input.endTime } }),
+      },
+      orderBy: [{ startTime: 'asc' }, { venue: { name: 'asc' } }],
+      select: {
+        id: true,
+        venueId: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        venue: {
+          select: {
+            id: true,
+            name: true,
+            playersPerSlot: true,
+            sportType: { select: { id: true, name: true, defaultPlayersPerSlot: true } },
           },
         },
       },

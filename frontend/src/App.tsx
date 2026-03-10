@@ -46,7 +46,7 @@ import AdditionalServicesListPage from '@features/additional-services/pages/Addi
 import AdditionalServiceCreatePage from '@features/additional-services/pages/AdditionalServiceCreatePage';
 import AdditionalServiceEditPage from '@features/additional-services/pages/AdditionalServiceEditPage';
 import AdminBookingsPage from '@features/bookings/pages/AdminBookingsPage';
-import BookingFlowPage from '@features/bookings/pages/BookingFlowPage';
+import BookingSearchPage from '@features/bookings/pages/BookingSearchPage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
 import PendingTransfersPage from '@features/payments/pages/PendingTransfersPage';
 import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
@@ -395,7 +395,7 @@ function App() {
             </PermissionRoute>
           }
         />
-        <Route path="/bookings/new" element={<BookingFlowPage />} />
+        <Route path="/bookings/new" element={<BookingSearchPage />} />
         <Route path="/bookings/my" element={<MyBookingsPage />} />
 
         {/* Payments */}

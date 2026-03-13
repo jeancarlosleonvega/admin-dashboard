@@ -15,8 +15,12 @@ type MembershipPlanInput = {
   name: string;
   description?: string;
   price: number;
+  baseBookingPrice?: number;
   monthlyReservationLimit?: number | null;
   sportTypeId?: string | null;
+  walletCreditEnabled?: boolean;
+  walletCreditAmount?: number | null;
+  walletPaymentEnabled?: boolean;
   active?: boolean;
 };
 

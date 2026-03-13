@@ -4,6 +4,8 @@ export interface SportType {
   description: string | null;
   defaultIntervalMinutes: number;
   defaultPlayersPerSlot: number;
+  defaultMemberPrice: number;
+  defaultNonMemberPrice: number;
   defaultOpenTime: string;
   defaultCloseTime: string;
   defaultEnabledDays: number[];

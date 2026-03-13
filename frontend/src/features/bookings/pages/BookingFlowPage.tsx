@@ -7,7 +7,7 @@ import { useCreateBooking } from '@/hooks/queries/useBookings';
 import { apiClient } from '@api/client';
 import { Spinner } from '@components/ui/Spinner';
 import toast from 'react-hot-toast';
-import type { PaymentMethod } from '@/types/booking.types';
+import type { Booking, PaymentMethod } from '@/types/booking.types';
 import { formatDate, formatDateLong } from '@lib/formatDate';
 
 type Step = 1 | 2 | 3 | 4;
@@ -24,7 +24,7 @@ export default function BookingFlowPage() {
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MERCADOPAGO');
   const [notes, setNotes] = useState('');
-  const [confirmedBooking, setConfirmedBooking] = useState<Record<string, unknown> | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
   const [showTransferProofForm, setShowTransferProofForm] = useState(false);
   const [proofUrl, setProofUrl] = useState('');
 

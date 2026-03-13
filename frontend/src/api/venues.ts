@@ -15,10 +15,10 @@ type VenueInput = {
   sportTypeId: string;
   name: string;
   description?: string;
-  intervalMinutes?: number;
-  playersPerSlot?: number;
-  openTime?: string;
-  closeTime?: string;
+  intervalMinutes?: number | null;
+  playersPerSlot?: number | null;
+  openTime?: string | null;
+  closeTime?: string | null;
   enabledDays?: number[];
   active?: boolean;
 };

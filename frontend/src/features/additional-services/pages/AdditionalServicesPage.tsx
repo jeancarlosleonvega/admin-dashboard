@@ -7,6 +7,13 @@ import ConfirmDialog from '@components/shared/ConfirmDialog';
 import toast from 'react-hot-toast';
 import type { AdditionalService } from '@/types/additional-service.types';
 
+type ServiceFormData = {
+  name: string;
+  description?: string;
+  price: number;
+  active: boolean;
+};
+
 function ServiceModal({
   item,
   onClose,
@@ -15,7 +22,7 @@ function ServiceModal({
 }: {
   item: AdditionalService | null;
   onClose: () => void;
-  onSave: (data: Record<string, unknown>) => void;
+  onSave: (data: ServiceFormData) => void;
   isSaving: boolean;
 }) {
   const [form, setForm] = useState({
@@ -90,7 +97,7 @@ export default function AdditionalServicesPage() {
 
   const services = data?.data ?? [];
 
-  const handleSave = async (formData: Record<string, unknown>) => {
+  const handleSave = async (formData: ServiceFormData) => {
     try {
       if (editTarget) {
         await updateService.mutateAsync({ id: editTarget.id, data: formData });

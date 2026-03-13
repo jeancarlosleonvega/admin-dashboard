@@ -22,7 +22,7 @@ export default function QRValidatorPage() {
       const data = await qrApi.validateQR(code.trim());
       setResult(data);
     } catch (err: unknown) {
-      setError(err?.response?.data?.error?.message ?? 'QR inválido o error al validar');
+      setError((err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ?? 'QR inválido o error al validar');
     } finally {
       setLoading(false);
     }

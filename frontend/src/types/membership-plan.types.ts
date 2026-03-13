@@ -3,8 +3,12 @@ export interface MembershipPlan {
   name: string;
   description: string | null;
   price: number;
+  baseBookingPrice: number;
   monthlyReservationLimit: number | null;
   sportTypeId: string | null;
+  walletCreditEnabled: boolean;
+  walletCreditAmount: number | null;
+  walletPaymentEnabled: boolean;
   active: boolean;
   createdAt: string;
   updatedAt: string;

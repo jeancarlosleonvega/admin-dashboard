@@ -16,7 +16,7 @@ function BlockedPeriodModal({
 }: {
   item: BlockedPeriod | null;
   onClose: () => void;
-  onSave: (data: Record<string, unknown>) => void;
+  onSave: (data: Partial<BlockedPeriod>) => void;
   isSaving: boolean;
 }) {
   const [form, setForm] = useState({
@@ -111,13 +111,13 @@ export default function BlockedPeriodsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: Record<string, unknown>) => blockedPeriodsApi.createBlockedPeriod(d),
+    mutationFn: (d: Partial<BlockedPeriod>) => blockedPeriodsApi.createBlockedPeriod(d as Parameters<typeof blockedPeriodsApi.createBlockedPeriod>[0]),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['blocked-periods'] }); toast.success('Período bloqueado creado'); setShowModal(false); },
     onError: () => toast.error('Error al crear período bloqueado'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => blockedPeriodsApi.updateBlockedPeriod(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<BlockedPeriod> }) => blockedPeriodsApi.updateBlockedPeriod(id, data as Parameters<typeof blockedPeriodsApi.updateBlockedPeriod>[1]),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['blocked-periods'] }); toast.success('Período bloqueado actualizado'); setShowModal(false); setEditTarget(null); },
     onError: () => toast.error('Error al actualizar'),
   });

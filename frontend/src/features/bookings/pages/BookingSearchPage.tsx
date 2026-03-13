@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { SlotAvailability } from '@/types/venue-schedule.types';
-import type { PaymentMethod } from '@/types/booking.types';
+import type { Booking, PaymentMethod } from '@/types/booking.types';
 import { formatDateLong, formatDateShort } from '@lib/formatDate';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -48,7 +48,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MERCADOPAGO');
   const [notes, setNotes] = useState('');
   const [confirmed, setConfirmed] = useState(false);
-  const [confirmedBooking, setConfirmedBooking] = useState<Record<string, unknown> | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
   const createBooking = useCreateBooking();
 
@@ -67,7 +67,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
         paymentMethod,
         notes: notes || undefined,
       });
-      setConfirmedBooking(booking as Record<string, unknown>);
+      setConfirmedBooking(booking);
       setConfirmed(true);
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { error?: { message?: string } } } })
@@ -102,7 +102,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
               <p className="text-sm text-yellow-700">
                 Monto:{' '}
                 <strong>
-                  ${parseFloat((confirmedBooking.price as string) ?? '0').toLocaleString()}
+                  ${confirmedBooking.price.toLocaleString()}
                 </strong>
                 . Tenés 24hs para cargar el comprobante.
               </p>
@@ -112,7 +112,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
               Abonás{' '}
               <strong>
-                ${parseFloat((confirmedBooking.price as string) ?? '0').toLocaleString()}
+                ${confirmedBooking.price.toLocaleString()}
               </strong>{' '}
               el día de la reserva.
             </div>
@@ -551,7 +551,7 @@ export default function BookingSearchPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {slotsData ?? [].map((slot) => {
+                  {(slotsData ?? []).map((slot) => {
                     const maxP =
                       slot.venue?.playersPerSlot ??
                       slot.venue?.sportType?.defaultPlayersPerSlot ??

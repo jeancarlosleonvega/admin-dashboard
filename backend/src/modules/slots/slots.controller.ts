@@ -8,7 +8,8 @@ export class SlotsController {
   async findByVenueAndDate(request: FastifyRequest, reply: FastifyReply) {
     const parsed = slotsQuerySchema.safeParse(request.query);
     if (!parsed.success) throw new ValidationError('Parámetros inválidos', parsed.error.errors);
-    const items = await slotsService.findByVenueAndDate(parsed.data);
+    const userId = (request as any).user?.id;
+    const items = await slotsService.findByVenueAndDate(parsed.data, userId);
     return reply.send(successResponse(items));
   }
 

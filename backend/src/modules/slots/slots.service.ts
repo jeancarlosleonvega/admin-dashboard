@@ -2,9 +2,34 @@ import { slotsRepository } from './slots.repository.js';
 import { prisma } from '../../infrastructure/database/client.js';
 import type { SlotsQueryInput, SlotsAvailabilityQueryInput, SlotsSearchInput } from './slots.schema.js';
 
+async function buildUserProfile(userId: string) {
+  const [user, activeMembership] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { sex: true, birthDate: true, handicap: true },
+    }),
+    prisma.userMembership.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+      },
+      select: { membershipPlanId: true },
+    }),
+  ]);
+
+  return {
+    membershipPlanId: activeMembership?.membershipPlanId ?? null,
+    sex: user?.sex ?? null,
+    birthDate: user?.birthDate ?? null,
+    handicap: user?.handicap ?? null,
+  };
+}
+
 export class SlotsService {
-  async findByVenueAndDate(data: SlotsQueryInput) {
-    return slotsRepository.findByVenueAndDate(data.venueId, data.date);
+  async findByVenueAndDate(data: SlotsQueryInput, userId?: string) {
+    const userProfile = userId ? await buildUserProfile(userId) : undefined;
+    return slotsRepository.findByVenueAndDate(data.venueId, data.date, userProfile);
   }
 
   async getAvailability(data: SlotsAvailabilityQueryInput) {
@@ -12,33 +37,7 @@ export class SlotsService {
   }
 
   async searchAvailable(data: SlotsSearchInput, userId?: string) {
-    let userProfile;
-    if (userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { sex: true, birthDate: true, handicap: true },
-      });
-
-      const activeMembership = await prisma.userMembership.findFirst({
-        where: {
-          userId,
-          status: 'ACTIVE',
-          OR: [
-            { endDate: null },
-            { endDate: { gt: new Date() } },
-          ],
-        },
-        select: { membershipPlanId: true },
-      });
-
-      userProfile = {
-        membershipPlanId: activeMembership?.membershipPlanId ?? null,
-        sex: user?.sex ?? null,
-        birthDate: user?.birthDate ?? null,
-        handicap: user?.handicap ?? null,
-      };
-    }
-
+    const userProfile = userId ? await buildUserProfile(userId) : undefined;
     return slotsRepository.searchAvailable(data, userProfile);
   }
 }

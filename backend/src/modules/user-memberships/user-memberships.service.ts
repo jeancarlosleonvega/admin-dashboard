@@ -1,6 +1,7 @@
 import { userMembershipsRepository } from './user-memberships.repository.js';
+import { walletService } from '../wallet/wallet.service.js';
+import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
-import { ValidationError } from '../../shared/errors/ValidationError.js';
 import type { CreateUserMembershipInput, UpdateUserMembershipInput, UserMembershipFiltersInput } from './user-memberships.schema.js';
 
 export class UserMembershipsService {
@@ -30,10 +31,31 @@ export class UserMembershipsService {
     // Un usuario solo puede tener UNA membresía activa a la vez
     const existing = await userMembershipsRepository.findActiveByUserId(data.userId);
     if (existing) {
-      // Cancelar la activa antes de asignar nueva
       await userMembershipsRepository.cancelActiveForUser(data.userId);
     }
-    return userMembershipsRepository.create(data);
+
+    const membership = await userMembershipsRepository.create(data);
+
+    // Acreditar wallet si el plan lo tiene habilitado
+    const plan = await prisma.membershipPlan.findUnique({
+      where: { id: data.membershipPlanId },
+      select: { walletCreditEnabled: true, walletCreditAmount: true, name: true },
+    });
+
+    if (plan?.walletCreditEnabled && plan.walletCreditAmount) {
+      const amount = parseFloat(plan.walletCreditAmount.toString());
+      if (amount > 0) {
+        await walletService.credit(
+          data.userId,
+          amount,
+          'membership',
+          membership.id,
+          `Crédito por membresía ${plan.name}`,
+        );
+      }
+    }
+
+    return membership;
   }
 
   async update(id: string, data: UpdateUserMembershipInput) {

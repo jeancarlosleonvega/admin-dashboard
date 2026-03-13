@@ -56,6 +56,9 @@ import ConditionTypesListPage from '@features/condition-types/pages/ConditionTyp
 import ConditionTypeCreatePage from '@features/condition-types/pages/ConditionTypeCreatePage';
 import ConditionTypeEditPage from '@features/condition-types/pages/ConditionTypeEditPage';
 import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
+import MyProfilePage from '@features/profile/pages/MyProfilePage';
+import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
+import MyWalletPage from '@features/wallet/pages/MyWalletPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -482,6 +485,11 @@ function App() {
             </PermissionRoute>
           }
         />
+
+        {/* Portal del socio */}
+        <Route path="/my-profile" element={<MyProfilePage />} />
+        <Route path="/my-membership" element={<MyMembershipPage />} />
+        <Route path="/my-wallet" element={<MyWalletPage />} />
 
         {/* Complete Profile */}
         <Route path="/complete-profile" element={<CompleteProfilePage />} />

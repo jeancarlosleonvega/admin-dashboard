@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, User, Wallet } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
@@ -19,6 +19,9 @@ const navigation = [
   { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen, permission: undefined },
   { name: 'Transferencias', href: '/payments/transfers', icon: DollarSign, permission: 'payments.view' },
   { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
+  { name: 'Mi Perfil', href: '/my-profile', icon: User, permission: undefined },
+  { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard, permission: undefined },
+  { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet, permission: undefined },
 ];
 
 const tooltipClass =

@@ -60,6 +60,7 @@ import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
 import PermissionRoute from '@/routes/PermissionRoute';
+import BookingRoute from '@/routes/BookingRoute';
 
 // Components
 import { Spinner } from '@components/ui/Spinner';
@@ -401,8 +402,22 @@ function App() {
             </PermissionRoute>
           }
         />
-        <Route path="/bookings/new" element={<BookingSearchPage />} />
-        <Route path="/bookings/my" element={<MyBookingsPage />} />
+        <Route
+          path="/bookings/new"
+          element={
+            <BookingRoute>
+              <BookingSearchPage />
+            </BookingRoute>
+          }
+        />
+        <Route
+          path="/bookings/my"
+          element={
+            <BookingRoute>
+              <MyBookingsPage />
+            </BookingRoute>
+          }
+        />
 
         {/* Payments */}
         <Route
@@ -468,18 +483,11 @@ function App() {
           }
         />
 
+        {/* Complete Profile */}
+        <Route path="/complete-profile" element={<CompleteProfilePage />} />
+
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Route>
-
-      {/* Complete Profile */}
-      <Route
-        path="/complete-profile"
-        element={
-          <ProtectedRoute>
-            <CompleteProfilePage />
-          </ProtectedRoute>
-        }
-      />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

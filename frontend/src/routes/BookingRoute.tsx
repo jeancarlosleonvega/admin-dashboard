@@ -14,9 +14,10 @@ export default function BookingRoute({ children }: BookingRouteProps) {
   const { user, can } = useAuthStore();
   const location = useLocation();
 
-  const isAdmin = can('users.manage');
+  // Clientes no tienen users.view — admins y recepcionistas sí
+  const isStaffOrAdmin = can('users.view');
 
-  if (!isAdmin && user?.profileCompleted === false) {
+  if (!isStaffOrAdmin && user?.profileCompleted === false) {
     return <Navigate to="/complete-profile" state={{ from: location }} replace />;
   }
 

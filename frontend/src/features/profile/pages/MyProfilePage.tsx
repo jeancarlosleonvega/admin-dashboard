@@ -6,6 +6,7 @@ import { usePageHeader } from '@/hooks/usePageHeader';
 import { useAuthStore } from '@stores/authStore';
 import { profileApi } from '@api/profile.api';
 import { Spinner } from '@components/ui/Spinner';
+import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
@@ -17,7 +18,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function MyProfilePage() {
-  usePageHeader({ subtitle: 'Tus datos personales' });
+  usePageHeader({});
 
   const { user, initialize } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,76 +61,86 @@ export default function MyProfilePage() {
   };
 
   return (
-    <div className="max-w-2xl space-y-6">
-      {/* Info básica (solo lectura) */}
-      <div className="card p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Información de cuenta</h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500 mb-0.5">Nombre</p>
-            <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 mb-0.5">Email</p>
-            <p className="font-medium text-gray-900">{user?.email}</p>
-          </div>
+    <div>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="px-6 pb-6">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <DetailSection title="Información de cuenta" description="Datos de acceso a la plataforma.">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Nombre</label>
+                  <input type="text" className="input bg-gray-50" value={user?.firstName ?? ''} readOnly />
+                </div>
+                <div>
+                  <label className="label">Apellido</label>
+                  <input type="text" className="input bg-gray-50" value={user?.lastName ?? ''} readOnly />
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="label">Email</label>
+                <input type="text" className="input bg-gray-50" value={user?.email ?? ''} readOnly />
+              </div>
+            </DetailSection>
+
+            <DetailSection title="Datos de perfil" description="Información necesaria para las reservas." noBorder>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="sex" className="label">Sexo</label>
+                  <select id="sex" className={`input ${errors.sex ? 'input-error' : ''}`} {...register('sex')}>
+                    <option value="">Seleccioná...</option>
+                    <option value="MALE">Masculino</option>
+                    <option value="FEMALE">Femenino</option>
+                  </select>
+                  {errors.sex && <p className="mt-1 text-sm text-red-600">{errors.sex.message}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="birthDate" className="label">Fecha de nacimiento</label>
+                  <input
+                    id="birthDate"
+                    type="date"
+                    className={`input ${errors.birthDate ? 'input-error' : ''}`}
+                    {...register('birthDate')}
+                  />
+                  {errors.birthDate && (
+                    <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="handicap" className="label">Handicap</label>
+                  <input
+                    id="handicap"
+                    type="number"
+                    min={0}
+                    max={54}
+                    step={1}
+                    placeholder="0 - 54"
+                    className={`input ${errors.handicap ? 'input-error' : ''}`}
+                    {...register('handicap')}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Handicap de golf (0 a 54)</p>
+                  {errors.handicap && (
+                    <p className="mt-1 text-sm text-red-600">{errors.handicap.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {isDirty && (
+                <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="btn-primary disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSubmitting && <Spinner size="sm" className="text-white" />}
+                    Guardar cambios
+                  </button>
+                </div>
+              )}
+            </DetailSection>
+          </form>
         </div>
-      </div>
-
-      {/* Datos de perfil (editables) */}
-      <div className="card p-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Datos de perfil</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="label">Sexo</label>
-            <select className={`input ${errors.sex ? 'input-error' : ''}`} {...register('sex')}>
-              <option value="">Seleccioná...</option>
-              <option value="MALE">Masculino</option>
-              <option value="FEMALE">Femenino</option>
-            </select>
-            {errors.sex && <p className="mt-1 text-sm text-red-600">{errors.sex.message}</p>}
-          </div>
-
-          <div>
-            <label className="label">Fecha de nacimiento</label>
-            <input
-              type="date"
-              className={`input ${errors.birthDate ? 'input-error' : ''}`}
-              {...register('birthDate')}
-            />
-            {errors.birthDate && (
-              <p className="mt-1 text-sm text-red-600">{errors.birthDate.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="label">Handicap</label>
-            <input
-              type="number"
-              min={0}
-              max={54}
-              step={1}
-              placeholder="0 - 54"
-              className={`input ${errors.handicap ? 'input-error' : ''}`}
-              {...register('handicap')}
-            />
-            <p className="mt-1 text-xs text-gray-500">Handicap de golf (0 a 54)</p>
-            {errors.handicap && (
-              <p className="mt-1 text-sm text-red-600">{errors.handicap.message}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting || !isDirty}
-              className="btn-primary disabled:opacity-50 flex items-center gap-2"
-            >
-              {isSubmitting && <Spinner size="sm" />}
-              Guardar cambios
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

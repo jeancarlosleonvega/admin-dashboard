@@ -1,6 +1,8 @@
+import { Navigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useQuery } from '@tanstack/react-query';
 import { walletApi } from '@api/wallet.api';
+import { useAuthStore } from '@stores/authStore';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
@@ -12,6 +14,11 @@ function formatAmount(amount: number) {
 
 export default function MyWalletPage() {
   usePageHeader({});
+  const { user } = useAuthStore();
+
+  if (!user?.walletEnabled) {
+    return <Navigate to="/bookings/my" replace />;
+  }
 
   const { data: wallet, isLoading: loadingWallet } = useQuery({
     queryKey: ['my-wallet'],

@@ -1,10 +1,12 @@
+import React from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, User, Wallet } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
 
-const navigation = [
+// Ítems solo para staff/admin (requieren al menos un permiso de gestión)
+const adminNav = [
   { name: 'Inicio', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
   { name: 'Tipos de Deporte', href: '/sport-types', icon: Activity, permission: 'sport-types.view' },
   { name: 'Espacios', href: '/venues', icon: MapPin, permission: 'venues.view' },
@@ -16,13 +18,49 @@ const navigation = [
   { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },
   { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle, permission: 'slots.view' },
-  { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen, permission: undefined },
   { name: 'Transferencias', href: '/payments/transfers', icon: DollarSign, permission: 'payments.view' },
   { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
-  { name: 'Mi Perfil', href: '/my-profile', icon: User, permission: undefined },
-  { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard, permission: undefined },
-  { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet, permission: undefined },
 ];
+
+// Ítems visibles para todos (portal del socio)
+const clientNav = [
+  { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen },
+  { name: 'Mi Perfil', href: '/my-profile', icon: User },
+  { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard },
+  { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet },
+];
+
+type NavItem = { name: string; href: string; icon: React.ElementType; permission?: string };
+
+function NavItemLink({ item, expanded, onClick }: { item: NavItem; expanded: boolean; onClick: () => void }) {
+  return (
+    <NavLink
+      to={item.href}
+      onClick={onClick}
+      className={({ isActive }) =>
+        cn(
+          'relative flex items-center w-full h-11 rounded-lg transition-colors group',
+          expanded ? 'lg:px-3 lg:gap-3' : 'lg:justify-center lg:px-0 lg:gap-0',
+          'px-3 gap-3',
+          isActive
+            ? 'text-primary-600 bg-primary-50'
+            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary-600" />}
+          <item.icon className="w-5 h-5 flex-shrink-0" />
+          <span className={cn('text-sm font-medium transition-all duration-300 overflow-hidden whitespace-nowrap', expanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0')}>
+            {item.name}
+          </span>
+          {!expanded && <span className={cn(tooltipClass, 'hidden lg:block')}>{item.name}</span>}
+        </>
+      )}
+    </NavLink>
+  );
+}
 
 const tooltipClass =
   'absolute left-full ml-2 px-3 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-primary-600/25 pointer-events-none opacity-0 invisible translate-x-2 group-hover:opacity-100 group-hover:visible group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap z-50';
@@ -32,9 +70,10 @@ export default function Sidebar() {
   const { sidebarOpen, mobileSidebarOpen, closeMobileSidebar } = useUIStore();
   const navigate = useNavigate();
 
-  const filteredNav = navigation.filter(
-    (item) => !item.permission || can(item.permission)
-  );
+  const isStaffOrAdmin = can('users.view');
+  const filteredAdminNav = adminNav.filter((item) => can(item.permission));
+  // Clientes ven solo portal; staff/admin ven gestión + acceso rápido al portal
+  const filteredNav = isStaffOrAdmin ? filteredAdminNav : [];
 
   const handleLogout = async () => {
     await logout();
@@ -108,44 +147,30 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 space-y-1">
-          {filteredNav.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.href}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                cn(
-                  'relative flex items-center w-full h-11 rounded-lg transition-colors group',
-                  expanded ? 'lg:px-3 lg:gap-3' : 'lg:justify-center lg:px-0 lg:gap-0',
-                  'px-3 gap-3',
-                  isActive
-                    ? 'text-primary-600 bg-primary-50'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <div className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary-600" />
-                  )}
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span
-                    className={cn(
-                      'text-sm font-medium transition-all duration-300 overflow-hidden whitespace-nowrap',
-                      expanded ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0'
-                    )}
-                  >
-                    {item.name}
-                  </span>
-                  {!expanded && (
-                    <span className={cn(tooltipClass, 'hidden lg:block')}>{item.name}</span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+        <nav className="flex-1 px-2 overflow-y-auto">
+          {/* Sección admin/staff */}
+          {filteredNav.length > 0 && (
+            <div className="space-y-1 pb-2">
+              {filteredNav.map((item) => (
+                <NavItemLink key={item.name} item={item} expanded={expanded} onClick={handleNavClick} />
+              ))}
+            </div>
+          )}
+
+          {/* Separador + portal del socio */}
+          {filteredNav.length > 0 && (
+            <div className={cn('pt-3 pb-2 flex-shrink-0', expanded ? 'lg:px-2' : 'lg:px-0')}>
+              <span className={cn('text-[10px] font-semibold text-gray-400 uppercase tracking-wider block', expanded ? 'lg:text-left' : 'lg:text-center lg:hidden')}>
+                Mi portal
+              </span>
+            </div>
+          )}
+
+          <div className="space-y-1 pb-2">
+            {clientNav.map((item) => (
+              <NavItemLink key={item.name} item={item} expanded={expanded} onClick={handleNavClick} />
+            ))}
+          </div>
         </nav>
 
         {/* Bottom section */}

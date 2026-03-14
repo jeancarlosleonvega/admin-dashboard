@@ -48,7 +48,7 @@ import AdditionalServiceEditPage from '@features/additional-services/pages/Addit
 import AdminBookingsPage from '@features/bookings/pages/AdminBookingsPage';
 import BookingSearchPage from '@features/bookings/pages/BookingSearchPage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
-import PendingTransfersPage from '@features/payments/pages/PendingTransfersPage';
+import PaymentsPage from '@features/payments/pages/PaymentsPage';
 import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
 import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
 import QRValidatorPage from '@features/qr/pages/QRValidatorPage';
@@ -417,12 +417,12 @@ function App() {
           }
         />
 
-        {/* Payments */}
+        {/* Pagos */}
         <Route
-          path="/pagos/transferencias"
+          path="/pagos"
           element={
             <PermissionRoute permission="payments.view">
-              <PendingTransfersPage />
+              <PaymentsPage />
             </PermissionRoute>
           }
         />

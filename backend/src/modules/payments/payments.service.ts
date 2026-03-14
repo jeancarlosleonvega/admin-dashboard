@@ -11,6 +11,21 @@ function formatMonthYear(date: Date): string {
 }
 
 export class PaymentsService {
+  async findAll(method?: string) {
+    return prisma.payment.findMany({
+      where: method ? { method } : undefined,
+      include: {
+        booking: {
+          include: {
+            user: { select: { id: true, firstName: true, lastName: true, email: true } },
+            slot: { include: { venue: { select: { id: true, name: true } } } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findPendingTransfers() {
     return prisma.payment.findMany({
       where: {

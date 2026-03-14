@@ -26,6 +26,12 @@ export interface PaymentWithBooking {
 }
 
 export const paymentsApi = {
+  async getAll(method?: string): Promise<PaymentWithBooking[]> {
+    const params = method ? { method } : undefined;
+    const response = await apiClient.get('/payments', { params });
+    return response.data.data;
+  },
+
   async getPendingTransfers(): Promise<PaymentWithBooking[]> {
     const response = await apiClient.get('/payments/pending-transfers');
     return response.data.data;

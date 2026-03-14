@@ -6,6 +6,11 @@ import { authorize } from '../../shared/middlewares/authorize.js';
 export async function paymentsRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authenticate);
 
+  fastify.get('/', {
+    preHandler: [authorize('payments.view')],
+    handler: paymentsController.findAll.bind(paymentsController),
+  });
+
   fastify.get('/pending-transfers', {
     preHandler: [authorize('payments.view')],
     handler: paymentsController.findPendingTransfers.bind(paymentsController),

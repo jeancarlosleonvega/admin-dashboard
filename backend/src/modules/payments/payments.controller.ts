@@ -5,6 +5,11 @@ import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
 export class PaymentsController {
+  async findAll(request: FastifyRequest<{ Querystring: { method?: string } }>, reply: FastifyReply) {
+    const items = await paymentsService.findAll(request.query.method);
+    return reply.send(successResponse(items));
+  }
+
   async findPendingTransfers(request: FastifyRequest, reply: FastifyReply) {
     const items = await paymentsService.findPendingTransfers();
     return reply.send(successResponse(items));

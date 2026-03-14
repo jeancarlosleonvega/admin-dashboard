@@ -3,8 +3,16 @@ import { paymentsApi } from '@api/payments.api';
 
 export const paymentKeys = {
   all: ['payments'] as const,
+  list: (method?: string) => [...paymentKeys.all, 'list', method] as const,
   pendingTransfers: () => [...paymentKeys.all, 'pending-transfers'] as const,
 };
+
+export function usePayments(method?: string) {
+  return useQuery({
+    queryKey: paymentKeys.list(method),
+    queryFn: () => paymentsApi.getAll(method),
+  });
+}
 
 export function usePendingTransfers() {
   return useQuery({

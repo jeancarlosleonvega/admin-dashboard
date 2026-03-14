@@ -17,7 +17,7 @@ const adminNav = [
   { name: 'Tipos de Condición', href: '/tipos-condicion', icon: GitBranch, permission: 'condition-types.view' },
   { name: 'Servicios Adicionales', href: '/servicios-adicionales', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/reservas', icon: Calendar, permission: 'bookings.view' },
-  { name: 'Transferencias', href: '/pagos/transferencias', icon: DollarSign, permission: 'payments.view' },
+  { name: 'Pagos', href: '/pagos', icon: DollarSign, permission: 'payments.view' },
   { name: 'Validar QR', href: '/validar-qr', icon: QrCode, permission: 'qr.validate' },
 ];
 

@@ -6,22 +6,44 @@ import { usePageHeaderStore } from '@stores/pageHeaderStore';
 const routeTitles: Record<string, string> = {
   '/inicio': 'Inicio',
   '/usuarios': 'Usuarios',
-  '/usuarios/create': 'Crear Usuario',
-  '/roles': 'Roles',
-  '/roles/create': 'Crear Rol',
-  '/permissions': 'Permisos',
-  '/permissions/create': 'Crear Permiso',
+  '/tipos-deporte': 'Tipos de Deporte',
+  '/tipos-deporte/nuevo': 'Nuevo Tipo de Deporte',
+  '/espacios': 'Espacios',
+  '/espacios/nuevo': 'Nuevo Espacio',
+  '/planes-membresia': 'Planes de Membresía',
+  '/planes-membresia/nuevo': 'Nuevo Plan de Membresía',
+  '/membresias-socios': 'Membresías Socios',
+  '/membresias-socios/nuevo': 'Asignar Membresía',
+  '/horarios': 'Horarios',
+  '/horarios/nuevo': 'Nuevo Horario',
+  '/periodos-bloqueados': 'Períodos Bloqueados',
+  '/periodos-bloqueados/nuevo': 'Nuevo Período Bloqueado',
+  '/tipos-condicion': 'Tipos de Condición',
+  '/tipos-condicion/nuevo': 'Nuevo Tipo de Condición',
+  '/servicios-adicionales': 'Servicios Adicionales',
+  '/reservas': 'Reservas',
+  '/reservas/nueva': 'Nueva Reserva',
+  '/mis-reservas': 'Mis Reservas',
+  '/pagos': 'Pagos',
+  '/validar-qr': 'Validar QR',
   '/configuracion': 'Configuración',
+  '/mi-perfil': 'Mi Perfil',
+  '/mi-membresia': 'Mi Membresía',
+  '/mi-billetera': 'Mi Billetera',
+  '/completar-perfil': 'Completar Perfil',
 };
 
 function getPageTitle(pathname: string): string {
   if (routeTitles[pathname]) return routeTitles[pathname];
-  if (/^\/usuarios\/[^/]+\/edit$/.test(pathname)) return 'Editar Usuario';
   if (/^\/usuarios\/[^/]+$/.test(pathname)) return 'Detalle de Usuario';
-  if (/^\/roles\/[^/]+\/edit$/.test(pathname)) return 'Editar Rol';
-  if (/^\/roles\/[^/]+$/.test(pathname)) return 'Detalle de Rol';
-  if (/^\/permissions\/[^/]+\/edit$/.test(pathname)) return 'Editar Permiso';
-  if (/^\/permissions\/[^/]+$/.test(pathname)) return 'Detalle de Permiso';
+  if (/^\/tipos-deporte\/[^/]+$/.test(pathname)) return 'Detalle de Tipo de Deporte';
+  if (/^\/espacios\/[^/]+$/.test(pathname)) return 'Detalle de Espacio';
+  if (/^\/planes-membresia\/[^/]+$/.test(pathname)) return 'Detalle de Plan de Membresía';
+  if (/^\/membresias-socios\/[^/]+$/.test(pathname)) return 'Detalle de Membresía';
+  if (/^\/horarios\/[^/]+$/.test(pathname)) return 'Detalle de Horario';
+  if (/^\/periodos-bloqueados\/[^/]+$/.test(pathname)) return 'Detalle de Período Bloqueado';
+  if (/^\/tipos-condicion\/[^/]+$/.test(pathname)) return 'Detalle de Tipo de Condición';
+  if (/^\/reservas\/[^/]+$/.test(pathname)) return 'Detalle de Reserva';
   return 'Inicio';
 }
 

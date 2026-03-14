@@ -21,12 +21,11 @@ const adminNav = [
   { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
 ];
 
-// Ítems del portal: solo clientes (no tienen users.view)
-const clientNav = [
+// Ítems base del portal: solo clientes (no tienen users.view)
+const baseClientNav = [
   { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle },
   { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen },
   { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard },
-  { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet },
 ];
 
 type NavItem = { name: string; href: string; icon: React.ElementType; permission?: string };
@@ -71,6 +70,9 @@ export default function Sidebar() {
 
   const isStaffOrAdmin = can('users.view');
   const filteredAdminNav = adminNav.filter((item) => can(item.permission));
+  const clientNav = user?.walletEnabled
+    ? [...baseClientNav, { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet }]
+    : baseClientNav;
 
   const handleLogout = async () => {
     await logout();

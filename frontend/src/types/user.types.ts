@@ -14,6 +14,7 @@ export interface User {
   birthDate?: string | null;
   handicap?: number | null;
   profileCompleted?: boolean;
+  walletEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }

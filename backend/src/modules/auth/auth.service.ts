@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { prisma } from '../../infrastructure/database/client.js';
 import { authRepository } from './auth.repository.js';
 import { hashPassword, verifyPassword } from '../../shared/utils/password.js';
 import {
@@ -141,6 +142,16 @@ export class AuthService {
 
     const permissions = authRepository.extractPermissions(user);
 
+    // Verificar si tiene membresía activa con wallet habilitado
+    const activeMembership = await prisma.userMembership.findFirst({
+      where: { userId, status: 'ACTIVE' },
+      select: { membershipPlan: { select: { walletCreditEnabled: true, walletPaymentEnabled: true } } },
+    });
+    const walletEnabled = !!(
+      activeMembership?.membershipPlan?.walletCreditEnabled ||
+      activeMembership?.membershipPlan?.walletPaymentEnabled
+    );
+
     // Generate new access token
     const accessToken = generateAccessToken({
       userId: user.id,
@@ -148,7 +159,7 @@ export class AuthService {
     });
 
     return {
-      user: authRepository.toSafeUser(user),
+      user: { ...authRepository.toSafeUser(user), walletEnabled },
       permissions,
       accessToken,
     };

@@ -23,7 +23,10 @@ export interface AuthResponse {
   accessToken: string;
 }
 
-export type SafeUser = Omit<User, 'passwordHash' | 'tokenVersion'>;
+export type SafeUser = Omit<User, 'passwordHash' | 'tokenVersion'> & {
+  profileCompleted?: boolean;
+  walletEnabled?: boolean;
+};
 
 export interface RefreshTokenPayload {
   userId: string;

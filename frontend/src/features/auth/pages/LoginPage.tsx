@@ -44,7 +44,7 @@ export default function LoginPage() {
         <h2 className="text-2xl font-bold text-gray-900">Iniciar sesión</h2>
         <p className="mt-2 text-sm text-gray-600">
           ¿No tenés cuenta?{' '}
-          <Link to="/register" className="text-blue-600 hover:text-blue-500 font-medium">
+          <Link to="/registrarse" className="text-blue-600 hover:text-blue-500 font-medium">
             Crear una
           </Link>
         </p>
@@ -83,7 +83,7 @@ export default function LoginPage() {
           )}
           <div className="mt-1 text-right">
             <Link
-              to="/forgot-password"
+              to="/olvide-contrasena"
               className="text-sm text-blue-600 hover:text-blue-500"
             >
               ¿Olvidaste tu contraseña?

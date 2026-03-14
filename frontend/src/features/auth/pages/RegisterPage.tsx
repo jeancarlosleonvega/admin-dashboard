@@ -55,7 +55,7 @@ export default function RegisterPage() {
         <h2 className="text-2xl font-bold text-gray-900">Crear cuenta</h2>
         <p className="mt-2 text-sm text-gray-600">
           ¿Ya tenés cuenta?{' '}
-          <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+          <Link to="/iniciar-sesion" className="text-blue-600 hover:text-blue-500 font-medium">
             Iniciá sesión
           </Link>
         </p>

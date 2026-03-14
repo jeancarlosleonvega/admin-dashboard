@@ -77,7 +77,7 @@ export default function ConditionTypeEditPage() {
         },
       });
       toast.success('Tipo de condición actualizado exitosamente');
-      navigate('/condition-types');
+      navigate('/tipos-condicion');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al actualizar el tipo de condición';
       toast.error(message);
@@ -92,7 +92,7 @@ export default function ConditionTypeEditPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Tipo de condición no encontrado</p>
-        <button onClick={() => navigate('/condition-types')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/tipos-condicion')} className="mt-4 text-blue-600 hover:underline">
           Volver
         </button>
       </div>
@@ -102,7 +102,7 @@ export default function ConditionTypeEditPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/condition-types')}
+        onClick={() => navigate('/tipos-condicion')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -200,7 +200,7 @@ export default function ConditionTypeEditPage() {
           </div>
 
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button type="button" onClick={() => navigate('/condition-types')} className="btn-secondary">
+            <button type="button" onClick={() => navigate('/tipos-condicion')} className="btn-secondary">
               Cancelar
             </button>
             <button type="submit" disabled={updateConditionType.isPending} className="btn-primary">

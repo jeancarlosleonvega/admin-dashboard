@@ -33,7 +33,7 @@ export default function MembershipPlansListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="membership-plans.manage">
-      <button className="btn-primary" onClick={() => navigate('/membership-plans/create')}>
+      <button className="btn-primary" onClick={() => navigate('/planes-membresia/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Agregar Plan
       </button>
@@ -194,7 +194,7 @@ export default function MembershipPlansListPage() {
                           <div className="flex justify-end gap-2">
                             <PermissionGate permission="membership-plans.manage">
                               <button
-                                onClick={() => navigate(`/membership-plans/${item.id}/edit`)}
+                                onClick={() => navigate(`/planes-membresia/${item.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Editar"
                               >

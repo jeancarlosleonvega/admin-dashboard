@@ -71,7 +71,7 @@ import { Spinner } from '@components/ui/Spinner';
 function App() {
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/inicio';
 
   useEffect(() => {
     initialize();
@@ -90,19 +90,19 @@ function App() {
       {/* Public routes */}
       <Route element={<AuthLayout />}>
         <Route
-          path="/login"
+          path="/iniciar-sesion"
           element={
             isAuthenticated ? <Navigate to={from} replace /> : <LoginPage />
           }
         />
         <Route
-          path="/register"
+          path="/registrarse"
           element={
             isAuthenticated ? <Navigate to={from} replace /> : <RegisterPage />
           }
         />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/olvide-contrasena" element={<ForgotPasswordPage />} />
+        <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
       </Route>
 
       {/* Protected routes */}
@@ -114,25 +114,20 @@ function App() {
         }
       >
         <Route
-          path="/dashboard"
+          path="/inicio"
           element={
             <PermissionRoute permission="dashboard.view">
               <DashboardPage />
             </PermissionRoute>
           }
         />
-        <Route
-          path="/settings"
-          element={<SettingsPage />}
-        />
-
         {/* Users CRUD */}
         <Route
-          path="/users"
-          element={<Navigate to="/settings?tab=users" replace />}
+          path="/usuarios"
+          element={<Navigate to="/configuracion?tab=users" replace />}
         />
         <Route
-          path="/users/create"
+          path="/usuarios/create"
           element={
             <PermissionRoute permission="users.create">
               <UserCreatePage />
@@ -140,7 +135,7 @@ function App() {
           }
         />
         <Route
-          path="/users/:id"
+          path="/usuarios/:id"
           element={
             <PermissionRoute permission="users.view">
               <UserDetailPage />
@@ -148,7 +143,7 @@ function App() {
           }
         />
         <Route
-          path="/users/:id/edit"
+          path="/usuarios/:id/edit"
           element={
             <PermissionRoute permission="users.edit">
               <UserEditPage />
@@ -159,7 +154,7 @@ function App() {
         {/* Roles CRUD */}
         <Route
           path="/roles"
-          element={<Navigate to="/settings?tab=roles" replace />}
+          element={<Navigate to="/configuracion?tab=roles" replace />}
         />
         <Route
           path="/roles/create"
@@ -189,7 +184,7 @@ function App() {
         {/* Permissions CRUD */}
         <Route
           path="/permissions"
-          element={<Navigate to="/settings?tab=permissions" replace />}
+          element={<Navigate to="/configuracion?tab=permissions" replace />}
         />
         <Route
           path="/permissions/create"
@@ -218,7 +213,7 @@ function App() {
 
         {/* Sport Types CRUD */}
         <Route
-          path="/sport-types"
+          path="/tipos-deporte"
           element={
             <PermissionRoute permission="sport-types.view">
               <SportTypesListPage />
@@ -226,7 +221,7 @@ function App() {
           }
         />
         <Route
-          path="/sport-types/create"
+          path="/tipos-deporte/create"
           element={
             <PermissionRoute permission="sport-types.manage">
               <SportTypeCreatePage />
@@ -234,7 +229,7 @@ function App() {
           }
         />
         <Route
-          path="/sport-types/:id"
+          path="/tipos-deporte/:id"
           element={
             <PermissionRoute permission="sport-types.view">
               <SportTypeDetailPage />
@@ -242,7 +237,7 @@ function App() {
           }
         />
         <Route
-          path="/sport-types/:id/edit"
+          path="/tipos-deporte/:id/edit"
           element={
             <PermissionRoute permission="sport-types.manage">
               <SportTypeEditPage />
@@ -252,7 +247,7 @@ function App() {
 
         {/* Venues CRUD */}
         <Route
-          path="/venues"
+          path="/espacios"
           element={
             <PermissionRoute permission="venues.view">
               <VenuesListPage />
@@ -260,7 +255,7 @@ function App() {
           }
         />
         <Route
-          path="/venues/create"
+          path="/espacios/create"
           element={
             <PermissionRoute permission="venues.manage">
               <VenueCreatePage />
@@ -268,7 +263,7 @@ function App() {
           }
         />
         <Route
-          path="/venues/:id"
+          path="/espacios/:id"
           element={
             <PermissionRoute permission="venues.view">
               <VenueDetailPage />
@@ -276,7 +271,7 @@ function App() {
           }
         />
         <Route
-          path="/venues/:id/edit"
+          path="/espacios/:id/edit"
           element={
             <PermissionRoute permission="venues.manage">
               <VenueEditPage />
@@ -286,7 +281,7 @@ function App() {
 
         {/* Membership Plans CRUD */}
         <Route
-          path="/membership-plans"
+          path="/planes-membresia"
           element={
             <PermissionRoute permission="membership-plans.view">
               <MembershipPlansListPage />
@@ -294,7 +289,7 @@ function App() {
           }
         />
         <Route
-          path="/membership-plans/create"
+          path="/planes-membresia/create"
           element={
             <PermissionRoute permission="membership-plans.manage">
               <MembershipPlanCreatePage />
@@ -302,7 +297,7 @@ function App() {
           }
         />
         <Route
-          path="/membership-plans/:id/edit"
+          path="/planes-membresia/:id/edit"
           element={
             <PermissionRoute permission="membership-plans.manage">
               <MembershipPlanEditPage />
@@ -312,7 +307,7 @@ function App() {
 
         {/* Venue Schedules */}
         <Route
-          path="/venue-schedules"
+          path="/horarios"
           element={
             <PermissionRoute permission="venue-schedules.view">
               <VenueSchedulesPage />
@@ -320,7 +315,7 @@ function App() {
           }
         />
         <Route
-          path="/venue-schedules/create"
+          path="/horarios/create"
           element={
             <PermissionRoute permission="venue-schedules.manage">
               <VenueScheduleCreatePage />
@@ -328,7 +323,7 @@ function App() {
           }
         />
         <Route
-          path="/venue-schedules/:id/edit"
+          path="/horarios/:id/edit"
           element={
             <PermissionRoute permission="venue-schedules.manage">
               <VenueScheduleEditPage />
@@ -336,7 +331,7 @@ function App() {
           }
         />
         <Route
-          path="/venue-schedules/slots"
+          path="/horarios/slots"
           element={
             <PermissionRoute permission="venue-schedules.view">
               <SlotsViewPage />
@@ -346,7 +341,7 @@ function App() {
 
         {/* Blocked Periods */}
         <Route
-          path="/blocked-periods"
+          path="/periodos-bloqueados"
           element={
             <PermissionRoute permission="blocked-periods.view">
               <BlockedPeriodsListPage />
@@ -354,7 +349,7 @@ function App() {
           }
         />
         <Route
-          path="/blocked-periods/create"
+          path="/periodos-bloqueados/create"
           element={
             <PermissionRoute permission="blocked-periods.manage">
               <BlockedPeriodCreatePage />
@@ -362,7 +357,7 @@ function App() {
           }
         />
         <Route
-          path="/blocked-periods/:id/edit"
+          path="/periodos-bloqueados/:id/edit"
           element={
             <PermissionRoute permission="blocked-periods.manage">
               <BlockedPeriodEditPage />
@@ -372,7 +367,7 @@ function App() {
 
         {/* Additional Services */}
         <Route
-          path="/additional-services"
+          path="/servicios-adicionales"
           element={
             <PermissionRoute permission="additional-services.view">
               <AdditionalServicesListPage />
@@ -380,7 +375,7 @@ function App() {
           }
         />
         <Route
-          path="/additional-services/create"
+          path="/servicios-adicionales/create"
           element={
             <PermissionRoute permission="additional-services.manage">
               <AdditionalServiceCreatePage />
@@ -388,7 +383,7 @@ function App() {
           }
         />
         <Route
-          path="/additional-services/:id/edit"
+          path="/servicios-adicionales/:id/edit"
           element={
             <PermissionRoute permission="additional-services.manage">
               <AdditionalServiceEditPage />
@@ -398,7 +393,7 @@ function App() {
 
         {/* Bookings */}
         <Route
-          path="/bookings"
+          path="/reservas"
           element={
             <PermissionRoute permission="bookings.view">
               <AdminBookingsPage />
@@ -406,7 +401,7 @@ function App() {
           }
         />
         <Route
-          path="/bookings/new"
+          path="/reservas/nueva"
           element={
             <BookingRoute>
               <BookingSearchPage />
@@ -414,7 +409,7 @@ function App() {
           }
         />
         <Route
-          path="/bookings/my"
+          path="/mis-reservas"
           element={
             <BookingRoute>
               <MyBookingsPage />
@@ -424,7 +419,7 @@ function App() {
 
         {/* Payments */}
         <Route
-          path="/payments/transfers"
+          path="/pagos/transferencias"
           element={
             <PermissionRoute permission="payments.view">
               <PendingTransfersPage />
@@ -434,7 +429,7 @@ function App() {
 
         {/* User Memberships */}
         <Route
-          path="/user-memberships"
+          path="/membresias-socios"
           element={
             <PermissionRoute permission="user-memberships.view">
               <UserMembershipsPage />
@@ -442,7 +437,7 @@ function App() {
           }
         />
         <Route
-          path="/user-memberships/create"
+          path="/membresias-socios/create"
           element={
             <PermissionRoute permission="user-memberships.manage">
               <UserMembershipCreatePage />
@@ -452,7 +447,7 @@ function App() {
 
         {/* QR Validator */}
         <Route
-          path="/qr-validator"
+          path="/validar-qr"
           element={
             <PermissionRoute permission="qr.validate">
               <QRValidatorPage />
@@ -462,7 +457,7 @@ function App() {
 
         {/* Condition Types CRUD */}
         <Route
-          path="/condition-types"
+          path="/tipos-condicion"
           element={
             <PermissionRoute permission="condition-types.view">
               <ConditionTypesListPage />
@@ -470,7 +465,7 @@ function App() {
           }
         />
         <Route
-          path="/condition-types/create"
+          path="/tipos-condicion/create"
           element={
             <PermissionRoute permission="condition-types.manage">
               <ConditionTypeCreatePage />
@@ -478,7 +473,7 @@ function App() {
           }
         />
         <Route
-          path="/condition-types/:id/edit"
+          path="/tipos-condicion/:id/edit"
           element={
             <PermissionRoute permission="condition-types.manage">
               <ConditionTypeEditPage />
@@ -487,18 +482,20 @@ function App() {
         />
 
         {/* Portal del socio */}
-        <Route path="/my-profile" element={<MyProfilePage />} />
-        <Route path="/my-membership" element={<MyMembershipPage />} />
-        <Route path="/my-wallet" element={<MyWalletPage />} />
+        <Route path="/mi-perfil" element={<MyProfilePage />} />
+        <Route path="/mi-membresia" element={<MyMembershipPage />} />
+        <Route path="/mi-billetera" element={<MyWalletPage />} />
 
         {/* Complete Profile */}
-        <Route path="/complete-profile" element={<CompleteProfilePage />} />
+        <Route path="/completar-perfil" element={<CompleteProfilePage />} />
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/configuracion" element={<SettingsPage />} />
+
+        <Route path="/" element={<Navigate to="/inicio" replace />} />
       </Route>
 
       {/* 404 */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/inicio" replace />} />
     </Routes>
   );
 }

@@ -17,7 +17,7 @@ export default function MyWalletPage() {
   const { user } = useAuthStore();
 
   if (!user?.walletEnabled) {
-    return <Navigate to="/bookings/my" replace />;
+    return <Navigate to="/mis-reservas" replace />;
   }
 
   const { data: wallet, isLoading: loadingWallet } = useQuery({

@@ -21,7 +21,7 @@ export default function ConditionTypesListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="condition-types.manage">
-      <button className="btn-primary" onClick={() => navigate('/condition-types/create')}>
+      <button className="btn-primary" onClick={() => navigate('/tipos-condicion/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Agregar Tipo de Condición
       </button>
@@ -122,7 +122,7 @@ export default function ConditionTypesListPage() {
                         <div className="flex justify-end gap-2">
                           <PermissionGate permission="condition-types.manage">
                             <button
-                              onClick={() => navigate(`/condition-types/${item.id}/edit`)}
+                              onClick={() => navigate(`/tipos-condicion/${item.id}/edit`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Editar"
                             >

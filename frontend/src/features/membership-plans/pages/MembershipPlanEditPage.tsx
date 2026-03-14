@@ -76,7 +76,7 @@ export default function MembershipPlanEditPage() {
     try {
       await updatePlan.mutateAsync({ id, data });
       toast.success('Plan de membresía actualizado exitosamente');
-      navigate('/membership-plans');
+      navigate('/planes-membresia');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al actualizar el plan';
       toast.error(message);
@@ -95,7 +95,7 @@ export default function MembershipPlanEditPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Plan no encontrado</p>
-        <button onClick={() => navigate('/membership-plans')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/planes-membresia')} className="mt-4 text-blue-600 hover:underline">
           Volver a Planes
         </button>
       </div>
@@ -105,7 +105,7 @@ export default function MembershipPlanEditPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/membership-plans')}
+        onClick={() => navigate('/planes-membresia')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -247,7 +247,7 @@ export default function MembershipPlanEditPage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/membership-plans')}
+              onClick={() => navigate('/planes-membresia')}
               className="btn-secondary"
             >
               Cancelar

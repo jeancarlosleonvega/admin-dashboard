@@ -18,7 +18,7 @@ export default function BookingRoute({ children }: BookingRouteProps) {
   const isStaffOrAdmin = can('users.view');
 
   if (!isStaffOrAdmin && user?.profileCompleted === false) {
-    return <Navigate to="/complete-profile" state={{ from: location }} replace />;
+    return <Navigate to="/completar-perfil" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

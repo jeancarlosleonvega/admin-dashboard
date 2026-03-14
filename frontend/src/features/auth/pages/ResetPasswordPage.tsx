@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
           Este enlace para restablecer la contraseña es inválido o ha expirado.
         </p>
         <Link
-          to="/forgot-password"
+          to="/olvide-contrasena"
           className="inline-block text-blue-600 hover:text-blue-500 font-medium text-sm"
         >
           Solicitar un nuevo enlace
@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
           </p>
         </div>
         <Link
-          to="/login"
+          to="/iniciar-sesion"
           className="inline-block btn-primary"
         >
           Iniciar sesión

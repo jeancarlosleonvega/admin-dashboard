@@ -59,7 +59,7 @@ export default function ConditionTypeCreatePage() {
         active: data.active,
       });
       toast.success('Tipo de condición creado exitosamente');
-      navigate('/condition-types');
+      navigate('/tipos-condicion');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al crear el tipo de condición';
       toast.error(message);
@@ -69,7 +69,7 @@ export default function ConditionTypeCreatePage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/condition-types')}
+        onClick={() => navigate('/tipos-condicion')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -172,7 +172,7 @@ export default function ConditionTypeCreatePage() {
           </div>
 
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button type="button" onClick={() => navigate('/condition-types')} className="btn-secondary">
+            <button type="button" onClick={() => navigate('/tipos-condicion')} className="btn-secondary">
               Cancelar
             </button>
             <button type="submit" disabled={createConditionType.isPending} className="btn-primary">

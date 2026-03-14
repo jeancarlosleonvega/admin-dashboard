@@ -96,7 +96,7 @@ export default function SportTypeDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Tipo de deporte no encontrado</p>
-        <button onClick={() => navigate('/sport-types')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/tipos-deporte')} className="mt-4 text-blue-600 hover:underline">
           Volver a Tipos de Deporte
         </button>
       </div>
@@ -106,7 +106,7 @@ export default function SportTypeDetailPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/sport-types')}
+        onClick={() => navigate('/tipos-deporte')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />

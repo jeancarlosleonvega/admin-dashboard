@@ -53,7 +53,7 @@ export default function UserMembershipCreatePage() {
         notes: data.notes || undefined,
       });
       toast.success('Membresía asignada exitosamente. La membresía anterior fue cancelada automáticamente.');
-      navigate('/user-memberships');
+      navigate('/membresias-socios');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al asignar la membresía';
       toast.error(message);
@@ -63,7 +63,7 @@ export default function UserMembershipCreatePage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/user-memberships')}
+        onClick={() => navigate('/membresias-socios')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -158,7 +158,7 @@ export default function UserMembershipCreatePage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/user-memberships')}
+              onClick={() => navigate('/membresias-socios')}
               className="btn-secondary"
             >
               Cancelar

@@ -38,7 +38,7 @@ export default function VenuesListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="venues.manage">
-      <button className="btn-primary" onClick={() => navigate('/venues/create')}>
+      <button className="btn-primary" onClick={() => navigate('/espacios/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Agregar Espacio
       </button>
@@ -213,7 +213,7 @@ export default function VenuesListPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => navigate(`/venues/${item.id}`)}
+                              onClick={() => navigate(`/espacios/${item.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Ver espacio"
                             >
@@ -221,7 +221,7 @@ export default function VenuesListPage() {
                             </button>
                             <PermissionGate permission="venues.manage">
                               <button
-                                onClick={() => navigate(`/venues/${item.id}/edit`)}
+                                onClick={() => navigate(`/espacios/${item.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Editar espacio"
                               >

@@ -30,7 +30,7 @@ export default function AdditionalServicesListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="additional-services.manage">
-      <button className="btn-primary" onClick={() => navigate('/additional-services/create')}>
+      <button className="btn-primary" onClick={() => navigate('/servicios-adicionales/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Nuevo Servicio
       </button>
@@ -141,7 +141,7 @@ export default function AdditionalServicesListPage() {
                         <div className="flex justify-end gap-2">
                           <PermissionGate permission="additional-services.manage">
                             <button
-                              onClick={() => navigate(`/additional-services/${service.id}/edit`)}
+                              onClick={() => navigate(`/servicios-adicionales/${service.id}/edit`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Editar"
                             >

@@ -102,7 +102,7 @@ export default function VenueDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Espacio no encontrado</p>
-        <button onClick={() => navigate('/venues')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/espacios')} className="mt-4 text-blue-600 hover:underline">
           Volver a Espacios
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function VenueDetailPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/venues')}
+        onClick={() => navigate('/espacios')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />

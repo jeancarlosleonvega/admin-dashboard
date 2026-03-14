@@ -47,7 +47,7 @@ export default function UsersListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="users.create">
-      <button className="btn-primary" onClick={() => navigate('/users/create')}>
+      <button className="btn-primary" onClick={() => navigate('/usuarios/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Agregar Usuario
       </button>
@@ -296,7 +296,7 @@ export default function UsersListPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => navigate(`/users/${user.id}`)}
+                              onClick={() => navigate(`/usuarios/${user.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Ver usuario"
                             >
@@ -304,7 +304,7 @@ export default function UsersListPage() {
                             </button>
                             <PermissionGate permission="users.edit">
                               <button
-                                onClick={() => navigate(`/users/${user.id}?tab=general`)}
+                                onClick={() => navigate(`/usuarios/${user.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Editar usuario"
                               >

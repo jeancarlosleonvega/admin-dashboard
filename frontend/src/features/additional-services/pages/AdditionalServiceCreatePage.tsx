@@ -51,7 +51,7 @@ export default function AdditionalServiceCreatePage() {
         active: data.active,
       });
       toast.success('Servicio adicional creado exitosamente');
-      navigate('/additional-services');
+      navigate('/servicios-adicionales');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al crear el servicio adicional';
       toast.error(message);
@@ -61,7 +61,7 @@ export default function AdditionalServiceCreatePage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/additional-services')}
+        onClick={() => navigate('/servicios-adicionales')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -136,7 +136,7 @@ export default function AdditionalServiceCreatePage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/additional-services')}
+              onClick={() => navigate('/servicios-adicionales')}
               className="btn-secondary"
             >
               Cancelar

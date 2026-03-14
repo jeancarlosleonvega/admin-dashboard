@@ -35,7 +35,7 @@ export default function BlockedPeriodsListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="blocked-periods.manage">
-      <button className="btn-primary" onClick={() => navigate('/blocked-periods/create')}>
+      <button className="btn-primary" onClick={() => navigate('/periodos-bloqueados/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Nuevo Período
       </button>
@@ -170,7 +170,7 @@ export default function BlockedPeriodsListPage() {
                           <div className="flex justify-end gap-2">
                             <PermissionGate permission="blocked-periods.manage">
                               <button
-                                onClick={() => navigate(`/blocked-periods/${period.id}/edit`)}
+                                onClick={() => navigate(`/periodos-bloqueados/${period.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Editar"
                               >

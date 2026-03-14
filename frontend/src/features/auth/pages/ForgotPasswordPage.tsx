@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <Link
-          to="/login"
+          to="/iniciar-sesion"
           className="inline-block text-blue-600 hover:text-blue-500 font-medium text-sm"
         >
           Volver al inicio de sesión
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
 
       <div className="text-center">
         <Link
-          to="/login"
+          to="/iniciar-sesion"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
           Volver al inicio de sesión

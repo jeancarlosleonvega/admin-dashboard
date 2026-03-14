@@ -4,25 +4,25 @@ import { useUIStore } from '@stores/uiStore';
 import { usePageHeaderStore } from '@stores/pageHeaderStore';
 
 const routeTitles: Record<string, string> = {
-  '/dashboard': 'Inicio',
-  '/users': 'Usuarios',
-  '/users/create': 'Crear Usuario',
+  '/inicio': 'Inicio',
+  '/usuarios': 'Usuarios',
+  '/usuarios/create': 'Crear Usuario',
   '/roles': 'Roles',
   '/roles/create': 'Crear Rol',
   '/permissions': 'Permisos',
   '/permissions/create': 'Crear Permiso',
-  '/settings': 'Configuración',
+  '/configuracion': 'Configuración',
 };
 
 function getPageTitle(pathname: string): string {
   if (routeTitles[pathname]) return routeTitles[pathname];
-  if (/^\/users\/[^/]+\/edit$/.test(pathname)) return 'Edit User';
-  if (/^\/users\/[^/]+$/.test(pathname)) return 'User Detail';
-  if (/^\/roles\/[^/]+\/edit$/.test(pathname)) return 'Edit Role';
-  if (/^\/roles\/[^/]+$/.test(pathname)) return 'Role Detail';
-  if (/^\/permissions\/[^/]+\/edit$/.test(pathname)) return 'Edit Permission';
-  if (/^\/permissions\/[^/]+$/.test(pathname)) return 'Permission Detail';
-  return 'Dashboard';
+  if (/^\/usuarios\/[^/]+\/edit$/.test(pathname)) return 'Editar Usuario';
+  if (/^\/usuarios\/[^/]+$/.test(pathname)) return 'Detalle de Usuario';
+  if (/^\/roles\/[^/]+\/edit$/.test(pathname)) return 'Editar Rol';
+  if (/^\/roles\/[^/]+$/.test(pathname)) return 'Detalle de Rol';
+  if (/^\/permissions\/[^/]+\/edit$/.test(pathname)) return 'Editar Permiso';
+  if (/^\/permissions\/[^/]+$/.test(pathname)) return 'Detalle de Permiso';
+  return 'Inicio';
 }
 
 export default function Topbar() {
@@ -38,7 +38,7 @@ export default function Topbar() {
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex items-center gap-3 min-w-0">
           {/* Mobile: logo */}
-          <Link to="/dashboard" className="flex items-center gap-2 lg:hidden shrink-0">
+          <Link to="/inicio" className="flex items-center gap-2 lg:hidden shrink-0">
             <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">G</span>
             </div>

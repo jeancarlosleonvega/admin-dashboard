@@ -22,9 +22,9 @@ const tabs: TabDef[] = [
 ];
 
 const updateUserSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  firstName: z.string().min(1, 'First name is required').max(50),
-  lastName: z.string().min(1, 'Last name is required').max(50),
+  email: z.string().email('Email inválido'),
+  firstName: z.string().min(1, 'El nombre es obligatorio').max(50),
+  lastName: z.string().min(1, 'El apellido es obligatorio').max(50),
   status: z.nativeEnum(UserStatus),
   roleIds: z.array(z.string()).optional(),
 });
@@ -82,7 +82,7 @@ export default function UserDetailPage() {
       });
       toast.success('Usuario actualizado exitosamente');
     } catch (error) {
-      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to update user';
+      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al actualizar el usuario';
       toast.error(message);
     }
   };
@@ -98,8 +98,8 @@ export default function UserDetailPage() {
   if (isError || !user) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-500">User not found</p>
-        <button onClick={() => navigate('/users')} className="mt-4 text-blue-600 hover:underline">
+        <p className="text-red-500">Usuario no encontrado</p>
+        <button onClick={() => navigate('/usuarios')} className="mt-4 text-blue-600 hover:underline">
           Volver a Usuarios
         </button>
       </div>
@@ -109,7 +109,7 @@ export default function UserDetailPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/users')}
+        onClick={() => navigate('/usuarios')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -123,22 +123,22 @@ export default function UserDetailPage() {
         <div className="px-6 pb-6">
           <TabPanel id="general" activeTab={activeTab}>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <DetailSection title="Account Info" description="Basic account information.">
+              <DetailSection title="Información de cuenta" description="Datos básicos de la cuenta.">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="label">First Name</label>
+                    <label htmlFor="firstName" className="label">Nombre</label>
                     <input id="firstName" type="text" className={`input ${errors.firstName ? 'input-error' : ''}`} readOnly={!canEdit} {...register('firstName')} />
                     {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>}
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="label">Last Name</label>
+                    <label htmlFor="lastName" className="label">Apellido</label>
                     <input id="lastName" type="text" className={`input ${errors.lastName ? 'input-error' : ''}`} readOnly={!canEdit} {...register('lastName')} />
                     {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>}
                   </div>
                 </div>
               </DetailSection>
 
-              <DetailSection title="Email & Status" description="Login email and account status.">
+              <DetailSection title="Email y Estado" description="Email de acceso y estado de la cuenta.">
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="email" className="label">Email</label>
@@ -146,7 +146,7 @@ export default function UserDetailPage() {
                     {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
                   </div>
                   <div>
-                    <label htmlFor="status" className="label">Status</label>
+                    <label htmlFor="status" className="label">Estado</label>
                     <select id="status" className={`input ${errors.status ? 'input-error' : ''}`} disabled={!canEdit} {...register('status')}>
                       <option value="ACTIVE">Activo</option>
                       <option value="INACTIVE">Inactivo</option>
@@ -157,21 +157,21 @@ export default function UserDetailPage() {
                 </div>
               </DetailSection>
 
-              <DetailSection title="Metadata" description="System information." noBorder>
+              <DetailSection title="Datos del sistema" description="Información del sistema." noBorder>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="label">Created At</label>
+                    <label className="label">Creado el</label>
                     <input type="text" className="input bg-gray-50" value={formatDateTime(user.createdAt)} readOnly />
                   </div>
                   <div>
-                    <label className="label">Updated At</label>
+                    <label className="label">Actualizado el</label>
                     <input type="text" className="input bg-gray-50" value={formatDateTime(user.updatedAt)} readOnly />
                   </div>
                 </div>
                 {canEdit && isDirty && (
                   <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
                     <button type="submit" disabled={updateUser.isPending} className="btn-primary">
-                      {updateUser.isPending ? <Spinner size="sm" className="text-white" /> : 'Save Changes'}
+                      {updateUser.isPending ? <Spinner size="sm" className="text-white" /> : 'Guardar cambios'}
                     </button>
                   </div>
                 )}
@@ -181,7 +181,7 @@ export default function UserDetailPage() {
 
           <TabPanel id="roles" activeTab={activeTab}>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <DetailSection title="Assigned Roles" description="Roles determine what permissions this user has." noBorder>
+              <DetailSection title="Roles asignados" description="Los roles determinan los permisos del usuario." noBorder>
                 {rolesLoading ? (
                   <Spinner size="sm" />
                 ) : (
@@ -204,7 +204,7 @@ export default function UserDetailPage() {
                 {canEdit && isDirty && (
                   <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
                     <button type="submit" disabled={updateUser.isPending} className="btn-primary">
-                      {updateUser.isPending ? <Spinner size="sm" className="text-white" /> : 'Save Changes'}
+                      {updateUser.isPending ? <Spinner size="sm" className="text-white" /> : 'Guardar cambios'}
                     </button>
                   </div>
                 )}

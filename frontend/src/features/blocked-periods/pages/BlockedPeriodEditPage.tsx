@@ -96,7 +96,7 @@ export default function BlockedPeriodEditPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blocked-periods'] });
       toast.success('Período bloqueado actualizado exitosamente');
-      navigate('/blocked-periods');
+      navigate('/periodos-bloqueados');
     },
     onError: (error: { response?: { data?: { error?: { message?: string } } } }) => {
       const message = error.response?.data?.error?.message || 'Error al actualizar el período bloqueado';
@@ -120,7 +120,7 @@ export default function BlockedPeriodEditPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Período bloqueado no encontrado</p>
-        <button onClick={() => navigate('/blocked-periods')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/periodos-bloqueados')} className="mt-4 text-blue-600 hover:underline">
           Volver a Períodos Bloqueados
         </button>
       </div>
@@ -130,7 +130,7 @@ export default function BlockedPeriodEditPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/blocked-periods')}
+        onClick={() => navigate('/periodos-bloqueados')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -240,7 +240,7 @@ export default function BlockedPeriodEditPage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/blocked-periods')}
+              onClick={() => navigate('/periodos-bloqueados')}
               className="btn-secondary"
             >
               Cancelar

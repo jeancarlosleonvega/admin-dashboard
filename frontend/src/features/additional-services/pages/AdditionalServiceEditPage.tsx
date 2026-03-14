@@ -71,7 +71,7 @@ export default function AdditionalServiceEditPage() {
         },
       });
       toast.success('Servicio adicional actualizado exitosamente');
-      navigate('/additional-services');
+      navigate('/servicios-adicionales');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al actualizar el servicio adicional';
       toast.error(message);
@@ -90,7 +90,7 @@ export default function AdditionalServiceEditPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">Servicio adicional no encontrado</p>
-        <button onClick={() => navigate('/additional-services')} className="mt-4 text-blue-600 hover:underline">
+        <button onClick={() => navigate('/servicios-adicionales')} className="mt-4 text-blue-600 hover:underline">
           Volver a Servicios Adicionales
         </button>
       </div>
@@ -100,7 +100,7 @@ export default function AdditionalServiceEditPage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/additional-services')}
+        onClick={() => navigate('/servicios-adicionales')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -172,7 +172,7 @@ export default function AdditionalServiceEditPage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/additional-services')}
+              onClick={() => navigate('/servicios-adicionales')}
               className="btn-secondary"
             >
               Cancelar

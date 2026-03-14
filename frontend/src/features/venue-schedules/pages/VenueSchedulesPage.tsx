@@ -39,7 +39,7 @@ export default function VenueSchedulesPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="venue-schedules.manage">
-      <button className="btn-primary" onClick={() => navigate('/venue-schedules/create')}>
+      <button className="btn-primary" onClick={() => navigate('/horarios/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Crear Horario
       </button>
@@ -211,7 +211,7 @@ export default function VenueSchedulesPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={() => navigate(`/venue-schedules/slots?scheduleId=${schedule.id}`)}
+                            onClick={() => navigate(`/horarios/slots?scheduleId=${schedule.id}`)}
                             className="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50"
                             title="Ver turnos"
                           >
@@ -228,7 +228,7 @@ export default function VenueSchedulesPage() {
                           </PermissionGate>
                           <PermissionGate permission="venue-schedules.manage">
                             <button
-                              onClick={() => navigate(`/venue-schedules/${schedule.id}/edit`)}
+                              onClick={() => navigate(`/horarios/${schedule.id}/edit`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Editar horario"
                             >

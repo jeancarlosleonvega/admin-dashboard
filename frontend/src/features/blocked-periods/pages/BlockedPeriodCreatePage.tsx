@@ -72,7 +72,7 @@ export default function BlockedPeriodCreatePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blocked-periods'] });
       toast.success('Período bloqueado creado exitosamente');
-      navigate('/blocked-periods');
+      navigate('/periodos-bloqueados');
     },
     onError: (error: { response?: { data?: { error?: { message?: string } } } }) => {
       const message = error.response?.data?.error?.message || 'Error al crear el período bloqueado';
@@ -87,7 +87,7 @@ export default function BlockedPeriodCreatePage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/blocked-periods')}
+        onClick={() => navigate('/periodos-bloqueados')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -197,7 +197,7 @@ export default function BlockedPeriodCreatePage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/blocked-periods')}
+              onClick={() => navigate('/periodos-bloqueados')}
               className="btn-secondary"
             >
               Cancelar

@@ -57,7 +57,7 @@ export default function UserCreatePage() {
         roleIds: roleIds && roleIds.length > 0 ? roleIds : undefined,
       });
       toast.success('Usuario creado exitosamente');
-      navigate('/users');
+      navigate('/usuarios');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Failed to create user';
       toast.error(message);
@@ -67,7 +67,7 @@ export default function UserCreatePage() {
   return (
     <div>
       <button
-        onClick={() => navigate('/users')}
+        onClick={() => navigate('/usuarios')}
         className="flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
       >
         <ArrowLeft className="w-4 h-4 mr-1" />
@@ -184,7 +184,7 @@ export default function UserCreatePage() {
           <div className="px-6 pb-6 flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
-              onClick={() => navigate('/users')}
+              onClick={() => navigate('/usuarios')}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               Cancel

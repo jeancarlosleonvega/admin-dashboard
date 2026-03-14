@@ -37,7 +37,7 @@ export default function SportTypesListPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="sport-types.manage">
-      <button className="btn-primary" onClick={() => navigate('/sport-types/create')}>
+      <button className="btn-primary" onClick={() => navigate('/tipos-deporte/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Agregar Tipo de Deporte
       </button>
@@ -201,7 +201,7 @@ export default function SportTypesListPage() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => navigate(`/sport-types/${item.id}`)}
+                              onClick={() => navigate(`/tipos-deporte/${item.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                               title="Ver tipo de deporte"
                             >
@@ -209,7 +209,7 @@ export default function SportTypesListPage() {
                             </button>
                             <PermissionGate permission="sport-types.manage">
                               <button
-                                onClick={() => navigate(`/sport-types/${item.id}/edit`)}
+                                onClick={() => navigate(`/tipos-deporte/${item.id}/edit`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
                                 title="Editar tipo de deporte"
                               >

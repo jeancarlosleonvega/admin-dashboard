@@ -41,7 +41,7 @@ export default function CompleteProfilePage() {
       // Re-initialize auth to get updated user with profileCompleted=true
       await initialize();
       toast.success('Perfil completado exitosamente');
-      navigate('/dashboard');
+      navigate('/inicio');
     } catch (error) {
       const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || 'Error al guardar el perfil';
       toast.error(message);

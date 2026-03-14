@@ -49,7 +49,7 @@ export default function UserMembershipsPage() {
 
   const headerActions = useMemo(() => (
     <PermissionGate permission="user-memberships.manage">
-      <button className="btn-primary" onClick={() => navigate('/user-memberships/create')}>
+      <button className="btn-primary" onClick={() => navigate('/membresias-socios/create')}>
         <Plus className="w-4 h-4 mr-2" />
         Asignar Membresía
       </button>

@@ -7,25 +7,25 @@ import { useUIStore } from '@stores/uiStore';
 
 // Ítems de gestión: solo staff/admin (cada uno requiere su permiso)
 const adminNav = [
-  { name: 'Inicio', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
-  { name: 'Tipos de Deporte', href: '/sport-types', icon: Activity, permission: 'sport-types.view' },
-  { name: 'Espacios', href: '/venues', icon: MapPin, permission: 'venues.view' },
-  { name: 'Planes de Membresía', href: '/membership-plans', icon: CreditCard, permission: 'membership-plans.view' },
-  { name: 'Membresías Socios', href: '/user-memberships', icon: UserCheck, permission: 'user-memberships.view' },
-  { name: 'Horarios', href: '/venue-schedules', icon: Clock, permission: 'venue-schedules.view' },
-  { name: 'Períodos Bloqueados', href: '/blocked-periods', icon: Ban, permission: 'blocked-periods.view' },
-  { name: 'Tipos de Condición', href: '/condition-types', icon: GitBranch, permission: 'condition-types.view' },
-  { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
-  { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },
-  { name: 'Transferencias', href: '/payments/transfers', icon: DollarSign, permission: 'payments.view' },
-  { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
+  { name: 'Inicio', href: '/inicio', icon: LayoutDashboard, permission: 'dashboard.view' },
+  { name: 'Tipos de Deporte', href: '/tipos-deporte', icon: Activity, permission: 'sport-types.view' },
+  { name: 'Espacios', href: '/espacios', icon: MapPin, permission: 'venues.view' },
+  { name: 'Planes de Membresía', href: '/planes-membresia', icon: CreditCard, permission: 'membership-plans.view' },
+  { name: 'Membresías Socios', href: '/membresias-socios', icon: UserCheck, permission: 'user-memberships.view' },
+  { name: 'Horarios', href: '/horarios', icon: Clock, permission: 'venue-schedules.view' },
+  { name: 'Períodos Bloqueados', href: '/periodos-bloqueados', icon: Ban, permission: 'blocked-periods.view' },
+  { name: 'Tipos de Condición', href: '/tipos-condicion', icon: GitBranch, permission: 'condition-types.view' },
+  { name: 'Servicios Adicionales', href: '/servicios-adicionales', icon: Package, permission: 'additional-services.view' },
+  { name: 'Reservas', href: '/reservas', icon: Calendar, permission: 'bookings.view' },
+  { name: 'Transferencias', href: '/pagos/transferencias', icon: DollarSign, permission: 'payments.view' },
+  { name: 'Validar QR', href: '/validar-qr', icon: QrCode, permission: 'qr.validate' },
 ];
 
 // Ítems base del portal: solo clientes (no tienen users.view)
 const baseClientNav = [
-  { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle },
-  { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen },
-  { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard },
+  { name: 'Nueva Reserva', href: '/reservas/nueva', icon: PlusCircle },
+  { name: 'Mis Reservas', href: '/mis-reservas', icon: BookOpen },
+  { name: 'Mi Membresía', href: '/mi-membresia', icon: CreditCard },
 ];
 
 type NavItem = { name: string; href: string; icon: React.ElementType; permission?: string };
@@ -71,12 +71,12 @@ export default function Sidebar() {
   const isStaffOrAdmin = can('users.view');
   const filteredAdminNav = adminNav.filter((item) => can(item.permission));
   const clientNav = user?.walletEnabled
-    ? [...baseClientNav, { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet }]
+    ? [...baseClientNav, { name: 'Mi Wallet', href: '/mi-billetera', icon: Wallet }]
     : baseClientNav;
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/iniciar-sesion');
   };
 
   const handleNavClick = () => {
@@ -117,7 +117,7 @@ export default function Sidebar() {
             expanded ? 'lg:px-4 lg:gap-3' : 'lg:px-2 lg:gap-0 lg:justify-center'
           )}
         >
-          <Link to="/dashboard" className="flex items-center gap-3 flex-1 min-w-0">
+          <Link to="/inicio" className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-lg">G</span>
             </div>
@@ -160,7 +160,7 @@ export default function Sidebar() {
         {/* Bottom section */}
         <div className="px-2 py-3 space-y-1 border-t border-gray-200 flex-shrink-0">
           <NavLink
-            to="/settings"
+            to="/configuracion"
             onClick={handleNavClick}
             className={({ isActive }) =>
               cn(
@@ -219,7 +219,7 @@ export default function Sidebar() {
 
         {/* User avatar → Mi Perfil */}
         <Link
-          to="/my-profile"
+          to="/mi-perfil"
           onClick={handleNavClick}
           className={cn(
             'flex items-center py-4 border-t border-gray-200 flex-shrink-0 hover:bg-gray-50 transition-colors',

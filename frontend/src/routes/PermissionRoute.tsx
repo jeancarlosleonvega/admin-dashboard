@@ -66,7 +66,7 @@ interface PermissionRouteProps {
 export default function PermissionRoute({
   permission,
   requireAll = false,
-  redirectTo = '/dashboard',
+  redirectTo = '/inicio',
   children,
 }: PermissionRouteProps) {
   const { can, canAny, canAll, isAuthenticated } = useAuthStore();
@@ -74,7 +74,7 @@ export default function PermissionRoute({
 
   // If not authenticated, let ProtectedRoute handle it
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/iniciar-sesion" state={{ from: location }} replace />;
   }
 
   // Check permissions

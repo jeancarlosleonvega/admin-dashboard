@@ -63,7 +63,7 @@ export class UsersController {
   }
 
   async updateMyProfile(request: FastifyRequest, reply: FastifyReply) {
-    const userId = (request as any).user.id;
+    const userId = (request as any).user.userId;
     const parsed = updateProfileSchema.safeParse(request.body);
     if (!parsed.success) {
       throw new ValidationError('Validation failed', parsed.error.errors);

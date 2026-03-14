@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, User, Wallet } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, Wallet } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
 
-// Ítems solo para staff/admin (requieren al menos un permiso de gestión)
+// Ítems de gestión: solo staff/admin (cada uno requiere su permiso)
 const adminNav = [
   { name: 'Inicio', href: '/dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
   { name: 'Tipos de Deporte', href: '/sport-types', icon: Activity, permission: 'sport-types.view' },
@@ -17,15 +17,14 @@ const adminNav = [
   { name: 'Tipos de Condición', href: '/condition-types', icon: GitBranch, permission: 'condition-types.view' },
   { name: 'Servicios Adicionales', href: '/additional-services', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/bookings', icon: Calendar, permission: 'bookings.view' },
-  { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle, permission: 'slots.view' },
   { name: 'Transferencias', href: '/payments/transfers', icon: DollarSign, permission: 'payments.view' },
   { name: 'Validar QR', href: '/qr-validator', icon: QrCode, permission: 'qr.validate' },
 ];
 
-// Ítems visibles para todos (portal del socio)
+// Ítems del portal: solo clientes (no tienen users.view)
 const clientNav = [
+  { name: 'Nueva Reserva', href: '/bookings/new', icon: PlusCircle },
   { name: 'Mis Reservas', href: '/bookings/my', icon: BookOpen },
-  { name: 'Mi Perfil', href: '/my-profile', icon: User },
   { name: 'Mi Membresía', href: '/my-membership', icon: CreditCard },
   { name: 'Mi Wallet', href: '/my-wallet', icon: Wallet },
 ];
@@ -72,8 +71,6 @@ export default function Sidebar() {
 
   const isStaffOrAdmin = can('users.view');
   const filteredAdminNav = adminNav.filter((item) => can(item.permission));
-  // Clientes ven solo portal; staff/admin ven gestión + acceso rápido al portal
-  const filteredNav = isStaffOrAdmin ? filteredAdminNav : [];
 
   const handleLogout = async () => {
     await logout();
@@ -147,30 +144,15 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 overflow-y-auto">
-          {/* Sección admin/staff */}
-          {filteredNav.length > 0 && (
-            <div className="space-y-1 pb-2">
-              {filteredNav.map((item) => (
+        <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
+          {isStaffOrAdmin
+            ? filteredAdminNav.map((item) => (
                 <NavItemLink key={item.name} item={item} expanded={expanded} onClick={handleNavClick} />
-              ))}
-            </div>
-          )}
-
-          {/* Separador + portal del socio */}
-          {filteredNav.length > 0 && (
-            <div className={cn('pt-3 pb-2 flex-shrink-0', expanded ? 'lg:px-2' : 'lg:px-0')}>
-              <span className={cn('text-[10px] font-semibold text-gray-400 uppercase tracking-wider block', expanded ? 'lg:text-left' : 'lg:text-center lg:hidden')}>
-                Mi portal
-              </span>
-            </div>
-          )}
-
-          <div className="space-y-1 pb-2">
-            {clientNav.map((item) => (
-              <NavItemLink key={item.name} item={item} expanded={expanded} onClick={handleNavClick} />
-            ))}
-          </div>
+              ))
+            : clientNav.map((item) => (
+                <NavItemLink key={item.name} item={item} expanded={expanded} onClick={handleNavClick} />
+              ))
+          }
         </nav>
 
         {/* Bottom section */}
@@ -233,10 +215,12 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* User avatar */}
-        <div
+        {/* User avatar → Mi Perfil */}
+        <Link
+          to="/my-profile"
+          onClick={handleNavClick}
           className={cn(
-            'flex items-center py-4 border-t border-gray-200 flex-shrink-0',
+            'flex items-center py-4 border-t border-gray-200 flex-shrink-0 hover:bg-gray-50 transition-colors',
             expanded ? 'lg:px-4 lg:gap-3' : 'lg:justify-center lg:px-0 lg:gap-0',
             'px-4 gap-3'
           )}
@@ -260,7 +244,7 @@ export default function Sidebar() {
             </span>
             <span className="text-xs text-gray-500 truncate">{user?.email}</span>
           </div>
-        </div>
+        </Link>
       </aside>
     </>
   );

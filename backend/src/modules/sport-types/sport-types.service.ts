@@ -34,6 +34,10 @@ export class SportTypesService {
 
   async delete(id: string): Promise<void> {
     await this.findById(id);
+    const venueCount = await sportTypesRepository.countVenues(id);
+    if (venueCount > 0) {
+      throw new ValidationError(`No se puede eliminar: el deporte tiene ${venueCount} espacio${venueCount !== 1 ? 's' : ''} asociado${venueCount !== 1 ? 's' : ''}`);
+    }
     await sportTypesRepository.delete(id);
   }
 }

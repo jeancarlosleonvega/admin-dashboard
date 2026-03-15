@@ -63,8 +63,9 @@ export default function SportTypesListPage() {
       await deleteSportType.mutateAsync(deleteTarget.id);
       toast.success('Tipo de deporte eliminado exitosamente');
       setDeleteTarget(null);
-    } catch {
-      toast.error('Error al eliminar el tipo de deporte');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message;
+      toast.error(msg ?? 'Error al eliminar el tipo de deporte');
     }
   };
 

@@ -22,9 +22,9 @@ const SORT_FIELD_MAP: Record<string, string> = {
 };
 
 const columns: ColumnDef[] = [
-  { key: 'resource', label: 'Resource', sortable: true, filterable: true, type: 'text' },
-  { key: 'action', label: 'Action', sortable: true, filterable: true, type: 'text' },
-  { key: 'description', label: 'Description', sortable: false, filterable: true, type: 'text' },
+  { key: 'resource', label: 'Recurso', sortable: true, filterable: true, type: 'text' },
+  { key: 'action', label: 'Acción', sortable: true, filterable: true, type: 'text' },
+  { key: 'description', label: 'Descripción', sortable: false, filterable: true, type: 'text' },
   { key: 'created', label: 'Creado', sortable: true, filterable: true, type: 'date' },
   { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
@@ -140,17 +140,17 @@ export default function PermissionsListPage() {
                   <tr>
                     {visibleColumns.includes('resource') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Resource
+                        Recurso
                       </th>
                     )}
                     {visibleColumns.includes('action') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Action
+                        Acción
                       </th>
                     )}
                     {visibleColumns.includes('description') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        Descripción
                       </th>
                     )}
                     {visibleColumns.includes('created') && (
@@ -160,7 +160,7 @@ export default function PermissionsListPage() {
                     )}
                     {visibleColumns.includes('actions') && (
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        Acciones
                       </th>
                     )}
                   </tr>
@@ -198,7 +198,7 @@ export default function PermissionsListPage() {
                             <button
                               onClick={() => navigate(`/permissions/${permission.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                              title="View permission"
+                              title="Ver permiso"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -206,7 +206,7 @@ export default function PermissionsListPage() {
                               <button
                                 onClick={() => navigate(`/permissions/${permission.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                                title="Edit permission"
+                                title="Editar permiso"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -215,7 +215,7 @@ export default function PermissionsListPage() {
                               <button
                                 onClick={() => setDeleteTarget(permission)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                                title="Delete permission"
+                                title="Eliminar permiso"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -233,8 +233,8 @@ export default function PermissionsListPage() {
             {meta.totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Showing {(meta.page - 1) * meta.limit + 1} to{' '}
-                  {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} permissions
+                  Mostrando {(meta.page - 1) * meta.limit + 1} a{' '}
+                  {Math.min(meta.page * meta.limit, meta.total)} de {meta.total} permisos
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -275,7 +275,7 @@ export default function PermissionsListPage() {
       <ConfirmDialog
         isOpen={!!deleteTarget}
         title="Eliminar Permiso"
-        message={`Are you sure you want to delete the permission "${deleteTarget?.resource}.${deleteTarget?.action}"? This action cannot be undone.`}
+        message={`¿Estás seguro de que deseas eliminar el permiso "${deleteTarget?.resource}.${deleteTarget?.action}"? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar"
         variant="danger"
         isLoading={deletePermission.isPending}

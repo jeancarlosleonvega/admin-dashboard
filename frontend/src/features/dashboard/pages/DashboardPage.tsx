@@ -7,9 +7,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  SUSPENDED: 'Suspended',
+  ACTIVE: 'Activo',
+  INACTIVE: 'Inactivo',
+  SUSPENDED: 'Suspendido',
 };
 
 function StatBar({ data, total }: { data: Record<string, number>; total: number }) {

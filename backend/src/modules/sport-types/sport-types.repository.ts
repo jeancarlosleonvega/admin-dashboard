@@ -38,8 +38,18 @@ export class SportTypesRepository {
     return prisma.sportType.update({ where: { id }, data });
   }
 
+  async countRelated(id: string): Promise<number> {
+    return prisma.venue.count({ where: { sportTypeId: id } });
+  }
+
   async delete(id: string): Promise<void> {
-    await prisma.sportType.delete({ where: { id } });
+    // Eliminar registros opcionales relacionados antes de borrar el deporte
+    await prisma.$transaction([
+      prisma.pricingConfig.deleteMany({ where: { sportTypeId: id } }),
+      prisma.blockedPeriod.deleteMany({ where: { sportTypeId: id } }),
+      prisma.additionalService.deleteMany({ where: { sportTypeId: id } }),
+      prisma.sportType.delete({ where: { id } }),
+    ]);
   }
 }
 

@@ -69,8 +69,9 @@ export default function VenueSchedulesPage() {
       await deleteSchedule.mutateAsync(deleteTarget.id);
       toast.success('Horario eliminado exitosamente');
       setDeleteTarget(null);
-    } catch {
-      toast.error('Error al eliminar el horario');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message ?? 'Error al eliminar el horario';
+      toast.error(msg);
     }
   };
 

@@ -220,6 +220,20 @@ export class VenueSchedulesService {
 
   async delete(id: string) {
     await this.findById(id);
+
+    // Verificar que no haya reservas activas en slots de este horario
+    const activeBookings = await prisma.booking.count({
+      where: {
+        slot: { scheduleId: id },
+        status: { in: ['PENDING_PAYMENT', 'CONFIRMED'] },
+      },
+    });
+    if (activeBookings > 0) {
+      throw new ValidationError(
+        `No se puede eliminar el horario porque tiene ${activeBookings} reserva${activeBookings > 1 ? 's' : ''} activa${activeBookings > 1 ? 's' : ''}. Cancelalas primero.`
+      );
+    }
+
     await venueSchedulesRepository.delete(id);
   }
 

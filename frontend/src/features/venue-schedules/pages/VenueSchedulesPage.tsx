@@ -159,7 +159,11 @@ export default function VenueSchedulesPage() {
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{schedule.name}</td>
                     )}
                     {visibleColumns.includes('venue') && (
-                      <td className="px-6 py-4 text-sm text-gray-500">{schedule.venue?.name ?? '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {schedule.venue
+                          ? <><span className="font-medium text-gray-700">{schedule.venue.sportType.name}</span>: {schedule.venue.name}</>
+                          : '-'}
+                      </td>
                     )}
                     {visibleColumns.includes('days') && (
                       <td className="px-6 py-4">

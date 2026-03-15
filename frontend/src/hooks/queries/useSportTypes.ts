@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { sportTypesApi } from '@api/sportTypes';
 import type { SportTypeFilters } from '@/types/sport-type.types';
+import { revenueKeys } from './useRevenue';
 
 export const sportTypeKeys = {
   all: ['sport-types'] as const,
@@ -56,6 +57,7 @@ export function useDeleteSportType() {
     mutationFn: (id: string) => sportTypesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sportTypeKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: revenueKeys.all });
     },
   });
 }

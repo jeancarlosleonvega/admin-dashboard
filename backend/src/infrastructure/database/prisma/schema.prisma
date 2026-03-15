@@ -59,6 +59,7 @@ enum RevenueValueType {
 }
 
 enum UserMembershipStatus {
+  PENDING
   ACTIVE
   INACTIVE
   CANCELLED
@@ -278,6 +279,7 @@ model UserMembership {
   reservationsUsedMonth Int                  @default(0) @map("reservations_used_month")
   currentMonthYear      String?              @map("current_month_year")
   notes                 String?
+  mpSubscriptionId      String?              @map("mp_subscription_id")
   createdAt             DateTime             @default(now()) @map("created_at")
   updatedAt             DateTime             @updatedAt @map("updated_at")
 

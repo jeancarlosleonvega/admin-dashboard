@@ -6,6 +6,11 @@ import { authorize } from '../../shared/middlewares/authorize.js';
 export async function membershipPlansRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authenticate);
 
+  // Planes activos: accesible para cualquier usuario autenticado (sin permiso especial)
+  fastify.get('/active', {
+    handler: membershipPlansController.findActive.bind(membershipPlansController),
+  });
+
   fastify.get('/', {
     preHandler: [authorize('membership-plans.view')],
     handler: membershipPlansController.findAll.bind(membershipPlansController),

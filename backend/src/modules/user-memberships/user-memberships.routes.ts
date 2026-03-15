@@ -4,7 +4,16 @@ import { authenticate } from '../../shared/middlewares/authenticate.js';
 import { authorize } from '../../shared/middlewares/authorize.js';
 
 export async function userMembershipsRoutes(fastify: FastifyInstance) {
+  // Webhook público de MercadoPago (sin auth)
+  fastify.post('/webhook/mercadopago', {
+    handler: userMembershipsController.mpWebhook.bind(userMembershipsController),
+  });
+
   fastify.addHook('preHandler', authenticate);
+
+  fastify.post('/subscribe', {
+    handler: userMembershipsController.subscribe.bind(userMembershipsController),
+  });
 
   fastify.get('/my', {
     handler: userMembershipsController.findMy.bind(userMembershipsController),

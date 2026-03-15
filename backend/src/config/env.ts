@@ -21,6 +21,10 @@ const envSchema = z.object({
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
+  // MercadoPago (optional)
+  MP_ACCESS_TOKEN: z.string().optional(),
+  MP_WEBHOOK_SECRET: z.string().optional(),
+
   // SMTP (optional)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),

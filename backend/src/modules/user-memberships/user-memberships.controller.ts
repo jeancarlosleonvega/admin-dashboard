@@ -52,6 +52,25 @@ export class UserMembershipsController {
     await userMembershipsService.delete(request.params.id);
     return reply.send(successResponse({ message: 'Membresía cancelada' }));
   }
+
+  async subscribe(request: FastifyRequest, reply: FastifyReply) {
+    const userId = (request as any).user.userId;
+    const { membershipPlanId } = request.body as { membershipPlanId: string };
+    if (!membershipPlanId) throw new ValidationError('membershipPlanId es requerido');
+    const result = await userMembershipsService.subscribe(userId, membershipPlanId);
+    return reply.send(successResponse(result));
+  }
+
+  async mpWebhook(request: FastifyRequest, reply: FastifyReply) {
+    const body = request.body as any;
+    const type: string = body?.type ?? '';
+    const dataId: string = body?.data?.id ?? '';
+    if (type && dataId) {
+      // No awaiting — responder inmediatamente a MP
+      userMembershipsService.handleMpWebhook(type, dataId).catch(() => {});
+    }
+    return reply.status(200).send({ received: true });
+  }
 }
 
 export const userMembershipsController = new UserMembershipsController();

@@ -32,6 +32,11 @@ export class MembershipPlansService {
     return membershipPlansRepository.update(id, data);
   }
 
+  async findActive(): Promise<MembershipPlanWithSportType[]> {
+    const { items } = await membershipPlansRepository.findAll({ active: 'true' }, 1, 100);
+    return items;
+  }
+
   async delete(id: string): Promise<void> {
     await this.findById(id);
     await membershipPlansRepository.delete(id);

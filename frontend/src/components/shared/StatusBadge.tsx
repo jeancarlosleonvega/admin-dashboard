@@ -4,6 +4,7 @@ const LABELS: Record<string, string> = {
   INACTIVE: 'Inactivo',
   SUSPENDED: 'Suspendido',
   // Membership
+  PENDING: 'Pendiente de pago',
   CANCELLED: 'Cancelada',
   EXPIRED: 'Expirada',
   // Booking
@@ -21,6 +22,7 @@ const COLORS: Record<string, string> = {
   ACTIVE: 'bg-green-100 text-green-700',
   INACTIVE: 'bg-gray-100 text-gray-700',
   SUSPENDED: 'bg-red-100 text-red-700',
+  PENDING: 'bg-yellow-100 text-yellow-700',
   CANCELLED: 'bg-red-100 text-red-700',
   EXPIRED: 'bg-orange-100 text-orange-700',
   PENDING_PAYMENT: 'bg-yellow-100 text-yellow-700',

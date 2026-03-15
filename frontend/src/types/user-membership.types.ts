@@ -1,4 +1,4 @@
-export type UserMembershipStatus = 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'EXPIRED';
+export type UserMembershipStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'EXPIRED';
 
 export interface UserMembership {
   id: string;
@@ -10,6 +10,7 @@ export interface UserMembership {
   reservationsUsedMonth: number;
   currentMonthYear?: string | null;
   notes?: string | null;
+  mpSubscriptionId?: string | null;
   createdAt: string;
   updatedAt: string;
   membershipPlan: { id: string; name: string; price: number; monthlyReservationLimit: number | null };

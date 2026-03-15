@@ -1,6 +1,15 @@
 import { apiClient } from './client';
 import type { UserMembership } from '@/types/user-membership.types';
 
+export interface ActiveMembershipPlan {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  monthlyReservationLimit: number | null;
+  sportType: { id: string; name: string } | null;
+}
+
 interface PaginatedResponse {
   data: UserMembership[];
   meta: { page: number; limit: number; total: number; totalPages: number };
@@ -47,5 +56,15 @@ export const userMembershipsApi = {
 
   async deleteUserMembership(id: string): Promise<void> {
     await apiClient.delete(`/user-memberships/${id}`);
+  },
+
+  async subscribe(membershipPlanId: string): Promise<{ initPoint: string }> {
+    const response = await apiClient.post('/user-memberships/subscribe', { membershipPlanId });
+    return response.data.data;
+  },
+
+  async getActivePlans(): Promise<ActiveMembershipPlan[]> {
+    const response = await apiClient.get('/membership-plans/active');
+    return response.data.data;
   },
 };

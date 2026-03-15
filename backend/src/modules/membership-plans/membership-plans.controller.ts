@@ -5,6 +5,11 @@ import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
 export class MembershipPlansController {
+  async findActive(request: FastifyRequest, reply: FastifyReply) {
+    const items = await membershipPlansService.findActive();
+    return reply.send(successResponse(items));
+  }
+
   async findAll(request: FastifyRequest, reply: FastifyReply) {
     const parsed = membershipPlanFiltersSchema.safeParse(request.query);
     if (!parsed.success) throw new ValidationError('Filtros inválidos', parsed.error.errors);

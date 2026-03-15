@@ -25,6 +25,7 @@ const routeTitles: Record<string, string> = {
   '/reservas/nueva': 'Nueva Reserva',
   '/mis-reservas': 'Mis Reservas',
   '/pagos': 'Pagos',
+  '/motor-precios': 'Motor de Precios',
   '/validar-qr': 'Validar QR',
   '/configuracion': 'Configuración',
   '/mi-perfil': 'Mi Perfil',

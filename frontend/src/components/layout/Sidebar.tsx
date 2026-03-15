@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, Wallet } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Activity, MapPin, CreditCard, Calendar, PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck, QrCode, GitBranch, Wallet, TrendingUp } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useUIStore } from '@stores/uiStore';
@@ -18,6 +18,7 @@ const adminNav = [
   { name: 'Servicios Adicionales', href: '/servicios-adicionales', icon: Package, permission: 'additional-services.view' },
   { name: 'Reservas', href: '/reservas', icon: Calendar, permission: 'bookings.view' },
   { name: 'Pagos', href: '/pagos', icon: DollarSign, permission: 'payments.view' },
+  { name: 'Motor de Precios', href: '/motor-precios', icon: TrendingUp, permission: 'revenue.view' },
   { name: 'Validar QR', href: '/validar-qr', icon: QrCode, permission: 'qr.validate' },
 ];
 

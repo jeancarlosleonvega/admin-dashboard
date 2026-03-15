@@ -59,6 +59,7 @@ import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
 import MyProfilePage from '@features/profile/pages/MyProfilePage';
 import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
 import MyWalletPage from '@features/wallet/pages/MyWalletPage';
+import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -477,6 +478,16 @@ function App() {
           element={
             <PermissionRoute permission="condition-types.manage">
               <ConditionTypeEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Motor de Precios */}
+        <Route
+          path="/motor-precios"
+          element={
+            <PermissionRoute permission="revenue.view">
+              <RevenueConfigPage />
             </PermissionRoute>
           }
         />

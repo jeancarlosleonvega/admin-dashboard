@@ -28,6 +28,7 @@ import { paymentsRoutes } from './modules/payments/payments.routes.js';
 import { qrRoutes } from './modules/qr/qr.routes.js';
 import { conditionTypesRoutes } from './modules/condition-types/condition-types.routes.js';
 import { walletRoutes } from './modules/wallet/wallet.routes.js';
+import { revenueRoutes } from './modules/revenue/revenue.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -80,6 +81,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     api.register(qrRoutes, { prefix: '/qr' });
     api.register(conditionTypesRoutes, { prefix: '/condition-types' });
     api.register(walletRoutes, { prefix: '/wallet' });
+    api.register(revenueRoutes, { prefix: '/revenue' });
   }, { prefix: '/api' });
 
   return app;

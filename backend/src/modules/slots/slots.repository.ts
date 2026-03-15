@@ -142,6 +142,66 @@ async function getMembershipBasePrice(userProfile: UserProfile): Promise<number 
   return plan ? parseFloat(plan.baseBookingPrice.toString()) : null;
 }
 
+// ─── Motor de Revenue Management ─────────────────────────────────────────────
+
+async function calcularPrecioRevenue(
+  basePrice: number,
+  slotStartTime: string,
+  slotDate: Date,
+  slotVenueId: string,
+  sportTypeId: string,
+): Promise<number> {
+  const config = await prisma.pricingConfig.findUnique({
+    where: { sportTypeId },
+    include: {
+      timeRules: true,
+      dayRules: true,
+      occupancyRules: true,
+    },
+  });
+
+  if (!config || !config.enabled) return basePrice;
+
+  // M_horario
+  let mHorario = 1.0;
+  const timeRule = config.timeRules.find(
+    (r) => slotStartTime >= r.startTime && slotStartTime < r.endTime,
+  );
+  if (timeRule) mHorario = parseFloat(timeRule.multiplier.toString());
+
+  // M_día
+  let mDia = 1.0;
+  const dow = slotDate.getDay(); // 0=dom, 6=sab
+  const dayType = dow === 0 || dow === 6 ? 'WEEKEND' : dow === 5 ? 'FRIDAY' : 'WEEKDAY';
+  const dayRule = config.dayRules.find((r) => r.dayType === dayType);
+  if (dayRule) mDia = parseFloat(dayRule.multiplier.toString());
+
+  // M_demanda
+  const [totalSlots, bookedSlots] = await Promise.all([
+    prisma.slot.count({ where: { venueId: slotVenueId, date: slotDate } }),
+    prisma.slot.count({ where: { venueId: slotVenueId, date: slotDate, status: 'BOOKED' } }),
+  ]);
+  const occupancyPct = totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0;
+  let mDemanda = 1.0;
+  const occRule = config.occupancyRules.find(
+    (r) => occupancyPct >= r.minOccupancy && occupancyPct <= r.maxOccupancy,
+  );
+  if (occRule) mDemanda = parseFloat(occRule.multiplier.toString());
+
+  // Precio final
+  let price = basePrice * mHorario * mDia * mDemanda;
+
+  const minP = parseFloat(config.minPrice.toString());
+  const maxP = parseFloat(config.maxPrice.toString());
+  if (minP > 0) price = Math.max(price, minP);
+  if (maxP < 999999) price = Math.min(price, maxP);
+  if (config.roundingStep > 0) {
+    price = Math.round(price / config.roundingStep) * config.roundingStep;
+  }
+
+  return price;
+}
+
 // ─── Filtrado por reglas (lógica central compartida) ─────────────────────────
 
 async function applyRuleFilter<T extends SlotBase>(
@@ -150,6 +210,15 @@ async function applyRuleFilter<T extends SlotBase>(
   baseBookingPrice: number | null,
 ): Promise<(Omit<T, 'scheduleId'> & { price: number | null; scheduleRule: object | null })[]> {
   const resultado: (Omit<T, 'scheduleId'> & { price: number | null; scheduleRule: object | null })[] = [];
+
+  // Obtener sportTypeId del venue (todos los slots son del mismo venue)
+  const venueInfo = slots.length > 0
+    ? await prisma.venue.findUnique({
+        where: { id: slots[0].venueId },
+        select: { sportTypeId: true },
+      })
+    : null;
+  const sportTypeId = venueInfo?.sportTypeId ?? '';
 
   for (const slot of slots) {
     const slotDate = slot.date;
@@ -201,12 +270,16 @@ async function applyRuleFilter<T extends SlotBase>(
       (a, b) => calcularEspecificidad(a) - calcularEspecificidad(b),
     )[0];
 
-    // Evaluar las rules en orden — la primera que el usuario satisface gana
+    // Evaluar las rules — gana la que tiene más condiciones cumplidas
     let ruleGanadora: any = null;
+    let maxConditions = -1;
     for (const rule of masEspecifico.rules) {
       if (evaluarRule(rule, userProfile)) {
-        ruleGanadora = rule;
-        break;
+        const condCount = rule.conditions.length;
+        if (condCount > maxConditions) {
+          maxConditions = condCount;
+          ruleGanadora = rule;
+        }
       }
     }
 
@@ -217,13 +290,18 @@ async function applyRuleFilter<T extends SlotBase>(
     if (!ruleGanadora.canBook) continue;
 
     const { scheduleId: _sid, ...slotSinScheduleId } = slot as T & { scheduleId?: unknown };
+    const basePrice = parseFloat(ruleGanadora.basePrice.toString());
+    const finalPrice = ruleGanadora.revenueManagementEnabled && sportTypeId
+      ? await calcularPrecioRevenue(basePrice, slot.startTime, slot.date, slot.venueId, sportTypeId)
+      : basePrice;
+
     resultado.push({
       ...slotSinScheduleId,
-      price: parseFloat(ruleGanadora.basePrice.toString()),
+      price: finalPrice,
       scheduleRule: {
         ruleId: ruleGanadora.id,
         canBook: ruleGanadora.canBook,
-        basePrice: parseFloat(ruleGanadora.basePrice.toString()),
+        basePrice,
         revenueManagementEnabled: ruleGanadora.revenueManagementEnabled,
       },
     });

@@ -52,6 +52,13 @@ enum SlotStatus {
   BLOCKED
 }
 
+enum RevenueDayType {
+  WEEKDAY
+  FRIDAY
+  WEEKEND
+  HOLIDAY
+}
+
 enum UserMembershipStatus {
   ACTIVE
   INACTIVE
@@ -513,7 +520,51 @@ model PricingConfig {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  sportType SportType @relation(fields: [sportTypeId], references: [id])
+  sportType      SportType              @relation(fields: [sportTypeId], references: [id])
+  timeRules      RevenueTimeRule[]
+  dayRules       RevenueDayRule[]
+  occupancyRules RevenueOccupancyRule[]
 
   @@map("pricing_configs")
+}
+
+model RevenueTimeRule {
+  id              String        @id @default(uuid())
+  pricingConfigId String        @map("pricing_config_id")
+  label           String?
+  startTime       String        @map("start_time")
+  endTime         String        @map("end_time")
+  multiplier      Decimal       @db.Decimal(5, 2)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+
+  @@map("revenue_time_rules")
+}
+
+model RevenueDayRule {
+  id              String         @id @default(uuid())
+  pricingConfigId String         @map("pricing_config_id")
+  dayType         RevenueDayType @map("day_type")
+  multiplier      Decimal        @db.Decimal(5, 2)
+  label           String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([pricingConfigId, dayType])
+  @@map("revenue_day_rules")
+}
+
+model RevenueOccupancyRule {
+  id              String        @id @default(uuid())
+  pricingConfigId String        @map("pricing_config_id")
+  minOccupancy    Int           @map("min_occupancy")
+  maxOccupancy    Int           @map("max_occupancy")
+  multiplier      Decimal       @db.Decimal(5, 2)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+
+  @@map("revenue_occupancy_rules")
 }

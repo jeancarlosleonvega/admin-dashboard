@@ -69,6 +69,10 @@ const permissions = [
 
   // Wallet
   { resource: 'wallet', action: 'view', description: 'Ver wallet propio' },
+
+  // Revenue Management
+  { resource: 'revenue', action: 'view', description: 'Ver configuración motor de precios' },
+  { resource: 'revenue', action: 'manage', description: 'Gestionar motor de precios' },
 ];
 
 const roles = [
@@ -111,6 +115,8 @@ const roles = [
       'condition-types.view',
       'condition-types.manage',
       'wallet.view',
+      'revenue.view',
+      'revenue.manage',
     ],
   },
   {

@@ -3,7 +3,7 @@ import type { CreateBlockedPeriodInput, UpdateBlockedPeriodInput } from './block
 
 const blockedPeriodInclude = {
   sportType: { select: { id: true, name: true } },
-  venue: { select: { id: true, name: true } },
+  venue: { select: { id: true, name: true, sportType: { select: { id: true, name: true } } } },
 };
 
 export class BlockedPeriodsRepository {

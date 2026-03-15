@@ -12,7 +12,7 @@ export interface BlockedPeriod {
   active: boolean;
   createdAt: string;
   sportType?: { id: string; name: string } | null;
-  venue?: { id: string; name: string } | null;
+  venue?: { id: string; name: string; sportType: { id: string; name: string } } | null;
 }
 
 interface PaginatedResponse {

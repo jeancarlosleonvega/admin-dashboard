@@ -152,7 +152,7 @@ export default function BlockedPeriodsListPage() {
                       {visibleColumns.includes('appliesTo') && (
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {period.venue
-                            ? period.venue.name
+                            ? <><span className="font-medium text-gray-700">{period.venue.sportType.name}</span>: {period.venue.name}</>
                             : period.sportType
                             ? period.sportType.name
                             : 'Todos'}

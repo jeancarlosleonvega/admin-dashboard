@@ -1,22 +1,17 @@
 import { z } from 'zod';
 
-export const timeRuleSchema = z.object({
-  label: z.string().optional(),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+export const factorRuleSchema = z.object({
+  minValue: z.string().optional().nullable(),
+  maxValue: z.string().optional().nullable(),
+  enumValue: z.string().optional().nullable(),
   multiplier: z.number().positive(),
+  label: z.string().optional().nullable(),
 });
 
-export const dayRuleSchema = z.object({
-  dayType: z.enum(['WEEKDAY', 'FRIDAY', 'WEEKEND', 'HOLIDAY']),
-  multiplier: z.number().positive(),
-  label: z.string().optional(),
-});
-
-export const occupancyRuleSchema = z.object({
-  minOccupancy: z.number().int().min(0).max(100),
-  maxOccupancy: z.number().int().min(0).max(100),
-  multiplier: z.number().positive(),
+export const factorSchema = z.object({
+  factorTypeId: z.string().uuid(),
+  enabled: z.boolean(),
+  rules: z.array(factorRuleSchema),
 });
 
 export const upsertRevenueConfigSchema = z.object({
@@ -24,9 +19,17 @@ export const upsertRevenueConfigSchema = z.object({
   minPrice: z.number().min(0),
   maxPrice: z.number().min(0),
   roundingStep: z.number().int().min(0),
-  timeRules: z.array(timeRuleSchema),
-  dayRules: z.array(dayRuleSchema),
-  occupancyRules: z.array(occupancyRuleSchema),
+  factors: z.array(factorSchema),
+});
+
+export const createFactorTypeSchema = z.object({
+  name: z.string().min(1),
+  key: z.string().min(1).regex(/^[a-zA-Z][a-zA-Z0-9_]*$/),
+  valueType: z.enum(['NUMBER_RANGE', 'TIME_RANGE', 'ENUM']),
+  enumValues: z.array(z.string()).optional().default([]),
+  enumLabels: z.array(z.string()).optional().default([]),
+  description: z.string().optional(),
 });
 
 export type UpsertRevenueConfigInput = z.infer<typeof upsertRevenueConfigSchema>;
+export type CreateFactorTypeInput = z.infer<typeof createFactorTypeSchema>;

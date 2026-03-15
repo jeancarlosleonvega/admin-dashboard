@@ -1,20 +1,39 @@
 import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
-import type { UpsertRevenueConfigInput } from './revenue.schema.js';
+import { ValidationError } from '../../shared/errors/ValidationError.js';
+import type { UpsertRevenueConfigInput, CreateFactorTypeInput } from './revenue.schema.js';
 
 export class RevenueService {
+  // ─── Factor Types ───────────────────────────────────────────
+  async findAllFactorTypes() {
+    return prisma.revenueFactorType.findMany({
+      where: { active: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createFactorType(data: CreateFactorTypeInput) {
+    const existing = await prisma.revenueFactorType.findUnique({ where: { key: data.key } });
+    if (existing) throw new ValidationError('Ya existe un factor con esa clave');
+    return prisma.revenueFactorType.create({ data });
+  }
+
+  async deleteFactorType(id: string) {
+    const ft = await prisma.revenueFactorType.findUnique({ where: { id } });
+    if (!ft) throw new NotFoundError('Tipo de factor');
+    if (ft.isSystem) throw new ValidationError('No se pueden eliminar factores del sistema');
+    return prisma.revenueFactorType.update({ where: { id }, data: { active: false } });
+  }
+
+  // ─── Config por SportType ────────────────────────────────────
   async findAll() {
     const sportTypes = await prisma.sportType.findMany({
       where: { active: true },
       select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
-
     return Promise.all(
-      sportTypes.map(async (st) => ({
-        sportType: st,
-        config: await this.findOrCreateConfig(st.id),
-      }))
+      sportTypes.map(async (st) => ({ sportType: st, config: await this.findOrCreateConfig(st.id) }))
     );
   }
 
@@ -28,16 +47,18 @@ export class RevenueService {
     let config = await prisma.pricingConfig.findUnique({
       where: { sportTypeId },
       include: {
-        timeRules: { orderBy: { startTime: 'asc' } },
-        dayRules: { orderBy: { dayType: 'asc' } },
-        occupancyRules: { orderBy: { minOccupancy: 'asc' } },
+        factors: {
+          include: {
+            factorType: true,
+            rules: { orderBy: { createdAt: 'asc' } },
+          },
+        },
       },
     });
-
     if (!config) {
       config = await prisma.pricingConfig.create({
         data: { sportTypeId, basePrice: 0, minPrice: 0, maxPrice: 999999, roundingStep: 0, enabled: false },
-        include: { timeRules: true, dayRules: true, occupancyRules: true },
+        include: { factors: { include: { factorType: true, rules: true } } },
       });
     }
     return config;
@@ -54,26 +75,34 @@ export class RevenueService {
         update: { enabled: data.enabled, minPrice: data.minPrice, maxPrice: data.maxPrice, roundingStep: data.roundingStep },
       });
 
-      await tx.revenueTimeRule.deleteMany({ where: { pricingConfigId: config.id } });
-      if (data.timeRules.length > 0) {
-        await tx.revenueTimeRule.createMany({
-          data: data.timeRules.map((r) => ({ pricingConfigId: config.id, label: r.label, startTime: r.startTime, endTime: r.endTime, multiplier: r.multiplier })),
+      // Para cada factor en el payload: upsert factor + replace rules
+      for (const f of data.factors) {
+        const factor = await tx.revenueFactor.upsert({
+          where: { pricingConfigId_factorTypeId: { pricingConfigId: config.id, factorTypeId: f.factorTypeId } },
+          create: { pricingConfigId: config.id, factorTypeId: f.factorTypeId, enabled: f.enabled },
+          update: { enabled: f.enabled },
         });
+
+        await tx.revenueFactorRule.deleteMany({ where: { factorId: factor.id } });
+        if (f.rules.length > 0) {
+          await tx.revenueFactorRule.createMany({
+            data: f.rules.map((r) => ({
+              factorId: factor.id,
+              minValue: r.minValue ?? null,
+              maxValue: r.maxValue ?? null,
+              enumValue: r.enumValue ?? null,
+              multiplier: r.multiplier,
+              label: r.label ?? null,
+            })),
+          });
+        }
       }
 
-      await tx.revenueDayRule.deleteMany({ where: { pricingConfigId: config.id } });
-      if (data.dayRules.length > 0) {
-        await tx.revenueDayRule.createMany({
-          data: data.dayRules.map((r) => ({ pricingConfigId: config.id, dayType: r.dayType, multiplier: r.multiplier, label: r.label })),
-        });
-      }
-
-      await tx.revenueOccupancyRule.deleteMany({ where: { pricingConfigId: config.id } });
-      if (data.occupancyRules.length > 0) {
-        await tx.revenueOccupancyRule.createMany({
-          data: data.occupancyRules.map((r) => ({ pricingConfigId: config.id, minOccupancy: r.minOccupancy, maxOccupancy: r.maxOccupancy, multiplier: r.multiplier })),
-        });
-      }
+      // Eliminar factores que ya no están en el payload
+      const factorTypeIds = data.factors.map((f) => f.factorTypeId);
+      await tx.revenueFactor.deleteMany({
+        where: { pricingConfigId: config.id, factorTypeId: { notIn: factorTypeIds } },
+      });
     });
 
     return this.findBySportType(sportTypeId);

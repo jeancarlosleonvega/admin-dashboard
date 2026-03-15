@@ -150,47 +150,75 @@ async function calcularPrecioRevenue(
   slotDate: Date,
   slotVenueId: string,
   sportTypeId: string,
+  userProfile?: UserProfile,
 ): Promise<number> {
   const config = await prisma.pricingConfig.findUnique({
     where: { sportTypeId },
     include: {
-      timeRules: true,
-      dayRules: true,
-      occupancyRules: true,
+      factors: {
+        where: { enabled: true },
+        include: {
+          factorType: true,
+          rules: true,
+        },
+      },
     },
   });
 
   if (!config || !config.enabled) return basePrice;
 
-  // M_horario
-  let mHorario = 1.0;
-  const timeRule = config.timeRules.find(
-    (r) => slotStartTime >= r.startTime && slotStartTime < r.endTime,
-  );
-  if (timeRule) mHorario = parseFloat(timeRule.multiplier.toString());
-
-  // M_día
-  let mDia = 1.0;
-  const dow = slotDate.getDay(); // 0=dom, 6=sab
+  // Calcular valores del contexto
+  const dow = slotDate.getDay();
   const dayType = dow === 0 || dow === 6 ? 'WEEKEND' : dow === 5 ? 'FRIDAY' : 'WEEKDAY';
-  const dayRule = config.dayRules.find((r) => r.dayType === dayType);
-  if (dayRule) mDia = parseFloat(dayRule.multiplier.toString());
 
-  // M_demanda
   const [totalSlots, bookedSlots] = await Promise.all([
     prisma.slot.count({ where: { venueId: slotVenueId, date: slotDate } }),
     prisma.slot.count({ where: { venueId: slotVenueId, date: slotDate, status: 'BOOKED' } }),
   ]);
   const occupancyPct = totalSlots > 0 ? Math.round((bookedSlots / totalSlots) * 100) : 0;
-  let mDemanda = 1.0;
-  const occRule = config.occupancyRules.find(
-    (r) => occupancyPct >= r.minOccupancy && occupancyPct <= r.maxOccupancy,
-  );
-  if (occRule) mDemanda = parseFloat(occRule.multiplier.toString());
 
-  // Precio final
-  let price = basePrice * mHorario * mDia * mDemanda;
+  const age = userProfile?.birthDate ? calcularEdad(userProfile.birthDate) : null;
 
+  // Resolver de valores por key
+  const resolver: Record<string, unknown> = {
+    startTime: slotStartTime,
+    dayOfWeek: dayType,
+    occupancyPct,
+    age,
+    sex: userProfile?.sex ?? null,
+    handicap: userProfile?.handicap ?? null,
+  };
+
+  let price = basePrice;
+
+  for (const factor of config.factors) {
+    const key = factor.factorType.key;
+    const valueType = factor.factorType.valueType;
+    const contextValue = resolver[key];
+    if (contextValue === null || contextValue === undefined) continue;
+
+    let multiplier: number | null = null;
+
+    if (valueType === 'ENUM') {
+      const rule = factor.rules.find((r) => r.enumValue === String(contextValue));
+      if (rule) multiplier = parseFloat(rule.multiplier.toString());
+    } else if (valueType === 'TIME_RANGE') {
+      const rule = factor.rules.find(
+        (r) => r.minValue && r.maxValue && String(contextValue) >= r.minValue && String(contextValue) < r.maxValue,
+      );
+      if (rule) multiplier = parseFloat(rule.multiplier.toString());
+    } else if (valueType === 'NUMBER_RANGE') {
+      const numVal = typeof contextValue === 'number' ? contextValue : parseFloat(String(contextValue));
+      const rule = factor.rules.find(
+        (r) => r.minValue !== null && r.maxValue !== null && numVal >= parseFloat(r.minValue!) && numVal <= parseFloat(r.maxValue!),
+      );
+      if (rule) multiplier = parseFloat(rule.multiplier.toString());
+    }
+
+    if (multiplier !== null) price *= multiplier;
+  }
+
+  // Límites
   const minP = parseFloat(config.minPrice.toString());
   const maxP = parseFloat(config.maxPrice.toString());
   if (minP > 0) price = Math.max(price, minP);
@@ -292,7 +320,7 @@ async function applyRuleFilter<T extends SlotBase>(
     const { scheduleId: _sid, ...slotSinScheduleId } = slot as T & { scheduleId?: unknown };
     const basePrice = parseFloat(ruleGanadora.basePrice.toString());
     const finalPrice = ruleGanadora.revenueManagementEnabled && sportTypeId
-      ? await calcularPrecioRevenue(basePrice, slot.startTime, slot.date, slot.venueId, sportTypeId)
+      ? await calcularPrecioRevenue(basePrice, slot.startTime, slot.date, slot.venueId, sportTypeId, userProfile)
       : basePrice;
 
     resultado.push({

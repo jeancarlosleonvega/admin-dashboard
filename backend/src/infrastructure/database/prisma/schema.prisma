@@ -52,11 +52,10 @@ enum SlotStatus {
   BLOCKED
 }
 
-enum RevenueDayType {
-  WEEKDAY
-  FRIDAY
-  WEEKEND
-  HOLIDAY
+enum RevenueValueType {
+  NUMBER_RANGE
+  TIME_RANGE
+  ENUM
 }
 
 enum UserMembershipStatus {
@@ -520,51 +519,56 @@ model PricingConfig {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  sportType      SportType              @relation(fields: [sportTypeId], references: [id])
-  timeRules      RevenueTimeRule[]
-  dayRules       RevenueDayRule[]
-  occupancyRules RevenueOccupancyRule[]
+  sportType SportType       @relation(fields: [sportTypeId], references: [id])
+  factors   RevenueFactor[]
 
   @@map("pricing_configs")
 }
 
-model RevenueTimeRule {
-  id              String        @id @default(uuid())
-  pricingConfigId String        @map("pricing_config_id")
-  label           String?
-  startTime       String        @map("start_time")
-  endTime         String        @map("end_time")
-  multiplier      Decimal       @db.Decimal(5, 2)
-  createdAt       DateTime      @default(now()) @map("created_at")
+model RevenueFactorType {
+  id          String           @id @default(uuid())
+  name        String
+  key         String           @unique
+  valueType   RevenueValueType @map("value_type")
+  enumValues  String[]         @default([]) @map("enum_values")
+  enumLabels  String[]         @default([]) @map("enum_labels")
+  description String?
+  isSystem    Boolean          @default(false) @map("is_system")
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+  factors RevenueFactor[]
 
-  @@map("revenue_time_rules")
+  @@map("revenue_factor_types")
 }
 
-model RevenueDayRule {
-  id              String         @id @default(uuid())
-  pricingConfigId String         @map("pricing_config_id")
-  dayType         RevenueDayType @map("day_type")
-  multiplier      Decimal        @db.Decimal(5, 2)
-  label           String?
-  createdAt       DateTime       @default(now()) @map("created_at")
+model RevenueFactor {
+  id              String   @id @default(uuid())
+  pricingConfigId String   @map("pricing_config_id")
+  factorTypeId    String   @map("factor_type_id")
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+  pricingConfig PricingConfig       @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+  factorType    RevenueFactorType   @relation(fields: [factorTypeId], references: [id], onDelete: Cascade)
+  rules         RevenueFactorRule[]
 
-  @@unique([pricingConfigId, dayType])
-  @@map("revenue_day_rules")
+  @@unique([pricingConfigId, factorTypeId])
+  @@map("revenue_factors")
 }
 
-model RevenueOccupancyRule {
-  id              String        @id @default(uuid())
-  pricingConfigId String        @map("pricing_config_id")
-  minOccupancy    Int           @map("min_occupancy")
-  maxOccupancy    Int           @map("max_occupancy")
-  multiplier      Decimal       @db.Decimal(5, 2)
-  createdAt       DateTime      @default(now()) @map("created_at")
+model RevenueFactorRule {
+  id         String   @id @default(uuid())
+  factorId   String   @map("factor_id")
+  minValue   String?  @map("min_value")
+  maxValue   String?  @map("max_value")
+  enumValue  String?  @map("enum_value")
+  multiplier Decimal  @db.Decimal(5, 2)
+  label      String?
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  pricingConfig PricingConfig @relation(fields: [pricingConfigId], references: [id], onDelete: Cascade)
+  factor RevenueFactor @relation(fields: [factorId], references: [id], onDelete: Cascade)
 
-  @@map("revenue_occupancy_rules")
+  @@map("revenue_factor_rules")
 }

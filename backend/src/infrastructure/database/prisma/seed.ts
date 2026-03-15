@@ -343,6 +343,65 @@ async function main() {
   }
   console.log('ConditionTypes creados');
 
+  // Seed RevenueFactorTypes
+  const factorTypes = [
+    {
+      name: 'Horario',
+      key: 'startTime',
+      valueType: 'TIME_RANGE' as const,
+      description: 'Multiplicador según la hora de inicio del slot',
+      isSystem: true,
+    },
+    {
+      name: 'Día de la semana',
+      key: 'dayOfWeek',
+      valueType: 'ENUM' as const,
+      enumValues: ['WEEKDAY', 'FRIDAY', 'WEEKEND', 'HOLIDAY'],
+      enumLabels: ['Entre semana', 'Viernes', 'Fin de semana', 'Festivo'],
+      description: 'Multiplicador según el día de la semana',
+      isSystem: true,
+    },
+    {
+      name: 'Demanda (ocupación)',
+      key: 'occupancyPct',
+      valueType: 'NUMBER_RANGE' as const,
+      description: 'Multiplicador según el porcentaje de ocupación del espacio',
+      isSystem: true,
+    },
+    {
+      name: 'Edad del socio',
+      key: 'age',
+      valueType: 'NUMBER_RANGE' as const,
+      description: 'Multiplicador según la edad del socio',
+      isSystem: false,
+    },
+    {
+      name: 'Sexo del socio',
+      key: 'sex',
+      valueType: 'ENUM' as const,
+      enumValues: ['MALE', 'FEMALE'],
+      enumLabels: ['Masculino', 'Femenino'],
+      description: 'Multiplicador según el sexo del socio',
+      isSystem: false,
+    },
+    {
+      name: 'Handicap',
+      key: 'handicap',
+      valueType: 'NUMBER_RANGE' as const,
+      description: 'Multiplicador según el handicap del socio',
+      isSystem: false,
+    },
+  ];
+
+  for (const ft of factorTypes) {
+    await prisma.revenueFactorType.upsert({
+      where: { key: ft.key },
+      update: { name: ft.name, description: ft.description },
+      create: ft,
+    });
+  }
+  console.log('RevenueFactorTypes creados');
+
   console.log('Seeding completed!');
 }
 

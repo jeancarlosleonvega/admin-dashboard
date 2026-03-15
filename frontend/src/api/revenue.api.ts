@@ -1,25 +1,44 @@
 import { apiClient } from './client';
 
-export interface RevenueTimeRule {
-  id?: string;
-  label?: string;
-  startTime: string;
-  endTime: string;
-  multiplier: number;
+export interface RevenueFactorType {
+  id: string;
+  name: string;
+  key: string;
+  valueType: 'NUMBER_RANGE' | 'TIME_RANGE' | 'ENUM';
+  enumValues: string[];
+  enumLabels: string[];
+  description?: string;
+  isSystem: boolean;
+  active: boolean;
 }
 
-export interface RevenueDayRule {
-  id?: string;
-  dayType: 'WEEKDAY' | 'FRIDAY' | 'WEEKEND' | 'HOLIDAY';
+export interface RevenueFactorRule {
+  minValue?: string | null;
+  maxValue?: string | null;
+  enumValue?: string | null;
   multiplier: number;
-  label?: string;
+  label?: string | null;
 }
 
-export interface RevenueOccupancyRule {
-  id?: string;
-  minOccupancy: number;
-  maxOccupancy: number;
-  multiplier: number;
+export interface RevenueFactor {
+  factorTypeId: string;
+  enabled: boolean;
+  factorType: RevenueFactorType;
+  rules: RevenueFactorRule[];
+}
+
+export interface RevenueFactorInput {
+  factorTypeId: string;
+  enabled: boolean;
+  rules: RevenueFactorRule[];
+}
+
+export interface RevenueConfigInput {
+  enabled: boolean;
+  minPrice: number;
+  maxPrice: number;
+  roundingStep: number;
+  factors: RevenueFactorInput[];
 }
 
 export interface RevenueConfig {
@@ -29,9 +48,7 @@ export interface RevenueConfig {
   minPrice: number;
   maxPrice: number;
   roundingStep: number;
-  timeRules: RevenueTimeRule[];
-  dayRules: RevenueDayRule[];
-  occupancyRules: RevenueOccupancyRule[];
+  factors: RevenueFactor[];
 }
 
 export interface RevenueSportTypeConfig {
@@ -40,11 +57,22 @@ export interface RevenueSportTypeConfig {
 }
 
 export const revenueApi = {
+  async getFactorTypes(): Promise<RevenueFactorType[]> {
+    const res = await apiClient.get('/revenue/factor-types');
+    return res.data.data;
+  },
+  async createFactorType(data: Omit<RevenueFactorType, 'id' | 'active' | 'isSystem'>): Promise<RevenueFactorType> {
+    const res = await apiClient.post('/revenue/factor-types', data);
+    return res.data.data;
+  },
+  async deleteFactorType(id: string): Promise<void> {
+    await apiClient.delete(`/revenue/factor-types/${id}`);
+  },
   async getAll(): Promise<RevenueSportTypeConfig[]> {
     const res = await apiClient.get('/revenue');
     return res.data.data;
   },
-  async upsert(sportTypeId: string, data: Omit<RevenueConfig, 'id' | 'sportTypeId'>): Promise<RevenueSportTypeConfig> {
+  async upsert(sportTypeId: string, data: RevenueConfigInput): Promise<RevenueSportTypeConfig> {
     const res = await apiClient.put(`/revenue/${sportTypeId}`, data);
     return res.data.data;
   },

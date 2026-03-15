@@ -17,17 +17,13 @@ import { formatDateTime } from '@lib/formatDate';
 
 const SORT_FIELD_MAP: Record<string, string> = {
   name: 'name',
-  system: 'isSystem',
   created: 'createdAt',
 };
 
 const columns: ColumnDef[] = [
-  { key: 'name', label: 'Name', sortable: true, filterable: true, type: 'text' },
-  { key: 'description', label: 'Description', sortable: false, filterable: true, type: 'text' },
+  { key: 'name', label: 'Nombre', sortable: true, filterable: true, type: 'text' },
+  { key: 'description', label: 'Descripción', sortable: false, filterable: true, type: 'text' },
   { key: 'permissions', label: 'Permisos', sortable: false, filterable: false },
-  { key: 'system', label: 'System', sortable: true, filterable: true, type: 'select', options: [
-    { label: 'Yes', value: 'true' }, { label: 'No', value: 'false' },
-  ]},
   { key: 'created', label: 'Creado', sortable: true, filterable: true, type: 'date' },
   { key: 'actions', label: 'Acciones', sortable: false, filterable: false },
 ];
@@ -98,8 +94,6 @@ export default function RolesListPage() {
                 next.name = rule.value;
               } else if (rule.field === 'description') {
                 next.description = rule.value;
-              } else if (rule.field === 'system') {
-                next.isSystem = rule.value;
               }
             }
             return next;
@@ -114,7 +108,6 @@ export default function RolesListPage() {
             if (c.key === 'name') return r.name;
             if (c.key === 'description') return r.description || '';
             if (c.key === 'permissions') return `${r.permissions.length}`;
-            if (c.key === 'system') return r.isSystem ? 'Yes' : 'No';
             if (c.key === 'created') return formatDateTime(r.createdAt);
             return '';
           }));
@@ -145,22 +138,17 @@ export default function RolesListPage() {
                   <tr>
                     {visibleColumns.includes('name') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Name
+                        Nombre
                       </th>
                     )}
                     {visibleColumns.includes('description') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
+                        Descripción
                       </th>
                     )}
                     {visibleColumns.includes('permissions') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Permissions
-                      </th>
-                    )}
-                    {visibleColumns.includes('system') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        System
+                        Permisos
                       </th>
                     )}
                     {visibleColumns.includes('created') && (
@@ -170,7 +158,7 @@ export default function RolesListPage() {
                     )}
                     {visibleColumns.includes('actions') && (
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        Acciones
                       </th>
                     )}
                   </tr>
@@ -198,21 +186,8 @@ export default function RolesListPage() {
                       {visibleColumns.includes('permissions') && (
                         <td className="px-6 py-4">
                           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                            {role.permissions.length} permission{role.permissions.length !== 1 ? 's' : ''}
+                            {role.permissions.length} {role.permissions.length !== 1 ? 'permisos' : 'permiso'}
                           </span>
-                        </td>
-                      )}
-                      {visibleColumns.includes('system') && (
-                        <td className="px-6 py-4">
-                          {role.isSystem ? (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
-                              No
-                            </span>
-                          )}
                         </td>
                       )}
                       {visibleColumns.includes('created') && (
@@ -226,7 +201,7 @@ export default function RolesListPage() {
                             <button
                               onClick={() => navigate(`/roles/${role.id}`)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                              title="View role"
+                              title="Ver rol"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -234,7 +209,7 @@ export default function RolesListPage() {
                               <button
                                 onClick={() => navigate(`/roles/${role.id}?tab=general`)}
                                 className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
-                                title="Edit role"
+                                title="Editar rol"
                               >
                                 <Pencil className="w-4 h-4" />
                               </button>
@@ -244,7 +219,7 @@ export default function RolesListPage() {
                                 <button
                                   onClick={() => setDeleteTarget(role)}
                                   className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
-                                  title="Delete role"
+                                  title="Eliminar rol"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>
@@ -263,8 +238,8 @@ export default function RolesListPage() {
             {meta.totalPages > 1 && (
               <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200">
                 <p className="text-sm text-gray-500">
-                  Showing {(meta.page - 1) * meta.limit + 1} to{' '}
-                  {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} roles
+                  Mostrando {(meta.page - 1) * meta.limit + 1} a{' '}
+                  {Math.min(meta.page * meta.limit, meta.total)} de {meta.total} roles
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -305,7 +280,7 @@ export default function RolesListPage() {
       <ConfirmDialog
         isOpen={!!deleteTarget}
         title="Eliminar Rol"
-        message={`Are you sure you want to delete the role "${deleteTarget?.name}"? This action cannot be undone.`}
+        message={`¿Estás seguro de que deseas eliminar el rol "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar"
         variant="danger"
         isLoading={deleteRole.isPending}

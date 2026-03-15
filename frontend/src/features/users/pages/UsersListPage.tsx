@@ -15,17 +15,12 @@ import { UserStatus } from '@/types/user.types';
 import { exportToCsv } from '@/lib/exportCsv';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '@lib/formatDate';
+import StatusBadge from '@components/shared/StatusBadge';
 
 const SORT_FIELD_MAP: Record<string, string> = {
   user: 'firstName',
   status: 'status',
   created: 'createdAt',
-};
-
-const STATUS_BADGE: Record<UserStatus, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  INACTIVE: 'bg-gray-100 text-gray-700',
-  SUSPENDED: 'bg-red-100 text-red-700',
 };
 
 const columns: ColumnDef[] = [
@@ -266,11 +261,7 @@ export default function UsersListPage() {
                       )}
                       {visibleColumns.includes('status') && (
                         <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[user.status]}`}
-                          >
-                            {user.status}
-                          </span>
+                          <StatusBadge status={user.status} />
                         </td>
                       )}
                       {visibleColumns.includes('roles') && (

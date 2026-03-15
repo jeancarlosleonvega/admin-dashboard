@@ -38,10 +38,6 @@ export class SportTypesRepository {
     return prisma.sportType.update({ where: { id }, data });
   }
 
-  async countVenues(id: string): Promise<number> {
-    return prisma.venue.count({ where: { sportTypeId: id } });
-  }
-
   async delete(id: string): Promise<void> {
     await prisma.sportType.delete({ where: { id } });
   }

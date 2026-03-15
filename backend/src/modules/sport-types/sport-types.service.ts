@@ -3,6 +3,7 @@ import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import type { CreateSportTypeInput, UpdateSportTypeInput, SportTypeFiltersInput } from './sport-types.schema.js';
 import type { SportType } from './sport-types.types.js';
+import { Prisma } from '@prisma/client';
 
 export class SportTypesService {
   async findAll(filters: SportTypeFiltersInput) {
@@ -34,11 +35,14 @@ export class SportTypesService {
 
   async delete(id: string): Promise<void> {
     await this.findById(id);
-    const venueCount = await sportTypesRepository.countVenues(id);
-    if (venueCount > 0) {
-      throw new ValidationError(`No se puede eliminar: el deporte tiene ${venueCount} espacio${venueCount !== 1 ? 's' : ''} asociado${venueCount !== 1 ? 's' : ''}`);
+    try {
+      await sportTypesRepository.delete(id);
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+        throw new ValidationError('No se puede eliminar: el tipo de deporte tiene registros asociados (espacios, períodos bloqueados u otros)');
+      }
+      throw err;
     }
-    await sportTypesRepository.delete(id);
   }
 }
 

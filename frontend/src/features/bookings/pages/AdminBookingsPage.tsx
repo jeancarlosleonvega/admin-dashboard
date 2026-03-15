@@ -87,7 +87,7 @@ export default function AdminBookingsPage() {
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Socio</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Venue</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Espacio</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hora</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
@@ -101,7 +101,11 @@ export default function AdminBookingsPage() {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {booking.user ? `${booking.user.firstName} ${booking.user.lastName}` : booking.userId}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{booking.slot.venue?.name ?? '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {booking.slot.venue
+                          ? <><span className="font-medium text-gray-700">{booking.slot.venue.sportType.name}</span>: {booking.slot.venue.name}</>
+                          : '-'}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{formatDate(booking.slot.date)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{booking.slot.startTime} - {booking.slot.endTime}</td>
                       <td className="px-6 py-4">

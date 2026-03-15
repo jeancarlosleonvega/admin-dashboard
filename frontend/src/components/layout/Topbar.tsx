@@ -1,7 +1,10 @@
-import { Bell, Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Bell, Menu, PanelLeftClose, PanelLeft, User, LogOut } from 'lucide-react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIStore } from '@stores/uiStore';
 import { usePageHeaderStore } from '@stores/pageHeaderStore';
+import { useAuthStore } from '@stores/authStore';
+import { cn } from '@lib/utils';
 
 const routeTitles: Record<string, string> = {
   '/inicio': 'Inicio',
@@ -27,7 +30,8 @@ const routeTitles: Record<string, string> = {
   '/pagos': 'Pagos',
   '/motor-precios': 'Motor de Precios',
   '/validar-qr': 'Validar QR',
-  '/configuracion': 'Configuración',
+  '/seguridad': 'Seguridad',
+  '/sistema': 'Sistema',
   '/mi-perfil': 'Mi Perfil',
   '/mi-membresia': 'Mi Membresía',
   '/mi-billetera': 'Mi Billetera',
@@ -46,6 +50,77 @@ function getPageTitle(pathname: string): string {
   if (/^\/tipos-condicion\/[^/]+$/.test(pathname)) return 'Detalle de Tipo de Condición';
   if (/^\/reservas\/[^/]+$/.test(pathname)) return 'Detalle de Reserva';
   return 'Inicio';
+}
+
+function UserMenu() {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const initials = user
+    ? `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase()
+    : '?';
+
+  const handleLogout = async () => {
+    setOpen(false);
+    await logout();
+    navigate('/iniciar-sesion');
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-lg hover:bg-gray-100 p-1.5 transition-colors"
+      >
+        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-semibold text-primary-700">{initials}</span>
+        </div>
+      </button>
+
+      {open && (
+        <div className={cn(
+          'absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-50',
+        )}>
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="text-sm font-medium text-gray-900 truncate">{user?.firstName} {user?.lastName}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          </div>
+
+          <Link
+            to="/mi-perfil"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <User className="w-4 h-4 text-gray-400" />
+            Mi Perfil
+          </Link>
+
+          <div className="border-t border-gray-100 mt-1 pt-1">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Salir
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function Topbar() {
@@ -72,7 +147,7 @@ export default function Topbar() {
           <button
             onClick={toggleSidebar}
             className="hidden lg:flex text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors shrink-0"
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={sidebarOpen ? 'Colapsar sidebar' : 'Expandir sidebar'}
           >
             {sidebarOpen ? (
               <PanelLeftClose className="w-6 h-6" />
@@ -98,16 +173,18 @@ export default function Topbar() {
 
           <button
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors relative"
-            title="Notifications"
+            title="Notificaciones"
           >
             <Bell className="w-5 h-5" />
           </button>
+
+          <UserMenu />
 
           {/* Mobile: hamburger menu */}
           <button
             onClick={openMobileSidebar}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
-            title="Open menu"
+            title="Abrir menú"
           >
             <Menu className="w-5 h-5" />
           </button>

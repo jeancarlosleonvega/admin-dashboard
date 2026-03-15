@@ -60,6 +60,7 @@ import MyProfilePage from '@features/profile/pages/MyProfilePage';
 import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
 import MyWalletPage from '@features/wallet/pages/MyWalletPage';
 import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
+import SystemConfigPage from '@features/settings/pages/SystemConfigPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -125,7 +126,7 @@ function App() {
         {/* Users CRUD */}
         <Route
           path="/usuarios"
-          element={<Navigate to="/configuracion?tab=users" replace />}
+          element={<Navigate to="/seguridad?tab=users" replace />}
         />
         <Route
           path="/usuarios/create"
@@ -155,7 +156,7 @@ function App() {
         {/* Roles CRUD */}
         <Route
           path="/roles"
-          element={<Navigate to="/configuracion?tab=roles" replace />}
+          element={<Navigate to="/seguridad?tab=roles" replace />}
         />
         <Route
           path="/roles/create"
@@ -185,7 +186,7 @@ function App() {
         {/* Permissions CRUD */}
         <Route
           path="/permissions"
-          element={<Navigate to="/configuracion?tab=permissions" replace />}
+          element={<Navigate to="/seguridad?tab=permissions" replace />}
         />
         <Route
           path="/permissions/create"
@@ -500,7 +501,22 @@ function App() {
         {/* Complete Profile */}
         <Route path="/completar-perfil" element={<CompleteProfilePage />} />
 
-        <Route path="/configuracion" element={<SettingsPage />} />
+        <Route
+          path="/seguridad"
+          element={
+            <PermissionRoute permission="users.view">
+              <SettingsPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="/sistema"
+          element={
+            <PermissionRoute permission="system-config.view">
+              <SystemConfigPage />
+            </PermissionRoute>
+          }
+        />
 
         <Route path="/" element={<Navigate to="/inicio" replace />} />
       </Route>

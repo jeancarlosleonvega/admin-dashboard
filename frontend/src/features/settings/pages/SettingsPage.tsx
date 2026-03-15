@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
 import { Users, Shield, Key } from 'lucide-react';
 import { Tabs, TabPanel } from '@components/ui/Tabs';
 import type { TabDef } from '@components/ui/Tabs';
@@ -13,12 +13,11 @@ const tabs: TabDef[] = [
 ];
 
 export default function SettingsPage() {
-  const [params, setParams] = useSearchParams();
-  const activeTab = params.get('tab') || 'users';
+  const [activeTab, setActiveTab] = useState('users');
 
   return (
     <div>
-      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={(tab) => setParams({ tab })} />
+      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
       <TabPanel id="users" activeTab={activeTab}>
         <UsersListPage />

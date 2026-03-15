@@ -94,6 +94,13 @@ export default function PaymentsPage() {
 
   return (
     <div>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-900">Pagos</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Historial de pagos y gestión de transferencias pendientes.
+        </p>
+      </div>
+
       {/* Tabs de método */}
       <div className="border-b border-gray-200 mb-4">
         <nav className="-mb-px flex space-x-8">

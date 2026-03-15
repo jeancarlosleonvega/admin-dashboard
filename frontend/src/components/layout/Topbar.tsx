@@ -119,7 +119,7 @@ export default function Topbar() {
   const location = useLocation();
   const routeTitle = getPageTitle(location.pathname);
   const { sidebarOpen, toggleSidebar, openMobileSidebar } = useUIStore();
-  const { title, subtitle, actions } = usePageHeaderStore();
+  const { title, actions } = usePageHeaderStore();
 
   const displayTitle = title ?? routeTitle;
 
@@ -151,9 +151,6 @@ export default function Topbar() {
           {/* Desktop: title + subtitle */}
           <div className="hidden lg:block min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 truncate">{displayTitle}</h2>
-            {subtitle && (
-              <div className="text-sm text-gray-500 truncate">{subtitle}</div>
-            )}
           </div>
         </div>
 
@@ -186,9 +183,6 @@ export default function Topbar() {
       {/* Mobile: title + subtitle below the top bar row */}
       <div className="lg:hidden px-6 pb-3 -mt-1">
         <h2 className="text-lg font-semibold text-gray-900 truncate">{displayTitle}</h2>
-        {subtitle && (
-          <div className="text-sm text-gray-500 truncate">{subtitle}</div>
-        )}
       </div>
     </header>
   );

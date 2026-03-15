@@ -24,35 +24,25 @@ import RoleEditPage from '@features/roles/pages/RoleEditPage';
 import PermissionCreatePage from '@features/permissions/pages/PermissionCreatePage';
 import PermissionDetailPage from '@features/permissions/pages/PermissionDetailPage';
 import PermissionEditPage from '@features/permissions/pages/PermissionEditPage';
-import SportTypesListPage from '@features/sport-types/pages/SportTypesListPage';
 import SportTypeCreatePage from '@features/sport-types/pages/SportTypeCreatePage';
 import SportTypeEditPage from '@features/sport-types/pages/SportTypeEditPage';
 import SportTypeDetailPage from '@features/sport-types/pages/SportTypeDetailPage';
-import VenuesListPage from '@features/venues/pages/VenuesListPage';
 import VenueCreatePage from '@features/venues/pages/VenueCreatePage';
 import VenueEditPage from '@features/venues/pages/VenueEditPage';
 import VenueDetailPage from '@features/venues/pages/VenueDetailPage';
-import MembershipPlansListPage from '@features/membership-plans/pages/MembershipPlansListPage';
 import MembershipPlanCreatePage from '@features/membership-plans/pages/MembershipPlanCreatePage';
 import MembershipPlanEditPage from '@features/membership-plans/pages/MembershipPlanEditPage';
-import VenueSchedulesPage from '@features/venue-schedules/pages/VenueSchedulesPage';
 import VenueScheduleCreatePage from '@features/venue-schedules/pages/VenueScheduleCreatePage';
 import VenueScheduleEditPage from '@features/venue-schedules/pages/VenueScheduleEditPage';
 import SlotsViewPage from '@features/slots/pages/SlotsViewPage';
-import BlockedPeriodsListPage from '@features/blocked-periods/pages/BlockedPeriodsListPage';
 import BlockedPeriodCreatePage from '@features/blocked-periods/pages/BlockedPeriodCreatePage';
 import BlockedPeriodEditPage from '@features/blocked-periods/pages/BlockedPeriodEditPage';
-import AdditionalServicesListPage from '@features/additional-services/pages/AdditionalServicesListPage';
 import AdditionalServiceCreatePage from '@features/additional-services/pages/AdditionalServiceCreatePage';
 import AdditionalServiceEditPage from '@features/additional-services/pages/AdditionalServiceEditPage';
-import AdminBookingsPage from '@features/bookings/pages/AdminBookingsPage';
 import BookingSearchPage from '@features/bookings/pages/BookingSearchPage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
 import PaymentsPage from '@features/payments/pages/PaymentsPage';
-import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
 import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
-import QRValidatorPage from '@features/qr/pages/QRValidatorPage';
-import ConditionTypesListPage from '@features/condition-types/pages/ConditionTypesListPage';
 import ConditionTypeCreatePage from '@features/condition-types/pages/ConditionTypeCreatePage';
 import ConditionTypeEditPage from '@features/condition-types/pages/ConditionTypeEditPage';
 import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
@@ -61,6 +51,9 @@ import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
 import MyWalletPage from '@features/wallet/pages/MyWalletPage';
 import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
 import SystemConfigPage from '@features/settings/pages/SystemConfigPage';
+import InstalacionesPage from '@features/instalaciones/pages/InstalacionesPage';
+import SociosPage from '@features/socios/pages/SociosPage';
+import ReservasHubPage from '@features/bookings/pages/ReservasHubPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -213,15 +206,23 @@ function App() {
           }
         />
 
-        {/* Sport Types CRUD */}
+        {/* Hub: Instalaciones */}
         <Route
-          path="/tipos-deporte"
+          path="/instalaciones"
           element={
             <PermissionRoute permission="sport-types.view">
-              <SportTypesListPage />
+              <InstalacionesPage />
             </PermissionRoute>
           }
         />
+        {/* Redirects para rutas individuales de listado */}
+        <Route path="/tipos-deporte" element={<Navigate to="/instalaciones?tab=tipos-deporte" replace />} />
+        <Route path="/espacios" element={<Navigate to="/instalaciones?tab=espacios" replace />} />
+        <Route path="/horarios" element={<Navigate to="/instalaciones?tab=horarios" replace />} />
+        <Route path="/periodos-bloqueados" element={<Navigate to="/instalaciones?tab=periodos-bloqueados" replace />} />
+        <Route path="/tipos-condicion" element={<Navigate to="/instalaciones?tab=tipos-condicion" replace />} />
+
+        {/* Sport Types CRUD (create/edit/detail se mantienen) */}
         <Route
           path="/tipos-deporte/create"
           element={
@@ -249,14 +250,6 @@ function App() {
 
         {/* Venues CRUD */}
         <Route
-          path="/espacios"
-          element={
-            <PermissionRoute permission="venues.view">
-              <VenuesListPage />
-            </PermissionRoute>
-          }
-        />
-        <Route
           path="/espacios/create"
           element={
             <PermissionRoute permission="venues.manage">
@@ -281,15 +274,19 @@ function App() {
           }
         />
 
-        {/* Membership Plans CRUD */}
+        {/* Hub: Socios */}
         <Route
-          path="/planes-membresia"
+          path="/socios"
           element={
             <PermissionRoute permission="membership-plans.view">
-              <MembershipPlansListPage />
+              <SociosPage />
             </PermissionRoute>
           }
         />
+        <Route path="/planes-membresia" element={<Navigate to="/socios?tab=planes" replace />} />
+        <Route path="/membresias-socios" element={<Navigate to="/socios?tab=membresias" replace />} />
+
+        {/* Membership Plans CRUD */}
         <Route
           path="/planes-membresia/create"
           element={
@@ -308,14 +305,6 @@ function App() {
         />
 
         {/* Venue Schedules */}
-        <Route
-          path="/horarios"
-          element={
-            <PermissionRoute permission="venue-schedules.view">
-              <VenueSchedulesPage />
-            </PermissionRoute>
-          }
-        />
         <Route
           path="/horarios/create"
           element={
@@ -343,14 +332,6 @@ function App() {
 
         {/* Blocked Periods */}
         <Route
-          path="/periodos-bloqueados"
-          element={
-            <PermissionRoute permission="blocked-periods.view">
-              <BlockedPeriodsListPage />
-            </PermissionRoute>
-          }
-        />
-        <Route
           path="/periodos-bloqueados/create"
           element={
             <PermissionRoute permission="blocked-periods.manage">
@@ -367,15 +348,19 @@ function App() {
           }
         />
 
-        {/* Additional Services */}
+        {/* Hub: Reservas */}
         <Route
-          path="/servicios-adicionales"
+          path="/reservas"
           element={
-            <PermissionRoute permission="additional-services.view">
-              <AdditionalServicesListPage />
+            <PermissionRoute permission="bookings.view">
+              <ReservasHubPage />
             </PermissionRoute>
           }
         />
+        <Route path="/servicios-adicionales" element={<Navigate to="/reservas?tab=servicios" replace />} />
+        <Route path="/validar-qr" element={<Navigate to="/reservas?tab=validar-qr" replace />} />
+
+        {/* Additional Services */}
         <Route
           path="/servicios-adicionales/create"
           element={
@@ -394,14 +379,6 @@ function App() {
         />
 
         {/* Bookings */}
-        <Route
-          path="/reservas"
-          element={
-            <PermissionRoute permission="bookings.view">
-              <AdminBookingsPage />
-            </PermissionRoute>
-          }
-        />
         <Route
           path="/reservas/nueva"
           element={
@@ -431,14 +408,6 @@ function App() {
 
         {/* User Memberships */}
         <Route
-          path="/membresias-socios"
-          element={
-            <PermissionRoute permission="user-memberships.view">
-              <UserMembershipsPage />
-            </PermissionRoute>
-          }
-        />
-        <Route
           path="/membresias-socios/create"
           element={
             <PermissionRoute permission="user-memberships.manage">
@@ -448,24 +417,8 @@ function App() {
         />
 
         {/* QR Validator */}
-        <Route
-          path="/validar-qr"
-          element={
-            <PermissionRoute permission="qr.validate">
-              <QRValidatorPage />
-            </PermissionRoute>
-          }
-        />
 
         {/* Condition Types CRUD */}
-        <Route
-          path="/tipos-condicion"
-          element={
-            <PermissionRoute permission="condition-types.view">
-              <ConditionTypesListPage />
-            </PermissionRoute>
-          }
-        />
         <Route
           path="/tipos-condicion/create"
           element={

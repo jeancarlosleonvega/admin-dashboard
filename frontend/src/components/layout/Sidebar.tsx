@@ -1,9 +1,9 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
-  LayoutDashboard, Activity, MapPin, CreditCard, Calendar,
-  PlusCircle, BookOpen, Clock, Ban, Package, DollarSign, UserCheck,
-  QrCode, GitBranch, Wallet, TrendingUp, Shield, Settings,
+  LayoutDashboard, MapPin, CreditCard, Calendar,
+  PlusCircle, BookOpen, DollarSign, UserCheck,
+  Wallet, TrendingUp, Shield, Settings,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -20,28 +20,11 @@ const adminNavGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Instalaciones',
+    label: 'Gestión',
     items: [
-      { name: 'Tipos de Deporte', href: '/tipos-deporte', icon: Activity, permission: 'sport-types.view' },
-      { name: 'Espacios', href: '/espacios', icon: MapPin, permission: 'venues.view' },
-      { name: 'Horarios', href: '/horarios', icon: Clock, permission: 'venue-schedules.view' },
-      { name: 'Períodos Bloqueados', href: '/periodos-bloqueados', icon: Ban, permission: 'blocked-periods.view' },
-      { name: 'Tipos de Condición', href: '/tipos-condicion', icon: GitBranch, permission: 'condition-types.view' },
-    ],
-  },
-  {
-    label: 'Socios',
-    items: [
-      { name: 'Planes de Membresía', href: '/planes-membresia', icon: CreditCard, permission: 'membership-plans.view' },
-      { name: 'Membresías Socios', href: '/membresias-socios', icon: UserCheck, permission: 'user-memberships.view' },
-    ],
-  },
-  {
-    label: 'Reservas',
-    items: [
+      { name: 'Instalaciones', href: '/instalaciones', icon: MapPin, permission: 'sport-types.view' },
+      { name: 'Socios', href: '/socios', icon: UserCheck, permission: 'membership-plans.view' },
       { name: 'Reservas', href: '/reservas', icon: Calendar, permission: 'bookings.view' },
-      { name: 'Servicios Adicionales', href: '/servicios-adicionales', icon: Package, permission: 'additional-services.view' },
-      { name: 'Validar QR', href: '/validar-qr', icon: QrCode, permission: 'qr.validate' },
     ],
   },
   {

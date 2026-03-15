@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, X } from 'lucide-react';
+import { Trash2, Plus, X, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Tabs, TabPanel } from '@components/ui/Tabs';
 import type { TabDef } from '@components/ui/Tabs';
@@ -8,6 +8,7 @@ import {
   useUpsertRevenue,
   useRevenueFactorTypes,
   useCreateFactorType,
+  useUpdateFactorType,
   useDeleteFactorType,
 } from '@hooks/queries/useRevenue';
 import type { RevenueConfig, RevenueConfigInput, RevenueFactorType } from '@api/revenue.api';
@@ -566,12 +567,144 @@ function NewFactorTypeForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── EditFactorTypeForm ───────────────────────────────────────────────────────
+
+function EditFactorTypeForm({ factorType, onClose }: { factorType: RevenueFactorType; onClose: () => void }) {
+  const updateFactorType = useUpdateFactorType();
+  const [name, setName] = useState(factorType.name);
+  const [description, setDescription] = useState(factorType.description ?? '');
+  const [enumEntries, setEnumEntries] = useState<EnumEntry[]>(
+    factorType.enumValues.map((val, i) => ({ value: val, label: factorType.enumLabels[i] ?? '' }))
+  );
+
+  function addEnumEntry() {
+    setEnumEntries((prev) => [...prev, { value: '', label: '' }]);
+  }
+
+  function removeEnumEntry(idx: number) {
+    setEnumEntries((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateEnumEntry(idx: number, field: 'value' | 'label', val: string) {
+    setEnumEntries((prev) => {
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], [field]: val };
+      return updated;
+    });
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const data: { name?: string; description?: string | null; enumValues?: string[]; enumLabels?: string[] } = {
+      name,
+      description: description || null,
+    };
+    if (factorType.valueType === 'ENUM') {
+      data.enumValues = enumEntries.map((e) => e.value).filter(Boolean);
+      data.enumLabels = enumEntries.map((e) => e.label).filter(Boolean);
+    }
+    updateFactorType.mutate({ id: factorType.id, data }, {
+      onSuccess: () => {
+        toast.success('Tipo de factor actualizado');
+        onClose();
+      },
+      onError: () => toast.error('Error al actualizar el tipo de factor'),
+    });
+  }
+
+  const inputClass = 'border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full';
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
+
+  return (
+    <div className="bg-white rounded-lg border border-blue-200 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold text-gray-900">Editar tipo de factor</h3>
+        <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Nombre</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Descripción</label>
+            <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass} />
+          </div>
+        </div>
+        <div>
+          <p className="text-xs text-gray-400">
+            Clave: <span className="font-mono">{factorType.key}</span> · Tipo: {factorType.valueType === 'NUMBER_RANGE' ? 'Rango numérico' : factorType.valueType === 'TIME_RANGE' ? 'Rango horario' : 'Enumerado'} — no modificables
+          </p>
+        </div>
+
+        {factorType.valueType === 'ENUM' && (
+          <div>
+            <label className={labelClass}>Valores del enumerado</label>
+            <div className="space-y-2">
+              {enumEntries.map((entry, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={entry.value}
+                    onChange={(e) => updateEnumEntry(idx, 'value', e.target.value)}
+                    placeholder="Valor interno"
+                    className={inputClass}
+                  />
+                  <input
+                    type="text"
+                    value={entry.label}
+                    onChange={(e) => updateEnumEntry(idx, 'label', e.target.value)}
+                    placeholder="Etiqueta visible"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeEnumEntry(idx)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addEnumEntry}
+                className="flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar valor
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={updateFactorType.isPending}
+            className="btn-primary px-5 py-2 text-sm font-medium disabled:opacity-60"
+          >
+            {updateFactorType.isPending ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // ─── FactorTypesTab ───────────────────────────────────────────────────────────
 
 function FactorTypesTab() {
   const { data: factorTypes, isLoading } = useRevenueFactorTypes();
   const deleteFactorType = useDeleteFactorType();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   function handleDelete(id: string, name: string) {
     if (!confirm(`¿Eliminar el tipo de factor "${name}"?`)) return;
@@ -582,6 +715,8 @@ function FactorTypesTab() {
   }
 
   if (isLoading) return <div className="py-10 text-center text-sm text-gray-400">Cargando...</div>;
+
+  const editingFt = editingId ? (factorTypes ?? []).find((ft) => ft.id === editingId) : null;
 
   return (
     <div className="space-y-5">
@@ -613,15 +748,24 @@ function FactorTypesTab() {
                 </td>
                 <td className="py-3 px-4 text-gray-400 text-xs">{ft.description ?? '—'}</td>
                 <td className="py-3 px-4">
-                  {!ft.isSystem && (
+                  <div className="flex items-center justify-end gap-1">
                     <button
-                      onClick={() => handleDelete(ft.id, ft.name)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                      title="Eliminar"
+                      onClick={() => { setEditingId(ft.id); setShowForm(false); }}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Editar"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </button>
-                  )}
+                    {!ft.isSystem && (
+                      <button
+                        onClick={() => handleDelete(ft.id, ft.name)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -636,7 +780,11 @@ function FactorTypesTab() {
         </table>
       </div>
 
-      {showForm ? (
+      {editingFt && (
+        <EditFactorTypeForm factorType={editingFt} onClose={() => setEditingId(null)} />
+      )}
+
+      {!editingFt && (showForm ? (
         <NewFactorTypeForm onClose={() => setShowForm(false)} />
       ) : (
         <div className="flex justify-end">
@@ -649,7 +797,7 @@ function FactorTypesTab() {
             Nuevo tipo de factor
           </button>
         </div>
-      )}
+      ))}
     </div>
   );
 }

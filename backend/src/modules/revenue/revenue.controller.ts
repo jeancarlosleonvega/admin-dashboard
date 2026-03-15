@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { revenueService } from './revenue.service.js';
-import { upsertRevenueConfigSchema, createFactorTypeSchema } from './revenue.schema.js';
+import { upsertRevenueConfigSchema, createFactorTypeSchema, updateFactorTypeSchema } from './revenue.schema.js';
 import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
@@ -13,6 +13,12 @@ export class RevenueController {
     const parsed = createFactorTypeSchema.safeParse(request.body);
     if (!parsed.success) throw new ValidationError('Validación fallida', parsed.error.errors);
     return reply.send(successResponse(await revenueService.createFactorType(parsed.data)));
+  }
+
+  async updateFactorType(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    const parsed = updateFactorTypeSchema.safeParse(request.body);
+    if (!parsed.success) throw new ValidationError('Validación fallida', parsed.error.errors);
+    return reply.send(successResponse(await revenueService.updateFactorType(request.params.id, parsed.data)));
   }
 
   async deleteFactorType(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {

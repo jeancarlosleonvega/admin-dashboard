@@ -31,5 +31,13 @@ export const createFactorTypeSchema = z.object({
   description: z.string().optional(),
 });
 
+export const updateFactorTypeSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional().nullable(),
+  enumValues: z.array(z.string()).optional(),
+  enumLabels: z.array(z.string()).optional(),
+});
+
 export type UpsertRevenueConfigInput = z.infer<typeof upsertRevenueConfigSchema>;
 export type CreateFactorTypeInput = z.infer<typeof createFactorTypeSchema>;
+export type UpdateFactorTypeInput = z.infer<typeof updateFactorTypeSchema>;

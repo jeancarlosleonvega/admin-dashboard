@@ -23,6 +23,15 @@ export function useCreateFactorType() {
   });
 }
 
+export function useUpdateFactorType() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string | null; enumValues?: string[]; enumLabels?: string[] } }) =>
+      revenueApi.updateFactorType(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: revenueKeys.factorTypes }),
+  });
+}
+
 export function useDeleteFactorType() {
   const queryClient = useQueryClient();
   return useMutation({

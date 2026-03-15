@@ -15,6 +15,10 @@ export async function revenueRoutes(fastify: FastifyInstance) {
     preHandler: [authorize('revenue.manage')],
     handler: revenueController.createFactorType.bind(revenueController),
   });
+  fastify.patch('/factor-types/:id', {
+    preHandler: [authorize('revenue.manage')],
+    handler: revenueController.updateFactorType.bind(revenueController),
+  });
   fastify.delete('/factor-types/:id', {
     preHandler: [authorize('revenue.manage')],
     handler: revenueController.deleteFactorType.bind(revenueController),

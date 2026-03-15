@@ -65,6 +65,10 @@ export const revenueApi = {
     const res = await apiClient.post('/revenue/factor-types', data);
     return res.data.data;
   },
+  async updateFactorType(id: string, data: { name?: string; description?: string | null; enumValues?: string[]; enumLabels?: string[] }): Promise<RevenueFactorType> {
+    const res = await apiClient.patch(`/revenue/factor-types/${id}`, data);
+    return res.data.data;
+  },
   async deleteFactorType(id: string): Promise<void> {
     await apiClient.delete(`/revenue/factor-types/${id}`);
   },

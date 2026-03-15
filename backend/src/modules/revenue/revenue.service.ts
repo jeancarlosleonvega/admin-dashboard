@@ -1,7 +1,7 @@
 import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
-import type { UpsertRevenueConfigInput, CreateFactorTypeInput } from './revenue.schema.js';
+import type { UpsertRevenueConfigInput, CreateFactorTypeInput, UpdateFactorTypeInput } from './revenue.schema.js';
 
 export class RevenueService {
   // ─── Factor Types ───────────────────────────────────────────
@@ -16,6 +16,12 @@ export class RevenueService {
     const existing = await prisma.revenueFactorType.findUnique({ where: { key: data.key } });
     if (existing) throw new ValidationError('Ya existe un factor con esa clave');
     return prisma.revenueFactorType.create({ data });
+  }
+
+  async updateFactorType(id: string, data: UpdateFactorTypeInput) {
+    const ft = await prisma.revenueFactorType.findUnique({ where: { id } });
+    if (!ft) throw new NotFoundError('Tipo de factor');
+    return prisma.revenueFactorType.update({ where: { id }, data });
   }
 
   async deleteFactorType(id: string) {

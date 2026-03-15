@@ -291,7 +291,6 @@ async function main() {
     { key: 'max_absences_before_suspension', value: '3', label: 'Máximo de ausencias antes de suspensión', group: 'ausencias' },
     { key: 'suspension_duration_days', value: '30', label: 'Duración de suspensión (días)', group: 'ausencias' },
     { key: 'transfer_payment_deadline_hours', value: '24', label: 'Horas límite para confirmar transferencia', group: 'pagos' },
-    { key: 'golf_member_tee_time_price', value: '3000', label: 'Precio fijo tee time para socios Golf', group: 'precios' },
   ];
   for (const config of defaultConfigs) {
     await prisma.systemConfig.upsert({

@@ -106,11 +106,8 @@ export class BookingsService {
         }
       }
 
-      // Precio fijo desde SystemConfig
-      const configPrecio = await prisma.systemConfig.findUnique({
-        where: { key: 'golf_member_tee_time_price' },
-      });
-      precio = parseFloat(configPrecio?.value ?? '3000');
+      // Precio base desde el plan de membresía
+      precio = parseFloat(plan.baseBookingPrice.toString());
       isMemberPrice = true;
       membershipPlanId = activeMembership.membershipPlanId;
     } else {

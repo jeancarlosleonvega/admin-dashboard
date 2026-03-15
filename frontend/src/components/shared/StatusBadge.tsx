@@ -33,13 +33,13 @@ const COLORS: Record<string, string> = {
 };
 
 interface StatusBadgeProps {
-  status: string;
+  status?: string;
   /** Para campos booleanos: pasar active={true/false} en lugar de status */
   active?: boolean;
 }
 
 export default function StatusBadge({ status, active }: StatusBadgeProps) {
-  const key = active !== undefined ? (active ? 'ACTIVE' : 'INACTIVE') : status;
+  const key = active !== undefined ? (active ? 'ACTIVE' : 'INACTIVE') : (status ?? '');
   const label = LABELS[key] ?? key;
   const color = COLORS[key] ?? 'bg-gray-100 text-gray-700';
 

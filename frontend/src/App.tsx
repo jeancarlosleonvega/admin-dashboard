@@ -14,7 +14,6 @@ import ResetPasswordPage from '@features/auth/pages/ResetPasswordPage';
 
 // Protected pages
 import DashboardPage from '@features/dashboard/pages/DashboardPage';
-import SettingsPage from '@features/settings/pages/SettingsPage';
 import UserCreatePage from '@features/users/pages/UserCreatePage';
 import UserDetailPage from '@features/users/pages/UserDetailPage';
 import UserEditPage from '@features/users/pages/UserEditPage';
@@ -41,7 +40,6 @@ import AdditionalServiceCreatePage from '@features/additional-services/pages/Add
 import AdditionalServiceEditPage from '@features/additional-services/pages/AdditionalServiceEditPage';
 import BookingSearchPage from '@features/bookings/pages/BookingSearchPage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
-import PaymentsPage from '@features/payments/pages/PaymentsPage';
 import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
 import ConditionTypeCreatePage from '@features/condition-types/pages/ConditionTypeCreatePage';
 import ConditionTypeEditPage from '@features/condition-types/pages/ConditionTypeEditPage';
@@ -49,10 +47,9 @@ import CompleteProfilePage from '@features/profile/pages/CompleteProfilePage';
 import MyProfilePage from '@features/profile/pages/MyProfilePage';
 import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
 import MyWalletPage from '@features/wallet/pages/MyWalletPage';
-import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
+import MisPagosPage from '@features/payments/pages/MisPagosPage';
 import FinanzasPage from '@features/finanzas/pages/FinanzasPage';
 import ConfiguracionPage from '@features/configuracion/pages/ConfiguracionPage';
-import SystemConfigPage from '@features/settings/pages/SystemConfigPage';
 import InstalacionesPage from '@features/instalaciones/pages/InstalacionesPage';
 import SociosPage from '@features/socios/pages/SociosPage';
 import ReservasHubPage from '@features/bookings/pages/ReservasHubPage';
@@ -445,6 +442,7 @@ function App() {
         <Route path="/mi-perfil" element={<MyProfilePage />} />
         <Route path="/mi-membresia" element={<MyMembershipPage />} />
         <Route path="/mi-billetera" element={<MyWalletPage />} />
+        <Route path="/mis-pagos" element={<MisPagosPage />} />
 
         {/* Complete Profile */}
         <Route path="/completar-perfil" element={<CompleteProfilePage />} />

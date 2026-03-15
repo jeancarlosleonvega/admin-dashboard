@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useAuthStore } from '@stores/authStore';
 import { profileApi } from '@api/profile.api';
+import { apiClient } from '@api/client';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
@@ -17,11 +18,52 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+const pwSchema = z.object({
+  currentPassword: z.string().min(1, 'Requerido'),
+  newPassword: z
+    .string()
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener una mayúscula')
+    .regex(/[a-z]/, 'Debe contener una minúscula')
+    .regex(/[0-9]/, 'Debe contener un número'),
+  confirmPassword: z.string().min(1, 'Requerido'),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+});
+
+type PwFormData = z.infer<typeof pwSchema>;
+
 export default function MyProfilePage() {
   usePageHeader({});
 
   const { user, initialize } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPwSubmitting, setIsPwSubmitting] = useState(false);
+
+  const {
+    register: registerPw,
+    handleSubmit: handleSubmitPw,
+    reset: resetPw,
+    formState: { errors: pwErrors },
+  } = useForm<PwFormData>({ resolver: zodResolver(pwSchema) });
+
+  const onSubmitPw = async (data: PwFormData) => {
+    setIsPwSubmitting(true);
+    try {
+      await apiClient.post('/auth/change-password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      toast.success('Contraseña actualizada');
+      resetPw();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message ?? 'Error al cambiar la contraseña';
+      toast.error(msg);
+    } finally {
+      setIsPwSubmitting(false);
+    }
+  };
 
   const {
     register,
@@ -138,6 +180,57 @@ export default function MyProfilePage() {
                   </button>
                 </div>
               )}
+            </DetailSection>
+          </form>
+        </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="px-6 pb-6">
+          <form onSubmit={handleSubmitPw(onSubmitPw)}>
+            <DetailSection title="Cambiar contraseña" description="Actualizá tu contraseña de acceso." noBorder>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="currentPassword" className="label">Contraseña actual</label>
+                  <input
+                    id="currentPassword"
+                    type="password"
+                    className={`input ${pwErrors.currentPassword ? 'input-error' : ''}`}
+                    {...registerPw('currentPassword')}
+                  />
+                  {pwErrors.currentPassword && <p className="mt-1 text-sm text-red-600">{pwErrors.currentPassword.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="newPassword" className="label">Nueva contraseña</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    className={`input ${pwErrors.newPassword ? 'input-error' : ''}`}
+                    {...registerPw('newPassword')}
+                  />
+                  {pwErrors.newPassword && <p className="mt-1 text-sm text-red-600">{pwErrors.newPassword.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className="label">Confirmar nueva contraseña</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    className={`input ${pwErrors.confirmPassword ? 'input-error' : ''}`}
+                    {...registerPw('confirmPassword')}
+                  />
+                  {pwErrors.confirmPassword && <p className="mt-1 text-sm text-red-600">{pwErrors.confirmPassword.message}</p>}
+                </div>
+              </div>
+              <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
+                <button
+                  type="submit"
+                  disabled={isPwSubmitting}
+                  className="btn-primary disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isPwSubmitting && <Spinner size="sm" className="text-white" />}
+                  Cambiar contraseña
+                </button>
+              </div>
             </DetailSection>
           </form>
         </div>

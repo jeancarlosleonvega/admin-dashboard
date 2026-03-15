@@ -12,6 +12,8 @@ import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { invalidateUserPermissions } from '../../shared/middlewares/authorize.js';
 import { logger } from '../../shared/utils/logger.js';
+import { emailService } from '../../shared/services/email.service.js';
+import { env } from '../../config/env.js';
 import type { LoginInput, RegisterInput } from './auth.schema.js';
 import type { AuthResponse } from './auth.types.js';
 
@@ -164,6 +166,20 @@ export class AuthService {
       accessToken,
     };
   }
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await authRepository.findUserById(userId);
+    if (!user) throw new AuthenticationError('Usuario no encontrado');
+
+    const isValid = await verifyPassword(currentPassword, user.passwordHash);
+    if (!isValid) throw new ValidationError('La contraseña actual es incorrecta');
+
+    const passwordHash = await hashPassword(newPassword);
+    await authRepository.updateUserPassword(userId, passwordHash);
+    await invalidateUserPermissions(userId);
+
+    emailService.sendPasswordChanged(user.email, user.firstName).catch(() => {});
+  }
+
   async forgotPassword(email: string): Promise<void> {
     const user = await authRepository.findUserByEmail(email);
 

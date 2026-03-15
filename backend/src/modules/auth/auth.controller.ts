@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { authService } from './auth.service.js';
-import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.schema.js';
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from './auth.schema.js';
 import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { authConfig } from '../../config/auth.js';
@@ -90,6 +90,13 @@ export class AuthController {
     return reply.send(
       successResponse({ message: 'Password has been reset successfully' })
     );
+  }
+
+  async changePassword(request: FastifyRequest, reply: FastifyReply) {
+    const parsed = changePasswordSchema.safeParse(request.body);
+    if (!parsed.success) throw new ValidationError('Datos inválidos', parsed.error.errors);
+    await authService.changePassword(request.user!.userId, parsed.data.currentPassword, parsed.data.newPassword);
+    return reply.send(successResponse({ message: 'Contraseña actualizada exitosamente' }));
   }
 }
 

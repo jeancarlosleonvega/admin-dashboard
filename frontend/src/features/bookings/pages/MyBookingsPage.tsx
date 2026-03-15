@@ -1,33 +1,22 @@
 import { useState } from 'react';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { BookOpen } from 'lucide-react';
-import { useMyBookings } from '@/hooks/queries/useBookings';
+import { useMyBookings, useCancelBooking } from '@/hooks/queries/useBookings';
 import { useUploadTransferProof } from '@/hooks/queries/usePayments';
 import { Spinner } from '@components/ui/Spinner';
+import StatusBadge from '@components/shared/StatusBadge';
 import toast from 'react-hot-toast';
-import type { Booking, BookingStatus } from '@/types/booking.types';
+import type { Booking } from '@/types/booking.types';
 import { formatDate } from '@lib/formatDate';
 
 type TabKey = 'upcoming' | 'past' | 'cancelled';
 
-const STATUS_BADGE: Record<BookingStatus, string> = {
-  PENDING_PAYMENT: 'bg-yellow-100 text-yellow-700',
-  CONFIRMED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
-  NO_SHOW: 'bg-gray-100 text-gray-700',
-};
-
-const STATUS_LABEL: Record<BookingStatus, string> = {
-  PENDING_PAYMENT: 'Pago pendiente',
-  CONFIRMED: 'Confirmada',
-  CANCELLED: 'Cancelada',
-  NO_SHOW: 'No se presentó',
-};
-
 function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => void }) {
   const uploadProof = useUploadTransferProof();
+  const cancelBooking = useCancelBooking();
   const [proofUrl, setProofUrl] = useState('');
   const [showProofForm, setShowProofForm] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   const handleUpload = async () => {
     if (!booking.payment?.id || !proofUrl) return;
@@ -40,6 +29,21 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
     }
   };
 
+  const handleCancel = async () => {
+    try {
+      await cancelBooking.mutateAsync(booking.id);
+      toast.success('Reserva cancelada');
+      onClose();
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message;
+      toast.error(msg ?? 'Error al cancelar la reserva');
+    }
+  };
+
+  const venue = booking.slot.venue;
+  const sportName = (venue as any)?.sportType?.name;
+  const canCancel = booking.status !== 'CANCELLED' && booking.status !== 'NO_SHOW';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
@@ -49,11 +53,15 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
         </div>
 
         <div className="space-y-3 text-sm">
-          <div className="bg-gray-50 rounded-lg p-4 space-y-1">
-            <p><span className="font-medium">Venue:</span> {booking.slot.venue?.name}</p>
-            <p><span className="font-medium">Fecha:</span> {formatDate(booking.slot.date)}</p>
-            <p><span className="font-medium">Horario:</span> {booking.slot.startTime} - {booking.slot.endTime}</p>
-            <p><span className="font-medium">Precio total:</span> ${parseFloat(booking.price.toString()).toLocaleString()}</p>
+          <div className="bg-gray-50 rounded-lg p-4 space-y-1.5">
+            <p>
+              <span className="font-medium text-gray-500">Espacio: </span>
+              {sportName ? <><span className="font-semibold text-gray-700">{sportName}</span>: </> : null}
+              {venue?.name}
+            </p>
+            <p><span className="font-medium text-gray-500">Fecha: </span>{formatDate(booking.slot.date)}</p>
+            <p><span className="font-medium text-gray-500">Horario: </span>{booking.slot.startTime} – {booking.slot.endTime}</p>
+            <p><span className="font-medium text-gray-500">Precio total: </span><strong>${parseFloat(booking.price.toString()).toLocaleString('es-AR')}</strong></p>
             {booking.isMemberPrice && <p className="text-blue-600 text-xs">Precio de socio</p>}
           </div>
 
@@ -64,7 +72,7 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
                 {booking.bookingServices.map((bs) => (
                   <li key={bs.id} className="flex justify-between">
                     <span>{bs.service.name}</span>
-                    <span>${parseFloat(bs.price.toString()).toLocaleString()}</span>
+                    <span>${parseFloat(bs.price.toString()).toLocaleString('es-AR')}</span>
                   </li>
                 ))}
               </ul>
@@ -72,9 +80,7 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
           )}
 
           <div>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[booking.status]}`}>
-              {STATUS_LABEL[booking.status]}
-            </span>
+            <StatusBadge status={booking.status} />
           </div>
 
           {booking.status === 'CONFIRMED' && booking.qrCode && (
@@ -114,6 +120,35 @@ function BookingDetail({ booking, onClose }: { booking: Booking; onClose: () => 
               <p className="text-sm text-purple-700">Tu comprobante está siendo revisado. Te confirmaremos tu reserva pronto.</p>
             </div>
           )}
+
+          {canCancel && (
+            <div className="pt-2 border-t border-gray-200">
+              {!confirmCancel ? (
+                <button
+                  onClick={() => setConfirmCancel(true)}
+                  className="w-full py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  Cancelar reserva
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-700 text-center">¿Confirmar cancelación?</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setConfirmCancel(false)} className="flex-1 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                      No
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      disabled={cancelBooking.isPending}
+                      className="flex-1 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {cancelBooking.isPending ? 'Cancelando...' : 'Sí, cancelar'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -126,12 +161,7 @@ export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('upcoming');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const statusByTab: Partial<Record<TabKey, BookingStatus>> = {
-    cancelled: 'CANCELLED',
-  };
-
   const { data, isLoading } = useMyBookings({
-    status: statusByTab[activeTab],
     page: 1,
     limit: 50,
   });
@@ -182,26 +212,31 @@ export default function MyBookingsPage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
-            {bookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="p-4 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setSelectedBooking(booking)}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-gray-900">{booking.slot.venue?.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(booking.slot.date)} — {booking.slot.startTime} a {booking.slot.endTime}
-                    </p>
-                    <p className="text-sm text-gray-500">${parseFloat(booking.price.toString()).toLocaleString()}</p>
+            {bookings.map((booking) => {
+              const venue = booking.slot.venue;
+              const sportName = (venue as any)?.sportType?.name;
+              return (
+                <div
+                  key={booking.id}
+                  className="p-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setSelectedBooking(booking)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-gray-900">
+                        {sportName ? <><span className="text-gray-700">{sportName}</span>: </> : null}
+                        {venue?.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(booking.slot.date)} — {booking.slot.startTime} a {booking.slot.endTime}
+                      </p>
+                      <p className="text-sm text-gray-500">${parseFloat(booking.price.toString()).toLocaleString('es-AR')}</p>
+                    </div>
+                    <StatusBadge status={booking.status} />
                   </div>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[booking.status]}`}>
-                    {STATUS_LABEL[booking.status]}
-                  </span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

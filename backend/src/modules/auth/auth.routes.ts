@@ -20,4 +20,9 @@ export async function authRoutes(fastify: FastifyInstance) {
     preHandler: [authenticate],
     handler: authController.me.bind(authController),
   });
+
+  fastify.post('/change-password', {
+    preHandler: [authenticate],
+    handler: authController.changePassword.bind(authController),
+  });
 }

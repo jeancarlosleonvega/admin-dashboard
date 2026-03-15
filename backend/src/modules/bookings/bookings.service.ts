@@ -4,6 +4,8 @@ import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { AuthorizationError } from '../../shared/errors/AuthorizationError.js';
 import { walletService } from '../wallet/wallet.service.js';
+import { emailService } from '../../shared/services/email.service.js';
+import { env } from '../../config/env.js';
 import type { CreateBookingInput, BookingFiltersInput, MyBookingFiltersInput } from './bookings.schema.js';
 
 type PaymentStatus = 'PENDING_PROOF' | 'PENDING_VALIDATION' | 'APPROVED' | 'REJECTED' | 'REFUNDED' | 'PENDING_CASH';
@@ -239,6 +241,36 @@ export class BookingsService {
       await walletService.debit(userId, totalPrice, 'BOOKING', booking.id, `Reserva #${booking.id}`);
     }
 
+    // 8. Email de notificación
+    const confirmaInmediatoFinal = data.paymentMethod === 'MERCADOPAGO' || data.paymentMethod === 'WALLET';
+    const venue = booking.slot.venue;
+    const sportName = (venue as any)?.sportType?.name ?? '';
+    const venueName = venue?.name ?? '';
+    const slotDate = new Date(booking.slot.date).toLocaleDateString('es-AR');
+    if (confirmaInmediatoFinal) {
+      emailService.sendBookingConfirmed(user.email, {
+        firstName: user.firstName,
+        venueName,
+        sportName,
+        date: slotDate,
+        startTime: booking.slot.startTime,
+        endTime: booking.slot.endTime,
+        price: totalPrice,
+        qrCode: booking.qrCode,
+      }).catch(() => {});
+    } else if (data.paymentMethod === 'TRANSFER') {
+      emailService.sendBookingPendingProof(user.email, {
+        firstName: user.firstName,
+        venueName,
+        sportName,
+        date: slotDate,
+        startTime: booking.slot.startTime,
+        endTime: booking.slot.endTime,
+        price: totalPrice,
+        appUrl: env.APP_URL ?? '',
+      }).catch(() => {});
+    }
+
     return bookingsRepository.findById(booking.id);
   }
 
@@ -291,6 +323,20 @@ export class BookingsService {
     // Si era WALLET y estaba confirmada, reintegrar saldo
     if (booking.payment?.method === 'WALLET' && booking.status === 'CONFIRMED') {
       await walletService.credit(booking.userId, parseFloat(booking.price.toString()), 'BOOKING_CANCEL', id, `Reintegro cancelación reserva #${id}`);
+    }
+
+    // Email de cancelación
+    const cancelUser = await prisma.user.findUnique({ where: { id: booking.userId }, select: { email: true, firstName: true } });
+    if (cancelUser) {
+      const venue = (booking as any).slot?.venue;
+      emailService.sendBookingCancelled(cancelUser.email, {
+        firstName: cancelUser.firstName,
+        venueName: venue?.name ?? '',
+        sportName: venue?.sportType?.name ?? '',
+        date: new Date((booking as any).slot?.date).toLocaleDateString('es-AR'),
+        startTime: (booking as any).slot?.startTime ?? '',
+        endTime: (booking as any).slot?.endTime ?? '',
+      }).catch(() => {});
     }
   }
 }

@@ -5,6 +5,7 @@ export const paymentKeys = {
   all: ['payments'] as const,
   list: (method?: string) => [...paymentKeys.all, 'list', method] as const,
   pendingTransfers: () => [...paymentKeys.all, 'pending-transfers'] as const,
+  my: () => [...paymentKeys.all, 'my'] as const,
 };
 
 export function usePayments(method?: string) {
@@ -18,6 +19,13 @@ export function usePendingTransfers() {
   return useQuery({
     queryKey: paymentKeys.pendingTransfers(),
     queryFn: () => paymentsApi.getPendingTransfers(),
+  });
+}
+
+export function useMyPayments() {
+  return useQuery({
+    queryKey: paymentKeys.my(),
+    queryFn: () => paymentsApi.getMy(),
   });
 }
 

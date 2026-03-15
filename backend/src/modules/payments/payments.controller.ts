@@ -5,6 +5,12 @@ import { successResponse } from '../../shared/utils/response.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 
 export class PaymentsController {
+  async findMy(request: FastifyRequest, reply: FastifyReply) {
+    const userId = (request as any).user.userId;
+    const items = await paymentsService.findMy(userId);
+    return reply.send(successResponse(items));
+  }
+
   async findAll(request: FastifyRequest<{ Querystring: { method?: string } }>, reply: FastifyReply) {
     const items = await paymentsService.findAll(request.query.method);
     return reply.send(successResponse(items));

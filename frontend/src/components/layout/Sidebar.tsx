@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, MapPin, CreditCard, Calendar,
   PlusCircle, BookOpen, DollarSign, UserCheck,
-  Wallet, Settings,
+  Wallet, Settings, Receipt,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -53,6 +53,7 @@ const baseClientNavGroups: NavGroup[] = [
     label: 'Mi Cuenta',
     items: [
       { name: 'Mi Membresía', href: '/mi-membresia', icon: CreditCard },
+      { name: 'Mis Pagos', href: '/mis-pagos', icon: Receipt },
     ],
   },
 ];
@@ -90,7 +91,7 @@ function NavItemLink({ item, expanded, onClick }: { item: NavItem; expanded: boo
   );
 }
 
-function NavGroupSection({ group, expanded, onClick, can }: { group: NavGroup; expanded: boolean; onClick: () => void; can: (p?: string) => boolean }) {
+function NavGroupSection({ group, expanded, onClick, can }: { group: NavGroup; expanded: boolean; onClick: () => void; can: (p: string) => boolean }) {
   const visibleItems = group.items.filter((item) => !item.permission || can(item.permission));
   if (visibleItems.length === 0) return null;
 

@@ -46,4 +46,9 @@ export const paymentsApi = {
     const response = await apiClient.put(`/payments/${id}/validate`, data);
     return response.data.data;
   },
+
+  async getMy(): Promise<PaymentWithBooking[]> {
+    const response = await apiClient.get('/payments/my');
+    return response.data.data;
+  },
 };

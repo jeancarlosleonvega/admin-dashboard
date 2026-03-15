@@ -5,6 +5,33 @@ import type { TabDef } from '@components/ui/Tabs';
 import { useRevenue, useUpsertRevenue } from '@hooks/queries/useRevenue';
 import type { RevenueConfig, RevenueTimeRule, RevenueDayRule, RevenueOccupancyRule } from '@api/revenue.api';
 
+function MultiplierInput({ value, onChange, className }: { value: number; onChange: (v: number) => void; className: string }) {
+  const [raw, setRaw] = useState(String(value));
+
+  useEffect(() => {
+    setRaw(String(value));
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={raw}
+      onChange={(e) => {
+        setRaw(e.target.value);
+        const num = parseFloat(e.target.value);
+        if (!isNaN(num) && num > 0) onChange(num);
+      }}
+      onBlur={() => {
+        const num = parseFloat(raw);
+        if (isNaN(num) || num <= 0) setRaw(String(value));
+        else setRaw(String(num));
+      }}
+      className={className}
+    />
+  );
+}
+
 const DAY_TYPE_LABELS: Record<string, string> = {
   WEEKDAY: 'Entre semana',
   FRIDAY: 'Viernes',
@@ -215,12 +242,9 @@ function SportTypePanel({ sportTypeId, initialConfig }: SportTypePanelProps) {
                       />
                     </td>
                     <td className="py-2 pr-4">
-                      <input
-                        type="number"
-                        min={0.01}
-                        step={0.01}
+                      <MultiplierInput
                         value={rule.multiplier}
-                        onChange={(e) => updateTimeRule(idx, 'multiplier', parseFloat(e.target.value) || 1)}
+                        onChange={(v) => updateTimeRule(idx, 'multiplier', v)}
                         className={inputClass}
                       />
                     </td>
@@ -276,12 +300,9 @@ function SportTypePanel({ sportTypeId, initialConfig }: SportTypePanelProps) {
                       </select>
                     </td>
                     <td className="py-2 pr-4">
-                      <input
-                        type="number"
-                        min={0.01}
-                        step={0.01}
+                      <MultiplierInput
                         value={rule.multiplier}
-                        onChange={(e) => updateDayRule(idx, 'multiplier', parseFloat(e.target.value) || 1)}
+                        onChange={(v) => updateDayRule(idx, 'multiplier', v)}
                         className={inputClass}
                       />
                     </td>
@@ -356,12 +377,9 @@ function SportTypePanel({ sportTypeId, initialConfig }: SportTypePanelProps) {
                       />
                     </td>
                     <td className="py-2 pr-4">
-                      <input
-                        type="number"
-                        min={0.01}
-                        step={0.01}
+                      <MultiplierInput
                         value={rule.multiplier}
-                        onChange={(e) => updateOccupancyRule(idx, 'multiplier', parseFloat(e.target.value) || 1)}
+                        onChange={(v) => updateOccupancyRule(idx, 'multiplier', v)}
                         className={inputClass}
                       />
                     </td>

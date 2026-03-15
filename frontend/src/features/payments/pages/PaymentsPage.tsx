@@ -185,7 +185,9 @@ export default function PaymentsPage() {
                       </td>
                     )}
                     {visibleColumns.includes('venue') && (
-                      <td className="px-6 py-4 text-sm text-gray-500">{p.booking.slot.venue.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        <span className="font-medium text-gray-700">{p.booking.slot.venue.sportType.name}</span>: {p.booking.slot.venue.name}
+                      </td>
                     )}
                     {visibleColumns.includes('date') && (
                       <td className="px-6 py-4 text-sm text-gray-500">
@@ -251,7 +253,7 @@ export default function PaymentsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Espacio</span>
-                <span className="text-gray-700">{selectedPayment.booking.slot.venue.name}</span>
+                <span className="text-gray-700"><span className="font-medium">{selectedPayment.booking.slot.venue.sportType.name}</span>: {selectedPayment.booking.slot.venue.name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Fecha reserva</span>

@@ -18,7 +18,7 @@ export class PaymentsService {
         booking: {
           include: {
             user: { select: { id: true, firstName: true, lastName: true, email: true } },
-            slot: { include: { venue: { select: { id: true, name: true } } } },
+            slot: { include: { venue: { select: { id: true, name: true, sportType: { select: { id: true, name: true } } } } } },
           },
         },
       },
@@ -40,7 +40,7 @@ export class PaymentsService {
             },
             slot: {
               include: {
-                venue: { select: { id: true, name: true } },
+                venue: { select: { id: true, name: true, sportType: { select: { id: true, name: true } } } },
               },
             },
           },

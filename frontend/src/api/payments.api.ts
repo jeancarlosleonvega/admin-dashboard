@@ -20,7 +20,7 @@ export interface PaymentWithBooking {
       date: string;
       startTime: string;
       endTime: string;
-      venue: { id: string; name: string };
+      venue: { id: string; name: string; sportType: { id: string; name: string } };
     };
   };
 }

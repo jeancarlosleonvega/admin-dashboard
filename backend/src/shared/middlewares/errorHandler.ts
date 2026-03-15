@@ -20,14 +20,15 @@ export function errorHandler(
     return sendError(reply, 'VALIDATION_ERROR', 'Validation failed', 400, details);
   }
 
-  // Handle custom AppError
-  if (error instanceof AppError) {
+  // Handle custom AppError (instanceof puede fallar en ESM, usar duck-typing como fallback)
+  const appErr = error as any;
+  if (error instanceof AppError || (appErr.code && appErr.statusCode && appErr.message)) {
     return sendError(
       reply,
-      error.code,
-      error.message,
-      error.statusCode,
-      error.details
+      appErr.code,
+      appErr.message,
+      appErr.statusCode,
+      appErr.details
     );
   }
 

@@ -50,6 +50,8 @@ import MyProfilePage from '@features/profile/pages/MyProfilePage';
 import MyMembershipPage from '@features/my-membership/pages/MyMembershipPage';
 import MyWalletPage from '@features/wallet/pages/MyWalletPage';
 import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
+import FinanzasPage from '@features/finanzas/pages/FinanzasPage';
+import ConfiguracionPage from '@features/configuracion/pages/ConfiguracionPage';
 import SystemConfigPage from '@features/settings/pages/SystemConfigPage';
 import InstalacionesPage from '@features/instalaciones/pages/InstalacionesPage';
 import SociosPage from '@features/socios/pages/SociosPage';
@@ -119,7 +121,7 @@ function App() {
         {/* Users CRUD */}
         <Route
           path="/usuarios"
-          element={<Navigate to="/seguridad?tab=users" replace />}
+          element={<Navigate to="/configuracion?tab=seguridad" replace />}
         />
         <Route
           path="/usuarios/create"
@@ -149,7 +151,7 @@ function App() {
         {/* Roles CRUD */}
         <Route
           path="/roles"
-          element={<Navigate to="/seguridad?tab=roles" replace />}
+          element={<Navigate to="/configuracion?tab=seguridad" replace />}
         />
         <Route
           path="/roles/create"
@@ -179,7 +181,7 @@ function App() {
         {/* Permissions CRUD */}
         <Route
           path="/permissions"
-          element={<Navigate to="/seguridad?tab=permissions" replace />}
+          element={<Navigate to="/configuracion?tab=seguridad" replace />}
         />
         <Route
           path="/permissions/create"
@@ -396,15 +398,17 @@ function App() {
           }
         />
 
-        {/* Pagos */}
+        {/* Hub: Finanzas */}
         <Route
-          path="/pagos"
+          path="/finanzas"
           element={
             <PermissionRoute permission="payments.view">
-              <PaymentsPage />
+              <FinanzasPage />
             </PermissionRoute>
           }
         />
+        <Route path="/pagos" element={<Navigate to="/finanzas?tab=pagos" replace />} />
+        <Route path="/motor-precios" element={<Navigate to="/finanzas?tab=motor-precios" replace />} />
 
         {/* User Memberships */}
         <Route
@@ -436,15 +440,6 @@ function App() {
           }
         />
 
-        {/* Motor de Precios */}
-        <Route
-          path="/motor-precios"
-          element={
-            <PermissionRoute permission="revenue.view">
-              <RevenueConfigPage />
-            </PermissionRoute>
-          }
-        />
 
         {/* Portal del socio */}
         <Route path="/mi-perfil" element={<MyProfilePage />} />
@@ -454,22 +449,17 @@ function App() {
         {/* Complete Profile */}
         <Route path="/completar-perfil" element={<CompleteProfilePage />} />
 
+        {/* Hub: Configuración */}
         <Route
-          path="/seguridad"
+          path="/configuracion"
           element={
             <PermissionRoute permission="users.view">
-              <SettingsPage />
+              <ConfiguracionPage />
             </PermissionRoute>
           }
         />
-        <Route
-          path="/sistema"
-          element={
-            <PermissionRoute permission="system-config.view">
-              <SystemConfigPage />
-            </PermissionRoute>
-          }
-        />
+        <Route path="/seguridad" element={<Navigate to="/configuracion?tab=seguridad" replace />} />
+        <Route path="/sistema" element={<Navigate to="/configuracion?tab=sistema" replace />} />
 
         <Route path="/" element={<Navigate to="/inicio" replace />} />
       </Route>

@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, MapPin, CreditCard, Calendar,
   PlusCircle, BookOpen, DollarSign, UserCheck,
-  Wallet, TrendingUp, Shield, Settings,
+  Wallet, Settings,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -30,15 +30,13 @@ const adminNavGroups: NavGroup[] = [
   {
     label: 'Finanzas',
     items: [
-      { name: 'Pagos', href: '/pagos', icon: DollarSign, permission: 'payments.view' },
-      { name: 'Motor de Precios', href: '/motor-precios', icon: TrendingUp, permission: 'revenue.view' },
+      { name: 'Finanzas', href: '/finanzas', icon: DollarSign, permission: 'payments.view' },
     ],
   },
   {
     label: 'Configuración',
     items: [
-      { name: 'Seguridad', href: '/seguridad', icon: Shield, permission: 'users.view' },
-      { name: 'Sistema', href: '/sistema', icon: Settings, permission: 'system-config.view' },
+      { name: 'Configuración', href: '/configuracion', icon: Settings, permission: 'users.view' },
     ],
   },
 ];

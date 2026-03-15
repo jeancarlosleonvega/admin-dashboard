@@ -11,6 +11,7 @@ import DataToolbar from '@components/shared/DataToolbar';
 import { useColumnVisibility } from '@/hooks/useColumnVisibility';
 import type { ColumnDef } from '@/hooks/useColumnVisibility';
 import type { VenueSchedule } from '@/types/venue-schedule.types';
+import StatusBadge from '@components/shared/StatusBadge';
 import toast from 'react-hot-toast';
 import { formatDate } from '@lib/formatDate';
 
@@ -87,20 +88,6 @@ export default function VenueSchedulesPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-sm font-medium text-gray-700">Filtrar por espacio:</label>
-        <select
-          value={venueIdFilter}
-          onChange={(e) => setVenueIdFilter(e.target.value)}
-          className="input max-w-xs"
-        >
-          <option value="">Todos los espacios</option>
-          {venues.map((v) => (
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
-      </div>
-
       <DataToolbar
         columns={columns}
         onSearchChange={useCallback(() => {}, [])}
@@ -109,6 +96,15 @@ export default function VenueSchedulesPage() {
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
         onResetColumns={resetColumns}
+        quickFilters={[
+          {
+            key: 'venueId',
+            label: 'Espacio',
+            value: venueIdFilter,
+            onChange: setVenueIdFilter,
+            options: venues.map((v) => ({ label: v.name, value: v.id })),
+          },
+        ]}
       />
 
       <div className="card overflow-hidden">
@@ -202,9 +198,7 @@ export default function VenueSchedulesPage() {
                     )}
                     {visibleColumns.includes('status') && (
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                          {schedule.active ? 'Activo' : 'Inactivo'}
-                        </span>
+                        <StatusBadge active={schedule.active} />
                       </td>
                     )}
                     {visibleColumns.includes('actions') && (

@@ -52,6 +52,7 @@ export interface UserFilters {
   email?: string;
   status?: UserStatus;
   roleId?: string;
+  membershipPlanId?: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
   page?: number;

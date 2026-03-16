@@ -51,6 +51,12 @@ export class BookingsController {
     return reply.status(201).send(successResponse(item));
   }
 
+  async markNoShow(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    const adminId = (request as any).user.userId;
+    const item = await bookingsService.markNoShow(request.params.id, adminId);
+    return reply.send(successResponse(item));
+  }
+
   async cancel(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     const req = request as any;
     const userId = req.user.userId;

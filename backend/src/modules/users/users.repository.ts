@@ -40,6 +40,12 @@ export class UsersRepository {
       };
     }
 
+    if (filters.membershipPlanId) {
+      where.userMemberships = {
+        some: { membershipPlanId: filters.membershipPlanId, status: 'ACTIVE' },
+      };
+    }
+
     const orderBy: any = filters.sortBy
       ? { [filters.sortBy]: filters.sortDirection || 'asc' }
       : { createdAt: 'desc' };

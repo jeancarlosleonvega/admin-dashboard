@@ -111,6 +111,10 @@ model User {
   bookings        Booking[]
   wallet          UserWallet?
 
+  suspensions        UserSuspension[] @relation("UserSuspensions")
+  suspensionsCreated UserSuspension[] @relation("SuspensionCreatedBy")
+  suspensionsLifted  UserSuspension[] @relation("SuspensionLiftedBy")
+
   @@map("users")
 }
 
@@ -558,6 +562,28 @@ model RevenueFactor {
 
   @@unique([pricingConfigId, factorTypeId])
   @@map("revenue_factors")
+}
+
+// ─── User Suspensions ─────────────────────────────────────────────────────────
+
+model UserSuspension {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  reason      String
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  isAutomatic Boolean   @default(false) @map("is_automatic")
+  liftedAt    DateTime? @map("lifted_at")
+  liftedById  String?   @map("lifted_by_id")
+  createdById String    @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user      User  @relation("UserSuspensions", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User  @relation("SuspensionCreatedBy", fields: [createdById], references: [id])
+  liftedBy  User? @relation("SuspensionLiftedBy", fields: [liftedById], references: [id])
+
+  @@map("user_suspensions")
 }
 
 model RevenueFactorRule {

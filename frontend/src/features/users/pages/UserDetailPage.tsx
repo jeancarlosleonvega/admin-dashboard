@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, User, Shield } from 'lucide-react';
+import { ArrowLeft, User, Shield, Ban } from 'lucide-react';
 import { useUser, useUpdateUser } from '@/hooks/queries/useUsers';
 import { useRolesList } from '@/hooks/queries/useRoles';
 import { useAuthStore } from '@stores/authStore';
@@ -15,10 +15,23 @@ import type { TabDef } from '@components/ui/Tabs';
 import { UserStatus } from '@/types/user.types';
 import toast from 'react-hot-toast';
 import { formatDateTime } from '@lib/formatDate';
+import { useUserSuspensions, useCreateSuspension, useLiftSuspension } from '@/hooks/queries/useSuspensions';
+import { useBookings } from '@/hooks/queries/useBookings';
+
+function NoShowCount({ userId }: { userId: string }) {
+  const { data } = useBookings({ userId, status: 'NO_SHOW', limit: 100 });
+  const count = data?.meta.total ?? 0;
+  return (
+    <p className="text-sm text-gray-600">
+      <span className="font-semibold text-orange-600">{count}</span> ausencia{count !== 1 ? 's' : ''} registrada{count !== 1 ? 's' : ''}
+    </p>
+  );
+}
 
 const tabs: TabDef[] = [
   { id: 'general', label: 'General', icon: User },
   { id: 'roles', label: 'Roles', icon: Shield },
+  { id: 'suspensions', label: 'Suspensiones', icon: Ban },
 ];
 
 const updateUserSchema = z.object({
@@ -43,6 +56,52 @@ export default function UserDetailPage() {
   const { data: roles, isLoading: rolesLoading } = useRolesList();
   const updateUser = useUpdateUser();
   usePageHeader({});
+
+  const { data: suspensions = [], isLoading: suspensionsLoading } = useUserSuspensions(id!);
+  const createSuspension = useCreateSuspension();
+  const liftSuspension = useLiftSuspension(id!);
+
+  const [showSuspendForm, setShowSuspendForm] = useState(false);
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendStart, setSuspendStart] = useState(new Date().toISOString().split('T')[0]);
+  const [suspendEnd, setSuspendEnd] = useState('');
+
+  const activeSuspension = suspensions.find(
+    (s) => !s.liftedAt && (!s.endDate || new Date(s.endDate) > new Date())
+  );
+
+  const handleCreateSuspension = async () => {
+    if (!id || !suspendReason) return;
+    try {
+      await createSuspension.mutateAsync({
+        userId: id,
+        reason: suspendReason,
+        startDate: suspendStart,
+        endDate: suspendEnd || undefined,
+      });
+      toast.success('Suspensión creada');
+      setShowSuspendForm(false);
+      setSuspendReason('');
+      setSuspendEnd('');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message ?? 'Error al suspender');
+    }
+  };
+
+  const handleLiftSuspension = async (suspId: string) => {
+    try {
+      await liftSuspension.mutateAsync(suspId);
+      toast.success('Suspensión levantada');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message ?? 'Error al levantar suspensión');
+    }
+  };
+
+  const suspensionStatus = (s: { liftedAt: string | null; endDate: string | null }) => {
+    if (s.liftedAt) return { label: 'Levantada', cls: 'text-gray-500 bg-gray-100' };
+    if (s.endDate && new Date(s.endDate) <= new Date()) return { label: 'Vencida', cls: 'text-yellow-700 bg-yellow-100' };
+    return { label: 'Activa', cls: 'text-red-700 bg-red-100' };
+  };
 
   const {
     register,
@@ -210,6 +269,123 @@ export default function UserDetailPage() {
                 )}
               </DetailSection>
             </form>
+          </TabPanel>
+
+          <TabPanel id="suspensions" activeTab={activeTab}>
+            <DetailSection title="Control de suspensiones" description="Historial de suspensiones del usuario." noBorder>
+              {suspensionsLoading ? (
+                <Spinner size="sm" />
+              ) : (
+                <div className="space-y-4">
+                  {/* Conteo de ausencias */}
+                  <NoShowCount userId={id!} />
+
+                  {/* Botón suspender */}
+                  {canEdit && !activeSuspension && !showSuspendForm && (
+                    <button
+                      onClick={() => setShowSuspendForm(true)}
+                      className="flex items-center gap-2 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    >
+                      <Ban className="w-4 h-4" />
+                      Suspender usuario
+                    </button>
+                  )}
+
+                  {/* Formulario de suspensión */}
+                  {showSuspendForm && (
+                    <div className="border border-red-200 rounded-lg p-4 bg-red-50 space-y-3">
+                      <p className="text-sm font-medium text-red-800">Nueva suspensión</p>
+                      <div>
+                        <label className="label">Motivo <span className="text-red-500">*</span></label>
+                        <textarea
+                          value={suspendReason}
+                          onChange={(e) => setSuspendReason(e.target.value)}
+                          rows={2}
+                          className="input resize-none"
+                          placeholder="Motivo de la suspensión…"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="label">Desde</label>
+                          <input type="date" value={suspendStart} onChange={(e) => setSuspendStart(e.target.value)} className="input" />
+                        </div>
+                        <div>
+                          <label className="label">Hasta (opcional)</label>
+                          <input type="date" value={suspendEnd} onChange={(e) => setSuspendEnd(e.target.value)} className="input" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowSuspendForm(false)} className="flex-1 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={handleCreateSuspension}
+                          disabled={!suspendReason || createSuspension.isPending}
+                          className="flex-1 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {createSuspension.isPending ? 'Guardando…' : 'Confirmar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tabla de suspensiones */}
+                  {suspensions.length === 0 ? (
+                    <p className="text-sm text-gray-400 py-4 text-center">Sin suspensiones registradas</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Motivo</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Desde</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Hasta</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            {canEdit && <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {suspensions.map((s) => {
+                            const st = suspensionStatus(s);
+                            const isActive = !s.liftedAt && (!s.endDate || new Date(s.endDate) > new Date());
+                            return (
+                              <tr key={s.id} className="hover:bg-gray-50">
+                                <td className="px-3 py-2 text-gray-700 max-w-[180px] truncate" title={s.reason}>{s.reason}</td>
+                                <td className="px-3 py-2 text-gray-500">{new Date(s.startDate).toLocaleDateString('es-AR')}</td>
+                                <td className="px-3 py-2 text-gray-500">{s.endDate ? new Date(s.endDate).toLocaleDateString('es-AR') : '—'}</td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.isAutomatic ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    {s.isAutomatic ? 'Auto' : 'Manual'}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${st.cls}`}>{st.label}</span>
+                                </td>
+                                {canEdit && (
+                                  <td className="px-3 py-2 text-right">
+                                    {isActive && (
+                                      <button
+                                        onClick={() => handleLiftSuspension(s.id)}
+                                        disabled={liftSuspension.isPending}
+                                        className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                                      >
+                                        Levantar
+                                      </button>
+                                    )}
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DetailSection>
           </TabPanel>
         </div>
       </div>

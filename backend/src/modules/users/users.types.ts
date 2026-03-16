@@ -32,6 +32,7 @@ export interface UserFilters {
   email?: string;
   status?: UserStatus;
   roleId?: string;
+  membershipPlanId?: string;
   sortBy?: 'firstName' | 'email' | 'status' | 'createdAt';
   sortDirection?: 'asc' | 'desc';
 }

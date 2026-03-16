@@ -5,6 +5,7 @@ import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { AuthorizationError } from '../../shared/errors/AuthorizationError.js';
 import { walletService } from '../wallet/wallet.service.js';
 import { emailService } from '../../shared/services/email.service.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import { env } from '../../config/env.js';
 import type { CreateBookingInput, BookingFiltersInput, MyBookingFiltersInput } from './bookings.schema.js';
 
@@ -104,11 +105,83 @@ export class BookingsService {
     return item;
   }
 
+  async markNoShow(id: string, adminId: string) {
+    const booking = await bookingsRepository.findById(id);
+    if (!booking) throw new NotFoundError('Reserva');
+    if (booking.status !== 'CONFIRMED') throw new ValidationError('Solo se puede marcar como ausente una reserva confirmada');
+
+    const slotDate = new Date((booking as any).slot.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (slotDate >= today) throw new ValidationError('Solo se puede marcar ausencia en reservas de fechas pasadas');
+
+    await prisma.booking.update({ where: { id }, data: { status: 'NO_SHOW' } });
+
+    // Contar total de NO_SHOW del usuario
+    const noShowCount = await prisma.booking.count({
+      where: { userId: booking.userId, status: 'NO_SHOW' },
+    });
+
+    // Leer config de suspensión automática
+    const [maxConfig, daysConfig] = await Promise.all([
+      prisma.systemConfig.findUnique({ where: { key: 'max_absences_before_suspension' } }),
+      prisma.systemConfig.findUnique({ where: { key: 'suspension_duration_days' } }),
+    ]);
+    const threshold = parseInt(maxConfig?.value ?? '3', 10);
+    const days = parseInt(daysConfig?.value ?? '30', 10);
+
+    if (noShowCount >= threshold) {
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + days);
+
+      // Verificar si ya tiene suspensión activa antes de crear otra
+      const alreadySuspended = await prisma.userSuspension.findFirst({
+        where: {
+          userId: booking.userId,
+          liftedAt: null,
+          OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+        },
+      });
+
+      if (!alreadySuspended) {
+        await prisma.userSuspension.create({
+          data: {
+            userId: booking.userId,
+            reason: `Suspensión automática por ${noShowCount} ausencias acumuladas`,
+            startDate: new Date(),
+            endDate,
+            isAutomatic: true,
+            createdById: adminId,
+          },
+        });
+        await prisma.user.update({ where: { id: booking.userId }, data: { status: 'SUSPENDED' } });
+      }
+    }
+
+    broadcast('slots:invalidate', { source: 'Reserva marcada como ausencia' });
+    return bookingsRepository.findById(id);
+  }
+
   async create(userId: string, data: CreateBookingInput) {
     // 1. Verificar usuario activo
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundError('Usuario');
     if (user.status !== 'ACTIVE') throw new ValidationError('Cuenta suspendida o inactiva');
+
+    // Verificar suspensión activa
+    const activeSuspension = await prisma.userSuspension.findFirst({
+      where: {
+        userId,
+        liftedAt: null,
+        OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+      },
+    });
+    if (activeSuspension) {
+      const until = activeSuspension.endDate
+        ? ` hasta el ${activeSuspension.endDate.toLocaleDateString('es-AR')}`
+        : '';
+      throw new ValidationError(`Tu cuenta está suspendida${until}. Contactá con recepción.`);
+    }
 
     // Verificar perfil completo (requerido para reservar)
     if (!user.sex || !user.birthDate || user.handicap == null) {
@@ -374,6 +447,7 @@ export class BookingsService {
       }).catch(() => {});
     }
 
+    broadcast('slots:invalidate', { source: 'Reserva confirmada' });
     return bookingsRepository.findById(booking.id);
   }
 
@@ -441,6 +515,8 @@ export class BookingsService {
         endTime: (booking as any).slot?.endTime ?? '',
       }).catch(() => {});
     }
+
+    broadcast('slots:invalidate', { source: 'Reserva cancelada' });
   }
 }
 

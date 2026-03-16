@@ -52,6 +52,7 @@ import FinanzasPage from '@features/finanzas/pages/FinanzasPage';
 import ConfiguracionPage from '@features/configuracion/pages/ConfiguracionPage';
 import InstalacionesPage from '@features/instalaciones/pages/InstalacionesPage';
 import SociosPage from '@features/socios/pages/SociosPage';
+import SocioDetailPage from '@features/socios/pages/SocioDetailPage';
 import ReservasHubPage from '@features/bookings/pages/ReservasHubPage';
 
 // Route guards
@@ -61,6 +62,14 @@ import BookingRoute from '@/routes/BookingRoute';
 
 // Components
 import { Spinner } from '@components/ui/Spinner';
+
+// Hooks
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+
+function RealtimeUpdater() {
+  useRealtimeUpdates();
+  return null;
+}
 
 function App() {
   const { isAuthenticated, isLoading, initialize } = useAuthStore();
@@ -103,6 +112,7 @@ function App() {
       <Route
         element={
           <ProtectedRoute>
+            <RealtimeUpdater />
             <MainLayout />
           </ProtectedRoute>
         }
@@ -284,6 +294,14 @@ function App() {
         />
         <Route path="/planes-membresia" element={<Navigate to="/socios?tab=planes" replace />} />
         <Route path="/membresias-socios" element={<Navigate to="/socios?tab=membresias" replace />} />
+        <Route
+          path="/socios/:id"
+          element={
+            <PermissionRoute permission="users.view">
+              <SocioDetailPage />
+            </PermissionRoute>
+          }
+        />
 
         {/* Membership Plans CRUD */}
         <Route

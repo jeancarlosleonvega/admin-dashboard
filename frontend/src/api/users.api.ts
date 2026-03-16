@@ -26,6 +26,7 @@ export const usersApi = {
     if (filters?.email) params.append('email', filters.email);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.roleId) params.append('roleId', filters.roleId);
+    if (filters?.membershipPlanId) params.append('membershipPlanId', filters.membershipPlanId);
     if (filters?.sortBy) params.append('sortBy', filters.sortBy);
     if (filters?.sortDirection) params.append('sortDirection', filters.sortDirection);
     if (filters?.page) params.append('page', filters.page.toString());

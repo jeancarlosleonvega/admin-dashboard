@@ -52,4 +52,9 @@ export const bookingsApi = {
   async cancelBooking(id: string): Promise<void> {
     await apiClient.delete(`/bookings/${id}`);
   },
+
+  async markNoShow(id: string): Promise<Booking> {
+    const response = await apiClient.post(`/bookings/${id}/no-show`);
+    return response.data.data;
+  },
 };

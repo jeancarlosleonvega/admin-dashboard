@@ -1,6 +1,11 @@
 import nodemailer from 'nodemailer';
+import QRCode from 'qrcode';
 import { env } from '../../config/env.js';
 import { logger } from '../utils/logger.js';
+
+async function qrToDataUrl(code: string): Promise<string> {
+  return QRCode.toDataURL(code, { width: 200, margin: 1 });
+}
 
 function createTransporter() {
   if (!env.SMTP_HOST || !env.SMTP_PORT || !env.SMTP_USER || !env.SMTP_PASS) {
@@ -53,6 +58,7 @@ export const emailService = {
     qrCode?: string | null;
   }) {
     const subject = `Reserva confirmada — ${data.sportName}: ${data.venueName}`;
+    const qrDataUrl = data.qrCode ? await qrToDataUrl(data.qrCode).catch(() => null) : null;
     const html = wrap(`
       <p>Hola <strong>${data.firstName}</strong>,</p>
       <p>Tu reserva fue <strong>confirmada</strong>.</p>
@@ -62,7 +68,7 @@ export const emailService = {
         <tr><td style="padding:8px;color:#6b7280">Horario</td><td style="padding:8px">${data.startTime} – ${data.endTime}</td></tr>
         <tr style="background:#f9fafb"><td style="padding:8px;color:#6b7280">Monto</td><td style="padding:8px;font-weight:600">$${data.price.toLocaleString('es-AR')}</td></tr>
       </table>
-      ${data.qrCode ? `<p>Tu código QR de acceso: <strong style="font-size:18px;letter-spacing:2px">${data.qrCode}</strong></p>` : ''}
+      ${qrDataUrl ? `<div style="text-align:center;margin-top:16px"><p style="color:#6b7280;font-size:13px;margin-bottom:8px">Código QR de acceso — presentalo en recepción</p><img src="${qrDataUrl}" width="180" height="180" alt="QR de acceso" style="display:block;margin:0 auto"/></div>` : ''}
       <p>¡Nos vemos en el club!</p>
     `);
     await send(to, subject, html);
@@ -125,6 +131,7 @@ export const emailService = {
     qrCode?: string | null;
   }) {
     const subject = `¡Transferencia aprobada! — ${data.sportName}: ${data.venueName}`;
+    const qrDataUrl = data.qrCode ? await qrToDataUrl(data.qrCode).catch(() => null) : null;
     const html = wrap(`
       <p>Hola <strong>${data.firstName}</strong>,</p>
       <p>Tu transferencia fue <strong>aprobada</strong> y tu reserva está confirmada.</p>
@@ -133,7 +140,7 @@ export const emailService = {
         <tr style="background:#f9fafb"><td style="padding:8px;color:#6b7280">Fecha</td><td style="padding:8px">${data.date}</td></tr>
         <tr><td style="padding:8px;color:#6b7280">Horario</td><td style="padding:8px">${data.startTime} – ${data.endTime}</td></tr>
       </table>
-      ${data.qrCode ? `<p>Tu código QR de acceso: <strong style="font-size:18px;letter-spacing:2px">${data.qrCode}</strong></p>` : ''}
+      ${qrDataUrl ? `<div style="text-align:center;margin-top:16px"><p style="color:#6b7280;font-size:13px;margin-bottom:8px">Código QR de acceso — presentalo en recepción</p><img src="${qrDataUrl}" width="180" height="180" alt="QR de acceso" style="display:block;margin:0 auto"/></div>` : ''}
       <p>¡Nos vemos en el club!</p>
     `);
     await send(to, subject, html);

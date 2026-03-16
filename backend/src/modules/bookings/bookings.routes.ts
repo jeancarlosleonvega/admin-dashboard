@@ -54,6 +54,11 @@ export async function bookingsRoutes(fastify: FastifyInstance) {
     handler: bookingsController.create.bind(bookingsController),
   });
 
+  fastify.post('/:id/no-show', {
+    preHandler: [authorize('bookings.manage')],
+    handler: bookingsController.markNoShow.bind(bookingsController),
+  });
+
   fastify.delete('/:id', {
     preHandler: [
       async (request: any, _reply: any) => {

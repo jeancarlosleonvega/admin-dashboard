@@ -28,6 +28,7 @@ export const userFiltersSchema = z.object({
   email: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional(),
   roleId: z.string().uuid().optional(),
+  membershipPlanId: z.string().uuid().optional(),
   sortBy: z.enum(['firstName', 'email', 'status', 'createdAt']).optional(),
   sortDirection: z.enum(['asc', 'desc']).optional(),
   page: z.coerce.number().int().positive().default(1),

@@ -60,3 +60,13 @@ export function useCancelBooking() {
     },
   });
 }
+
+export function useMarkNoShow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => bookingsApi.markNoShow(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+  });
+}

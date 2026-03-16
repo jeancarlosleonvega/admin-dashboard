@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { Calendar, Eye } from 'lucide-react';
-import { useBookings } from '@/hooks/queries/useBookings';
+import { Calendar, Eye, UserX } from 'lucide-react';
+import { useBookings, useMarkNoShow } from '@/hooks/queries/useBookings';
 import { Spinner } from '@components/ui/Spinner';
 import StatusBadge from '@components/shared/StatusBadge';
 import BookingDetailModal from '@components/shared/BookingDetailModal';
 import type { Booking, BookingStatus } from '@/types/booking.types';
 import { formatDate } from '@lib/formatDate';
+import toast from 'react-hot-toast';
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   MERCADOPAGO: 'MercadoPago',
@@ -27,8 +28,28 @@ export default function AdminBookingsPage() {
   }>({ page: 1, limit: 20 });
 
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [confirmNoShow, setConfirmNoShow] = useState<Booking | null>(null);
 
   const { data, isLoading, isError } = useBookings(filters);
+  const markNoShow = useMarkNoShow();
+
+  const handleNoShow = async (booking: Booking) => {
+    try {
+      await markNoShow.mutateAsync(booking.id);
+      toast.success('Reserva marcada como ausencia');
+      setConfirmNoShow(null);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error?.message ?? 'Error al marcar ausencia';
+      toast.error(msg);
+    }
+  };
+
+  const isSlotPast = (booking: Booking) => {
+    const slotDate = new Date(booking.slot.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return slotDate < today;
+  };
   const bookings = data?.data ?? [];
   const meta = data?.meta ?? { page: 1, limit: 20, total: 0, totalPages: 0 };
 
@@ -105,7 +126,16 @@ export default function AdminBookingsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">${parseFloat(booking.price.toString()).toLocaleString('es-AR')}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{booking.payment ? PAYMENT_METHOD_LABEL[booking.payment.method] ?? booking.payment.method : '-'}</td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
+                        {booking.status === 'CONFIRMED' && isSlotPast(booking) && (
+                          <button
+                            onClick={() => setConfirmNoShow(booking)}
+                            className="p-1.5 text-gray-400 hover:text-orange-600 rounded hover:bg-orange-50"
+                            title="Marcar ausencia"
+                          >
+                            <UserX className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedBooking(booking)}
                           className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
@@ -140,6 +170,33 @@ export default function AdminBookingsPage() {
           onClose={() => setSelectedBooking(null)}
           isAdmin
         />
+      )}
+
+      {confirmNoShow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-base font-semibold text-gray-900">¿Marcar como ausente?</h3>
+            <p className="text-sm text-gray-600">
+              Se registrará que <strong>{confirmNoShow.user?.firstName} {confirmNoShow.user?.lastName}</strong> no se presentó.
+              Si supera el umbral de ausencias, se suspenderá automáticamente.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmNoShow(null)}
+                className="flex-1 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleNoShow(confirmNoShow)}
+                disabled={markNoShow.isPending}
+                className="flex-1 py-2 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              >
+                {markNoShow.isPending ? 'Marcando…' : 'Marcar ausencia'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

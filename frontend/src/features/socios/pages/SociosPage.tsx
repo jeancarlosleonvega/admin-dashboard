@@ -1,18 +1,20 @@
 import { useSearchParams } from 'react-router-dom';
-import { CreditCard, UserCheck } from 'lucide-react';
+import { CreditCard, UserCheck, Users } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import MembershipPlansListPage from '@features/membership-plans/pages/MembershipPlansListPage';
 import UserMembershipsPage from '@features/user-memberships/pages/UserMembershipsPage';
+import SociosListTab from '../components/SociosListTab';
 
 const navItems = [
+  { id: 'socios', label: 'Socios', title: 'Socios', icon: Users, permission: 'users.view', subtitle: 'Listado de socios del club' },
   { id: 'planes', label: 'Planes', title: 'Planes de Membresía', icon: CreditCard, permission: 'membership-plans.view', subtitle: 'Gestionar planes y precios de membresía' },
   { id: 'membresias', label: 'Membresías', title: 'Membresías Socios', icon: UserCheck, permission: 'user-memberships.view', subtitle: 'Asignar y gestionar membresías de socios' },
 ];
 
 export default function SociosPage() {
   const [params, setParams] = useSearchParams();
-  const activeTab = params.get('tab') || 'planes';
+  const activeTab = params.get('tab') || 'socios';
   const { can } = useAuthStore();
 
   const visibleItems = navItems.filter((item) => !item.permission || can(item.permission));
@@ -23,7 +25,7 @@ export default function SociosPage() {
       <aside className="w-48 flex-shrink-0">
         <nav className="space-y-0.5">
           {visibleItems.map((item) => {
-            const isActive = activeTab === item.id;
+            const isActive = (activeTab === item.id) || (activeTab === '' && item.id === 'socios');
             return (
               <button
                 key={item.id}
@@ -50,6 +52,7 @@ export default function SociosPage() {
             <p className="text-sm text-gray-500 mt-1">{activeItem.subtitle}</p>
           </div>
         )}
+        {activeTab === 'socios' && <SociosListTab />}
         {activeTab === 'planes' && <MembershipPlansListPage />}
         {activeTab === 'membresias' && <UserMembershipsPage />}
       </div>

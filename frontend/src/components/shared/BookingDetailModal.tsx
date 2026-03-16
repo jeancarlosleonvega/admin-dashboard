@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useCancelBooking } from '@/hooks/queries/useBookings';
 import { useUploadTransferProof } from '@/hooks/queries/usePayments';
 import StatusBadge from '@components/shared/StatusBadge';
@@ -150,10 +151,9 @@ export default function BookingDetailModal({ booking, onClose, isAdmin = false }
 
           {/* QR */}
           {booking.status === 'CONFIRMED' && booking.qrCode && (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-              <p className="text-xs text-gray-400 mb-1">Código de acceso</p>
-              <p className="font-mono text-base font-bold tracking-widest break-all text-gray-900">{booking.qrCode}</p>
-              <p className="text-xs text-gray-400 mt-1">Presentá este código al ingresar</p>
+            <div className="flex flex-col items-center gap-2 p-4 bg-gray-50 rounded-lg">
+              <QRCodeSVG value={booking.qrCode} size={180} />
+              <p className="text-xs text-gray-400">Presentá este código en recepción</p>
             </div>
           )}
 

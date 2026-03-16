@@ -250,7 +250,7 @@ async function applyRuleFilter<T extends SlotBase>(
 
   for (const slot of slots) {
     const slotDate = slot.date;
-    const isoDay = slotDate.getDay() === 0 ? 7 : slotDate.getDay();
+    const isoDay = slotDate.getUTCDay() === 0 ? 7 : slotDate.getUTCDay();
 
     // Buscar todos los schedules activos que cubren este slot
     const coveringSchedules = await prisma.venueSchedule.findMany({
@@ -279,9 +279,12 @@ async function applyRuleFilter<T extends SlotBase>(
       return slot.startTime >= sch.openTime && slot.startTime < sch.closeTime;
     });
 
+    const slotVenue = (slot as any).venue;
+
     // Sin schedule activo: incluir con precio base
     if (schedulesConHorario.length === 0) {
-      resultado.push({ ...slot, price: baseBookingPrice, scheduleRule: null });
+      const pps = slotVenue?.playersPerSlot ?? slotVenue?.sportType?.defaultPlayersPerSlot ?? null;
+      resultado.push({ ...slot, price: baseBookingPrice, playersPerSlot: pps, scheduleRule: null });
       continue;
     }
 
@@ -289,7 +292,8 @@ async function applyRuleFilter<T extends SlotBase>(
 
     // Solo schedules sin reglas: abierto a todos
     if (schedulesConRules.length === 0) {
-      resultado.push({ ...slot, price: baseBookingPrice, scheduleRule: null });
+      const pps = schedulesConHorario[0].playersPerSlot ?? slotVenue?.playersPerSlot ?? slotVenue?.sportType?.defaultPlayersPerSlot ?? null;
+      resultado.push({ ...slot, price: baseBookingPrice, playersPerSlot: pps, scheduleRule: null });
       continue;
     }
 
@@ -318,18 +322,22 @@ async function applyRuleFilter<T extends SlotBase>(
     if (!ruleGanadora.canBook) continue;
 
     const { scheduleId: _sid, ...slotSinScheduleId } = slot as T & { scheduleId?: unknown };
-    const basePrice = parseFloat(ruleGanadora.basePrice.toString());
+    const ruleBasePrice = parseFloat(ruleGanadora.basePrice.toString());
+    // La regla tiene precio custom → ese precio manda siempre
     const finalPrice = ruleGanadora.revenueManagementEnabled && sportTypeId
-      ? await calcularPrecioRevenue(basePrice, slot.startTime, slot.date, slot.venueId, sportTypeId, userProfile)
-      : basePrice;
+      ? await calcularPrecioRevenue(ruleBasePrice, slot.startTime, slot.date, slot.venueId, sportTypeId, userProfile)
+      : ruleBasePrice;
+
+    const effectivePPS = masEspecifico.playersPerSlot ?? (slot as any).schedule?.playersPerSlot ?? slotVenue?.playersPerSlot ?? slotVenue?.sportType?.defaultPlayersPerSlot ?? null;
 
     resultado.push({
       ...slotSinScheduleId,
       price: finalPrice,
+      playersPerSlot: effectivePPS,
       scheduleRule: {
         ruleId: ruleGanadora.id,
         canBook: ruleGanadora.canBook,
-        basePrice,
+        basePrice: ruleBasePrice,
         revenueManagementEnabled: ruleGanadora.revenueManagementEnabled,
       },
     });
@@ -341,10 +349,10 @@ async function applyRuleFilter<T extends SlotBase>(
 // ─── Repository ───────────────────────────────────────────────────────────────
 
 export class SlotsRepository {
-  async findByVenueAndDate(venueId: string, date: string, userProfile?: UserProfile) {
+  async findByVenueAndDate(venueId: string, date: string, scheduleId?: string, userProfile?: UserProfile) {
     const dateObj = new Date(date + 'T00:00:00.000Z');
     const slots = await prisma.slot.findMany({
-      where: { venueId, date: dateObj, status: 'AVAILABLE' },
+      where: { venueId, date: dateObj, status: 'AVAILABLE', ...(scheduleId && { scheduleId }) },
       orderBy: { startTime: 'asc' },
       select: {
         id: true,
@@ -390,6 +398,7 @@ export class SlotsRepository {
         startTime: true,
         endTime: true,
         status: true,
+        schedule: { select: { playersPerSlot: true } },
         venue: {
           select: {
             id: true,
@@ -401,13 +410,28 @@ export class SlotsRepository {
       },
     });
 
-    if (!userProfile) return slots.map((s) => ({ ...s, price: null, scheduleRule: null }));
+    const withPPS = slots.map((s) => ({
+      ...s,
+      price: null as number | null,
+      playersPerSlot: s.schedule?.playersPerSlot ?? s.venue?.playersPerSlot ?? s.venue?.sportType?.defaultPlayersPerSlot ?? null,
+      scheduleRule: null as object | null,
+    }));
+
+    const filterByPlayers = (items: typeof withPPS) =>
+      input.numPlayers && input.numPlayers > 0
+        ? items.filter((s) => s.playersPerSlot == null || s.playersPerSlot <= input.numPlayers!)
+        : items;
+
+    if (!userProfile) return filterByPlayers(withPPS);
 
     const baseBookingPrice = await getMembershipBasePrice(userProfile);
-    return applyRuleFilter(slots, userProfile, baseBookingPrice);
+    const filtered = await applyRuleFilter(slots, userProfile, baseBookingPrice);
+    return input.numPlayers && input.numPlayers > 0
+      ? filtered.filter((s) => (s as any).playersPerSlot == null || (s as any).playersPerSlot <= input.numPlayers!)
+      : filtered;
   }
 
-  async findAvailabilityByVenueAndRange(venueId: string, startDate: string, endDate: string) {
+  async findAvailabilityByVenueAndRange(venueId: string, startDate: string, endDate: string, scheduleId?: string, openTime?: string, closeTime?: string) {
     const start = new Date(startDate + 'T00:00:00.000Z');
     const end = new Date(endDate + 'T00:00:00.000Z');
 
@@ -417,6 +441,9 @@ export class SlotsRepository {
         venueId,
         date: { gte: start, lte: end },
         status: 'AVAILABLE',
+        ...(scheduleId && { scheduleId }),
+        ...(openTime && { startTime: { gte: openTime } }),
+        ...(closeTime && { startTime: { lt: closeTime } }),
       },
       _count: { id: true },
       orderBy: { date: 'asc' },

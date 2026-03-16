@@ -125,8 +125,11 @@ const roles = [
     isSystem: true,
     permissions: [
       'dashboard.view',
+      'users.view',
       'venues.view',
       'membership-plans.view',
+      'user-memberships.view',
+      'user-memberships.manage',
       'slots.view',
       'bookings.view',
       'qr.validate',
@@ -140,8 +143,11 @@ const roles = [
     isSystem: true,
     permissions: [
       'dashboard.view',
+      'venues.view',
+      'venue-schedules.view',
       'membership-plans.view',
       'slots.view',
+      'bookings.view',
       'additional-services.view',
       'wallet.view',
     ],

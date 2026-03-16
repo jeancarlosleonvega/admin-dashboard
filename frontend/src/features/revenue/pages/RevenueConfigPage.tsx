@@ -533,6 +533,7 @@ function NewFactorTypeForm({ onClose }: { onClose: () => void }) {
                     type="button"
                     onClick={() => removeEnumEntry(idx)}
                     className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                    title="Eliminar"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -664,6 +665,7 @@ function EditFactorTypeForm({ factorType, onClose }: { factorType: RevenueFactor
                     type="button"
                     onClick={() => removeEnumEntry(idx)}
                     className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                    title="Eliminar"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

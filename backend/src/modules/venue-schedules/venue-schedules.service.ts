@@ -43,15 +43,21 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
   const closeTime =
     schedule.closeTime ?? venue.closeTime ?? sportType.defaultCloseTime;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Trabajar solo con strings YYYY-MM-DD para evitar cualquier problema de timezone.
+  // generateUntil viene como UTC midnight desde el frontend (date-only → UTC en JS),
+  // por lo que la parte de fecha en UTC es siempre la fecha exacta que eligió el usuario.
+  const endDateStr = generateUntil.toISOString().split('T')[0]; // "2026-03-31"
 
-  const startFrom = new Date(Math.max(schedule.startDate.getTime(), today.getTime()));
-  const scheduleEnd = schedule.endDate ?? generateUntil;
-  const endAt = new Date(Math.min(scheduleEnd.getTime(), generateUntil.getTime()));
+  // today en UTC
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  if (startFrom > endAt) {
-    await venueSchedulesRepository.updateGeneratedUntil(scheduleId, endAt);
+  // startDate del schedule: se guardó como UTC midnight → la parte UTC es la fecha correcta
+  const startDateStr = schedule.startDate.toISOString().split('T')[0];
+
+  const startFromStr = startDateStr > todayStr ? startDateStr : todayStr;
+
+  if (startFromStr > endDateStr) {
+    await venueSchedulesRepository.updateGeneratedUntil(scheduleId, new Date(endDateStr + 'T00:00:00.000Z'));
     return;
   }
 
@@ -59,8 +65,8 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
   const blockedPeriods = await prisma.blockedPeriod.findMany({
     where: {
       active: true,
-      startDate: { lte: endAt },
-      endDate: { gte: startFrom },
+      startDate: { lte: new Date(endDateStr + 'T00:00:00.000Z') },
+      endDate: { gte: new Date(startFromStr + 'T00:00:00.000Z') },
       OR: [
         { venueId: venue.id },
         { sportTypeId: sportType.id },
@@ -81,14 +87,16 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
   const openMinutes = timeToMinutes(openTime);
   const closeMinutes = timeToMinutes(closeTime);
 
-  const currentDate = new Date(startFrom);
-  while (currentDate <= endAt) {
+  // Loop sobre strings de fecha: comparación pura de strings YYYY-MM-DD, sin timestamps
+  let currentDateStr = startFromStr;
+  while (currentDateStr <= endDateStr) {
+    const dateStr = currentDateStr;
+    const dayDate = new Date(dateStr + 'T00:00:00.000Z');
     // isoDay: 1=Lunes, 7=Domingo
-    const isoDay = currentDate.getDay() === 0 ? 7 : currentDate.getDay();
+    const tempDate = new Date(dateStr + 'T12:00:00.000Z'); // mediodía UTC evita cualquier desfase
+    const isoDay = tempDate.getUTCDay() === 0 ? 7 : tempDate.getUTCDay();
 
     if (schedule.daysOfWeek.includes(isoDay)) {
-      const dateStr = dateToISOString(currentDate);
-      const dayDate = new Date(dateStr + 'T00:00:00.000Z');
 
       // Verificar si el día completo está bloqueado
       const dayBlocked = blockedPeriods.some((bp) => {
@@ -125,7 +133,10 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
       }
     }
 
-    currentDate.setDate(currentDate.getDate() + 1);
+    // Avanzar al siguiente día como string
+    const next = new Date(currentDateStr + 'T12:00:00.000Z');
+    next.setUTCDate(next.getUTCDate() + 1);
+    currentDateStr = next.toISOString().split('T')[0];
   }
 
   // Insertar en lotes, ignorar duplicados
@@ -160,7 +171,17 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
     await prisma.slot.updateMany({ where, data: { status: 'BLOCKED' } });
   }
 
-  await venueSchedulesRepository.updateGeneratedUntil(scheduleId, endAt);
+  // Eliminar slots AVAILABLE que queden más allá de la nueva fecha límite
+  await prisma.slot.deleteMany({
+    where: {
+      scheduleId,
+      venueId: venue.id,
+      status: 'AVAILABLE',
+      date: { gt: new Date(endDateStr + 'T00:00:00.000Z') },
+    },
+  });
+
+  await venueSchedulesRepository.updateGeneratedUntil(scheduleId, new Date(endDateStr + 'T00:00:00.000Z'));
 }
 
 export class VenueSchedulesService {
@@ -215,7 +236,30 @@ export class VenueSchedulesService {
     }
     const updated = await venueSchedulesRepository.update(id, data);
     if (!updated) throw new ValidationError('Error al actualizar el schedule');
-    return updated;
+
+    // Borrar todos los slots AVAILABLE futuros de este schedule (horario, días o fechas cambiaron)
+    const todayDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
+    await prisma.slot.deleteMany({
+      where: {
+        scheduleId: id,
+        status: 'AVAILABLE',
+        date: { gte: todayDate },
+      },
+    });
+
+    // Resetear generatedUntil para forzar regeneración completa
+    await venueSchedulesRepository.updateGeneratedUntil(id, null);
+
+    // Regenerar desde cero con la nueva configuración
+    const defaultUntilStr = new Date(new Date().getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const newEndStr = updated.endDate ? updated.endDate.toISOString().split('T')[0] : defaultUntilStr;
+    try {
+      await generateSlots(id, new Date(newEndStr + 'T00:00:00.000Z'));
+    } catch (err) {
+      console.error('[VenueSchedules] Error al regenerar slots tras update:', err);
+    }
+
+    return venueSchedulesRepository.findById(id);
   }
 
   async delete(id: string) {
@@ -240,6 +284,17 @@ export class VenueSchedulesService {
   async generateSlotsManually(id: string, until: string) {
     await this.findById(id);
     const generateUntil = new Date(until);
+
+    // Actualizar endDate del schedule
+    await venueSchedulesRepository.update(id, { endDate: until });
+
+    // Borrar todos los slots AVAILABLE futuros y regenerar desde cero
+    const todayDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
+    await prisma.slot.deleteMany({
+      where: { scheduleId: id, status: 'AVAILABLE', date: { gte: todayDate } },
+    });
+    await venueSchedulesRepository.updateGeneratedUntil(id, null);
+
     await generateSlots(id, generateUntil);
     return venueSchedulesRepository.findById(id);
   }

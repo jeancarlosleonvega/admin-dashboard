@@ -27,13 +27,12 @@ async function buildUserProfile(userId: string) {
 }
 
 export class SlotsService {
-  async findByVenueAndDate(data: SlotsQueryInput, userId?: string) {
-    const userProfile = userId ? await buildUserProfile(userId) : undefined;
-    return slotsRepository.findByVenueAndDate(data.venueId, data.date, userProfile);
+  async findByVenueAndDate(data: SlotsQueryInput) {
+    return slotsRepository.findByVenueAndDate(data.venueId, data.date, data.scheduleId);
   }
 
   async getAvailability(data: SlotsAvailabilityQueryInput) {
-    return slotsRepository.findAvailabilityByVenueAndRange(data.venueId, data.startDate, data.endDate);
+    return slotsRepository.findAvailabilityByVenueAndRange(data.venueId, data.startDate, data.endDate, data.scheduleId, data.openTime, data.closeTime);
   }
 
   async searchAvailable(data: SlotsSearchInput, userId?: string) {

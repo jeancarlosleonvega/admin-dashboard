@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useSearchSlots } from '@/hooks/queries/useSlots';
 import { useVenues } from '@/hooks/queries/useVenues';
@@ -23,10 +23,17 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   MERCADOPAGO: 'MercadoPago (inmediato)',
   TRANSFER: 'Transferencia bancaria',
   CASH: 'Efectivo en el club',
+  WALLET: 'Wallet',
 };
 
 function toISODate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
 }
 
 // ─── Booking modal ────────────────────────────────────────────────────────────
@@ -41,7 +48,7 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
   const { data: servicesData } = useAdditionalServices({ active: true, limit: 100 });
   const services = servicesData?.data ?? [];
 
-  const maxPlayers = slot.venue?.playersPerSlot ?? slot.venue?.sportType?.defaultPlayersPerSlot ?? 10;
+  const maxPlayers = slot.playersPerSlot ?? slot.venue?.playersPerSlot ?? slot.venue?.sportType?.defaultPlayersPerSlot ?? 10;
 
   const [players, setPlayers] = useState(Math.min(initialPlayers, maxPlayers));
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
@@ -135,6 +142,11 @@ function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModa
             <p className="text-sm text-gray-500">
               {slot.venue?.name} · {dateLabel} · {slot.startTime} — {slot.endTime}
             </p>
+            {slot.price != null && (
+              <p className="text-lg font-bold text-emerald-600 mt-0.5">
+                ${slot.price.toLocaleString('es-AR')}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
@@ -269,7 +281,7 @@ export default function BookingSearchPage() {
 
   // Toolbar state
   const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState('');
+  const [endDate, setEndDate] = useState(() => addDays(today, 7));
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [venueId, setVenueId] = useState('');
@@ -282,16 +294,29 @@ export default function BookingSearchPage() {
   const { data: venuesData } = useVenues({ active: 'true', limit: 100 });
   const venues = venuesData?.data ?? [];
 
+  // Debounce solo en campos de texto (hora) para no disparar un fetch por tecla
+  const [debouncedStartTime, setDebouncedStartTime] = useState('');
+  const [debouncedEndTime, setDebouncedEndTime] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedStartTime(startTime), 400);
+    return () => clearTimeout(t);
+  }, [startTime]);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedEndTime(endTime), 400);
+    return () => clearTimeout(t);
+  }, [endTime]);
+
+  // Fecha, cancha y jugadores son cambios discretos → inmediatos (sin debounce)
   const searchParams = useMemo(
     () => ({
       startDate,
       endDate: endDate || undefined,
       venueId: venueId || undefined,
-      startTime: startTime || undefined,
-      endTime: endTime || undefined,
+      startTime: debouncedStartTime || undefined,
+      endTime: debouncedEndTime || undefined,
       numPlayers: numPlayers,
     }),
-    [startDate, endDate, venueId, startTime, endTime, numPlayers],
+    [startDate, endDate, venueId, debouncedStartTime, debouncedEndTime, numPlayers],
   );
 
   const { data: slotsData, isLoading, isFetching } = useSearchSlots(searchParams, !!startDate);
@@ -324,9 +349,21 @@ export default function BookingSearchPage() {
     ? formatDateLong(startDate)
     : '';
 
+  const maxEndDate = startDate ? addDays(startDate, 30) : '';
+
   const handleStartDateChange = (val: string) => {
+    if (!val) return;
     setStartDate(val);
-    if (endDate && val > endDate) setEndDate(val);
+    // Auto-setear fecha hasta a 1 semana después, respetando el máximo de 1 mes
+    const autoEnd = addDays(val, 7);
+    setEndDate(autoEnd);
+  };
+
+  const handleEndDateChange = (val: string) => {
+    if (!val) { setEndDate(''); return; }
+    // No permitir más de 1 mes desde fecha desde
+    if (maxEndDate && val > maxEndDate) setEndDate(maxEndDate);
+    else setEndDate(val);
   };
 
   return (
@@ -357,7 +394,8 @@ export default function BookingSearchPage() {
               type="date"
               value={endDate}
               min={startDate || today}
-              onChange={(e) => setEndDate(e.target.value)}
+              max={maxEndDate}
+              onChange={(e) => handleEndDateChange(e.target.value)}
               className="input"
             />
           </div>
@@ -492,33 +530,39 @@ export default function BookingSearchPage() {
                   <div className="space-y-3">
                     {Array.from(venueMap.entries()).map(([, venueSlots]) => {
                       const venue = venueSlots[0]?.venue;
-                      const maxP = venue?.playersPerSlot ?? venue?.sportType?.defaultPlayersPerSlot ?? 10;
                       return (
                         <div key={venue?.id ?? 'unknown'} className="card overflow-hidden">
                           <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-gray-400" />
                             <span className="text-sm font-semibold text-gray-800">{venue?.name}</span>
-                            <span className="ml-auto flex items-center gap-1 text-xs text-gray-400">
-                              <Users className="w-3.5 h-3.5" />
-                              hasta {maxP} jugadores
-                            </span>
                           </div>
                           <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                            {venueSlots.map((slot) => (
-                              <button
-                                key={slot.id}
-                                onClick={() => setSelectedSlot(slot)}
-                                className="flex flex-col items-center justify-center gap-0.5 border border-gray-200 rounded-xl py-3 px-2 hover:border-primary-400 hover:bg-primary-50 transition-colors group"
-                              >
-                                <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
-                                  {slot.startTime}
-                                </span>
-                                <span className="text-xs text-gray-400">{slot.endTime}</span>
-                                <span className="mt-1 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                  Disponible
-                                </span>
-                              </button>
-                            ))}
+                            {venueSlots.map((slot) => {
+                              const pps = slot.playersPerSlot ?? slot.venue?.playersPerSlot ?? slot.venue?.sportType?.defaultPlayersPerSlot;
+                              return (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => setSelectedSlot(slot)}
+                                  className="flex flex-col items-center justify-center gap-0.5 border border-gray-200 rounded-xl py-3 px-2 hover:border-primary-400 hover:bg-primary-50 transition-colors group"
+                                >
+                                  <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
+                                    {slot.startTime}
+                                  </span>
+                                  <span className="text-xs text-gray-400">{slot.endTime}</span>
+                                  {pps != null && (
+                                    <span className="flex items-center gap-0.5 text-[10px] text-gray-400 mt-0.5">
+                                      <Users className="w-2.5 h-2.5" />
+                                      {pps}
+                                    </span>
+                                  )}
+                                  {slot.price != null && (
+                                    <span className="mt-0.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                      ${slot.price.toLocaleString('es-AR')}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       );
@@ -547,12 +591,16 @@ export default function BookingSearchPage() {
                     <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Jugadores máx.
                     </th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Precio
+                    </th>
                     <th className="px-5 py-3" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {(slotsData ?? []).map((slot) => {
                     const maxP =
+                      slot.playersPerSlot ??
                       slot.venue?.playersPerSlot ??
                       slot.venue?.sportType?.defaultPlayersPerSlot ??
                       '—';
@@ -570,6 +618,13 @@ export default function BookingSearchPage() {
                           {slot.startTime} — {slot.endTime}
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-600">{maxP}</td>
+                        <td className="px-5 py-3">
+                          {slot.price != null ? (
+                            <span className="text-sm font-bold text-emerald-600">
+                              ${slot.price.toLocaleString('es-AR')}
+                            </span>
+                          ) : '—'}
+                        </td>
                         <td className="px-5 py-3 text-right">
                           <button
                             onClick={() => setSelectedSlot(slot)}

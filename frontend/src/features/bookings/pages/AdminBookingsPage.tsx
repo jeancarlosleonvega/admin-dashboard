@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { Calendar } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
 import { useBookings } from '@/hooks/queries/useBookings';
 import { Spinner } from '@components/ui/Spinner';
-import type { BookingStatus } from '@/types/booking.types';
+import StatusBadge from '@components/shared/StatusBadge';
+import BookingDetailModal from '@components/shared/BookingDetailModal';
+import type { Booking, BookingStatus } from '@/types/booking.types';
 import { formatDate } from '@lib/formatDate';
-
-const STATUS_BADGE: Record<BookingStatus, string> = {
-  PENDING_PAYMENT: 'bg-yellow-100 text-yellow-700',
-  CONFIRMED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
-  NO_SHOW: 'bg-gray-100 text-gray-700',
-};
-
-const STATUS_LABEL: Record<BookingStatus, string> = {
-  PENDING_PAYMENT: 'Pago pendiente',
-  CONFIRMED: 'Confirmada',
-  CANCELLED: 'Cancelada',
-  NO_SHOW: 'No se presentó',
-};
 
 const PAYMENT_METHOD_LABEL: Record<string, string> = {
   MERCADOPAGO: 'MercadoPago',
   TRANSFER: 'Transferencia',
   CASH: 'Efectivo',
+  WALLET: 'Wallet',
 };
 
 export default function AdminBookingsPage() {
@@ -36,6 +25,8 @@ export default function AdminBookingsPage() {
     page: number;
     limit: number;
   }>({ page: 1, limit: 20 });
+
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const { data, isLoading, isError } = useBookings(filters);
   const bookings = data?.data ?? [];
@@ -93,6 +84,7 @@ export default function AdminBookingsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Monto</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -109,12 +101,19 @@ export default function AdminBookingsPage() {
                       <td className="px-6 py-4 text-sm text-gray-500">{formatDate(booking.slot.date)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{booking.slot.startTime} - {booking.slot.endTime}</td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_BADGE[booking.status]}`}>
-                          {STATUS_LABEL[booking.status]}
-                        </span>
+                        <StatusBadge status={booking.status} />
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">${parseFloat(booking.price.toString()).toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{booking.payment ? PAYMENT_METHOD_LABEL[booking.payment.method] : '-'}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">${parseFloat(booking.price.toString()).toLocaleString('es-AR')}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{booking.payment ? PAYMENT_METHOD_LABEL[booking.payment.method] ?? booking.payment.method : '-'}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedBooking(booking)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50"
+                          title="Ver detalle"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -134,6 +133,14 @@ export default function AdminBookingsPage() {
           </>
         )}
       </div>
+
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          isAdmin
+        />
+      )}
     </div>
   );
 }

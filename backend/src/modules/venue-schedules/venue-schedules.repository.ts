@@ -135,7 +135,7 @@ export class VenueSchedulesRepository {
     }
   }
 
-  async updateGeneratedUntil(id: string, generatedUntil: Date) {
+  async updateGeneratedUntil(id: string, generatedUntil: Date | null) {
     await prisma.venueSchedule.update({
       where: { id },
       data: { generatedUntil },

@@ -10,6 +10,75 @@ import type { CreateBookingInput, BookingFiltersInput, MyBookingFiltersInput } f
 
 type PaymentStatus = 'PENDING_PROOF' | 'PENDING_VALIDATION' | 'APPROVED' | 'REJECTED' | 'REFUNDED' | 'PENDING_CASH';
 
+type UserForRules = {
+  sex: string | null;
+  birthDate: Date | null;
+  handicap: number | null;
+  activeMembershipPlanIds: string[];
+};
+
+function applyNumericOp(userVal: number, operator: string, ruleVal: number): boolean {
+  switch (operator) {
+    case 'EQ':  return userVal === ruleVal;
+    case 'NEQ': return userVal !== ruleVal;
+    case 'GT':  return userVal > ruleVal;
+    case 'GTE': return userVal >= ruleVal;
+    case 'LT':  return userVal < ruleVal;
+    case 'LTE': return userVal <= ruleVal;
+    default:    return false;
+  }
+}
+
+function evaluateCondition(
+  cond: { conditionType: { key: string }; operator: string; value: string },
+  user: UserForRules
+): boolean {
+  const { key } = cond.conditionType;
+
+  if (key === 'membership_plan') {
+    const hasPlan = user.activeMembershipPlanIds.includes(cond.value);
+    return cond.operator === 'EQ' ? hasPlan : !hasPlan;
+  }
+
+  if (key === 'sex') {
+    return cond.operator === 'EQ' ? user.sex === cond.value : user.sex !== cond.value;
+  }
+
+  if (key === 'age') {
+    const age = user.birthDate
+      ? Math.floor((Date.now() - user.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+      : 0;
+    return applyNumericOp(age, cond.operator, parseInt(cond.value, 10));
+  }
+
+  if (key === 'handicap') {
+    return applyNumericOp(user.handicap ?? 0, cond.operator, parseInt(cond.value, 10));
+  }
+
+  return false;
+}
+
+function evaluateRule(
+  rule: { conditions: { conditionType: { key: string }; operator: string; value: string; logicalOperator: string | null; order: number }[] },
+  user: UserForRules
+): boolean {
+  if (rule.conditions.length === 0) return true;
+
+  const sorted = [...rule.conditions].sort((a, b) => a.order - b.order);
+  let result = evaluateCondition(sorted[0], user);
+
+  for (let i = 1; i < sorted.length; i++) {
+    const condResult = evaluateCondition(sorted[i], user);
+    if (sorted[i].logicalOperator === 'OR') {
+      result = result || condResult;
+    } else {
+      result = result && condResult;
+    }
+  }
+
+  return result;
+}
+
 function formatMonthYear(date: Date): string {
   const y = date.getFullYear();
   const m = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -50,16 +119,22 @@ export class BookingsService {
     const slot = await prisma.slot.findUnique({
       where: { id: data.slotId },
       include: {
-        venue: {
-          include: { sportType: true },
+        venue: { include: { sportType: true } },
+        schedule: {
+          include: {
+            rules: {
+              include: {
+                conditions: { include: { conditionType: true }, orderBy: { order: 'asc' } },
+              },
+            },
+          },
         },
       },
     });
     if (!slot) throw new NotFoundError('Slot');
     if (slot.status !== 'AVAILABLE') throw new ValidationError('Slot no disponible');
 
-    // Get effective maxPlayers: schedule > venue > sportType
-    const schedule = slot.scheduleId ? await prisma.venueSchedule.findUnique({ where: { id: slot.scheduleId }, select: { playersPerSlot: true } }) : null;
+    const schedule = slot.schedule;
     const maxPlayers = schedule?.playersPerSlot ?? slot.venue.playersPerSlot ?? slot.venue.sportType.defaultPlayersPerSlot;
 
     if (data.numPlayers > maxPlayers) {
@@ -85,17 +160,39 @@ export class BookingsService {
       include: { membershipPlan: true },
     });
 
-    if (activeMembership) {
-      const plan = activeMembership.membershipPlan;
+    // Resetear contador mensual si cambió el mes
+    if (activeMembership && activeMembership.currentMonthYear !== mesActual) {
+      await prisma.userMembership.update({
+        where: { id: activeMembership.id },
+        data: { reservationsUsedMonth: 0, currentMonthYear: mesActual },
+      });
+      activeMembership.reservationsUsedMonth = 0;
+    }
 
-      // Resetear contador mensual si cambió el mes
-      if (activeMembership.currentMonthYear !== mesActual) {
-        await prisma.userMembership.update({
-          where: { id: activeMembership.id },
-          data: { reservationsUsedMonth: 0, currentMonthYear: mesActual },
-        });
-        activeMembership.reservationsUsedMonth = 0;
+    // Evaluar reglas del horario si existen
+    const scheduleRules = schedule?.rules ?? [];
+    if (scheduleRules.length > 0) {
+      const userForRules: UserForRules = {
+        sex: user.sex,
+        birthDate: user.birthDate,
+        handicap: user.handicap,
+        activeMembershipPlanIds: activeMembership ? [activeMembership.membershipPlanId] : [],
+      };
+
+      const matchingRule = scheduleRules.find((rule) => evaluateRule(rule, userForRules));
+
+      if (!matchingRule) {
+        throw new ValidationError('No cumplís los requisitos para reservar en este horario');
       }
+      if (!matchingRule.canBook) {
+        throw new ValidationError('No tenés permiso para reservar en este horario');
+      }
+
+      precio = parseFloat(matchingRule.basePrice.toString());
+      isMemberPrice = !!activeMembership;
+      membershipPlanId = activeMembership?.membershipPlanId ?? null;
+    } else if (activeMembership) {
+      const plan = activeMembership.membershipPlan;
 
       // Verificar límite mensual
       if (plan.monthlyReservationLimit !== null) {
@@ -106,7 +203,6 @@ export class BookingsService {
         }
       }
 
-      // Precio base desde el plan de membresía
       precio = parseFloat(plan.baseBookingPrice.toString());
       isMemberPrice = true;
       membershipPlanId = activeMembership.membershipPlanId;
@@ -114,6 +210,16 @@ export class BookingsService {
       precio = parseFloat(slot.venue.sportType.defaultNonMemberPrice.toString());
       isMemberPrice = false;
       membershipPlanId = null;
+    }
+
+    // Verificar límite mensual cuando se usaron reglas del horario
+    if (scheduleRules.length > 0 && activeMembership) {
+      const plan = activeMembership.membershipPlan;
+      if (plan.monthlyReservationLimit !== null && activeMembership.reservationsUsedMonth >= plan.monthlyReservationLimit) {
+        throw new ValidationError(
+          `Límite mensual de reservas alcanzado (${activeMembership.reservationsUsedMonth}/${plan.monthlyReservationLimit})`
+        );
+      }
     }
 
     // Validar pago con WALLET

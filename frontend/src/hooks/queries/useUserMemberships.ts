@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userMembershipsApi } from '@api/userMemberships.api';
+import { slotKeys } from './useSlots';
 
 export const userMembershipKeys = {
   all: ['user-memberships'] as const,
@@ -44,6 +45,7 @@ export function useCreateUserMembership() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.my() });
+      queryClient.removeQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -57,6 +59,7 @@ export function useUpdateUserMembership() {
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.my() });
+      queryClient.removeQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -68,6 +71,7 @@ export function useDeleteUserMembership() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userMembershipKeys.my() });
+      queryClient.removeQueries({ queryKey: slotKeys.all });
     },
   });
 }

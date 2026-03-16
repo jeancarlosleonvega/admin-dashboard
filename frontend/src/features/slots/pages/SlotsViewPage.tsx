@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { ArrowLeft, Ban, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { ArrowLeft, Ban, ChevronLeft, ChevronRight, Clock, ShieldCheck } from 'lucide-react';
 import { useVenueSchedule } from '@/hooks/queries/useVenueSchedules';
 import { useSlots, useSlotAvailability } from '@/hooks/queries/useSlots';
 import { useBlockedPeriods } from '@/hooks/queries/useBlockedPeriods';
+import { useMembershipPlans } from '@/hooks/queries/useMembershipPlans';
 import { Spinner } from '@components/ui/Spinner';
 import { formatDate, formatDateLong } from '@lib/formatDate';
+import type { ScheduleRule } from '@/types/venue-schedule.types';
 
 const DAY_NAMES: Record<number, string> = {
   1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo',
@@ -16,6 +18,10 @@ const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
+
+const OPERATOR_LABELS: Record<string, string> = {
+  EQ: '=', NEQ: '≠', GT: '>', GTE: '≥', LT: '<', LTE: '≤',
+};
 
 const STATUS_LABEL: Record<string, string> = {
   AVAILABLE: 'Disponible',
@@ -52,11 +58,18 @@ export default function SlotsViewPage() {
     return { startDate: toLocalDateString(first), endDate: toLocalDateString(last) };
   }, [calendarMonth]);
 
-  const { data: availability } = useSlotAvailability(schedule?.venueId ?? '', startDate, endDate);
-  const { data: slots, isLoading: slotsLoading } = useSlots(schedule?.venueId ?? '', selectedDate);
+  const { data: availability } = useSlotAvailability(
+    schedule?.venueId ?? '',
+    startDate,
+    endDate,
+    scheduleId || undefined,
+  );
+  const { data: slots, isLoading: slotsLoading } = useSlots(schedule?.venueId ?? '', selectedDate, scheduleId || undefined);
 
   // Períodos bloqueados del mes visible — sin filtro de venue para incluir bloques globales
   const { data: blockedData } = useBlockedPeriods({ startDate, endDate });
+  const { data: plansData } = useMembershipPlans({ active: 'true', limit: 100 });
+  const membershipPlans = plansData?.data ?? [];
   // Mapa date → availableSlots
   const availabilityMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -193,6 +206,66 @@ export default function SlotsViewPage() {
           </div>
         </div>
       </div>
+
+      {/* Condiciones de acceso */}
+      {schedule.rules && schedule.rules.length > 0 && (
+        <div className="card p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldCheck className="w-4 h-4 text-blue-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Condiciones de acceso</h3>
+          </div>
+          <div className="space-y-3">
+            {schedule.rules.map((rule: ScheduleRule, idx: number) => (
+              <div key={rule.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-700">Regla {idx + 1}</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${rule.canBook ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {rule.canBook ? 'Puede reservar' : 'No puede reservar'}
+                    </span>
+                    {rule.revenueManagementEnabled && (
+                      <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">
+                        Revenue management
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-6 mb-3">
+                  <div>
+                    <p className="text-xs text-gray-500">Precio base</p>
+                    <p className="text-sm font-medium text-gray-900">${rule.basePrice.toLocaleString()}</p>
+                  </div>
+                </div>
+                {rule.conditions.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Condiciones</p>
+                    <div className="space-y-1">
+                      {rule.conditions.map((cond, condIdx) => {
+                        const valueLabel = cond.conditionType.key === 'membership_plan'
+                          ? (membershipPlans.find((p) => p.id === cond.value)?.name ?? cond.value)
+                          : cond.conditionType.key === 'sex'
+                          ? (cond.value === 'MALE' ? 'Masculino' : cond.value === 'FEMALE' ? 'Femenino' : cond.value)
+                          : cond.value;
+                        return (
+                          <div key={condIdx} className="flex items-center gap-2 text-sm text-gray-700">
+                            {condIdx > 0 && (
+                              <span className="text-xs font-semibold text-blue-600 w-8">{cond.logicalOperator}</span>
+                            )}
+                            {condIdx === 0 && <span className="w-8" />}
+                            <span className="font-medium">{cond.conditionType.name}</span>
+                            <span className="text-gray-400">{OPERATOR_LABELS[cond.operator] ?? cond.operator}</span>
+                            <span className="text-gray-900">{valueLabel}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Calendario + Slots */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

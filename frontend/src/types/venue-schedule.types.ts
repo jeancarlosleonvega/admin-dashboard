@@ -47,6 +47,14 @@ export interface SlotAvailability {
   endTime: string;
   status: 'AVAILABLE' | 'BOOKED' | 'BLOCKED';
   venueId?: string;
+  playersPerSlot?: number | null;
+  price?: number | null;
+  scheduleRule?: {
+    ruleId: string;
+    canBook: boolean;
+    basePrice: number;
+    revenueManagementEnabled: boolean;
+  } | null;
   venue?: {
     id: string;
     name: string;

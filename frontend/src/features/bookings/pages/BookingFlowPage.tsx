@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useQuery } from '@tanstack/react-query';
-import { useSlots } from '@/hooks/queries/useSlots';
+import { useSearchSlots } from '@/hooks/queries/useSlots';
 import { useAdditionalServices } from '@/hooks/queries/useAdditionalServices';
 import { useCreateBooking } from '@/hooks/queries/useBookings';
 import { apiClient } from '@api/client';
@@ -45,7 +45,10 @@ export default function BookingFlowPage() {
     enabled: !!selectedSportTypeId,
   });
 
-  const { data: slots, isLoading: slotsLoading } = useSlots(selectedVenueId, selectedDate);
+  const { data: slots, isLoading: slotsLoading } = useSearchSlots(
+    { startDate: selectedDate, endDate: selectedDate, venueId: selectedVenueId },
+    !!selectedVenueId && !!selectedDate,
+  );
 
   const { data: servicesData } = useAdditionalServices({
     sportTypeId: selectedSportTypeId || undefined,
@@ -56,8 +59,19 @@ export default function BookingFlowPage() {
 
   const selectedSlot = slots?.find((s) => s.id === selectedSlotId);
   const selectedVenue = (venuesData ?? []).find((v) => v.id === selectedVenueId);
-  const maxPlayers = selectedVenue?.playersPerSlot ?? selectedVenue?.sportType?.defaultPlayersPerSlot ?? 10;
+  // Effective playersPerSlot: from loaded slots (schedule override) → venue → sportType default
+  const slotsMaxPlayers = slots && slots.length > 0
+    ? Math.min(...slots.map((s) => s.playersPerSlot ?? selectedVenue?.playersPerSlot ?? selectedVenue?.sportType?.defaultPlayersPerSlot ?? 10))
+    : null;
+  const maxPlayers = slotsMaxPlayers ?? selectedVenue?.playersPerSlot ?? selectedVenue?.sportType?.defaultPlayersPerSlot ?? 10;
   const services = servicesData?.data ?? [];
+
+  // Ajustar numPlayers si supera maxPlayers cuando cargan los slots
+  useEffect(() => {
+    if (slotsMaxPlayers !== null && numPlayers > slotsMaxPlayers) {
+      setNumPlayers(slotsMaxPlayers);
+    }
+  }, [slotsMaxPlayers]);
 
   const toggleService = (id: string) => {
     setSelectedServiceIds((prev) =>

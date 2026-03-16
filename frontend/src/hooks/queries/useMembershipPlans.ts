@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { membershipPlansApi } from '@api/membershipPlans';
+import { slotKeys } from './useSlots';
 import type { MembershipPlanFilters } from '@/types/membership-plan.types';
 
 export const membershipPlanKeys = {
@@ -45,6 +46,8 @@ export function useUpdateMembershipPlan() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.lists() });
       queryClient.invalidateQueries({ queryKey: membershipPlanKeys.detail(variables.id) });
+      // El precio base del plan afecta los cálculos de slots → borrar caché de slots completamente
+      queryClient.removeQueries({ queryKey: slotKeys.all });
     },
   });
 }

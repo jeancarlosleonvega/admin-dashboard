@@ -8,8 +8,7 @@ export class SlotsController {
   async findByVenueAndDate(request: FastifyRequest, reply: FastifyReply) {
     const parsed = slotsQuerySchema.safeParse(request.query);
     if (!parsed.success) throw new ValidationError('Parámetros inválidos', parsed.error.errors);
-    const userId = (request as any).user?.id;
-    const items = await slotsService.findByVenueAndDate(parsed.data, userId);
+    const items = await slotsService.findByVenueAndDate(parsed.data);
     return reply.send(successResponse(items));
   }
 
@@ -23,7 +22,7 @@ export class SlotsController {
   async search(request: FastifyRequest, reply: FastifyReply) {
     const parsed = slotsSearchSchema.safeParse(request.query);
     if (!parsed.success) throw new ValidationError('Parámetros inválidos', parsed.error.errors);
-    const userId = (request as any).user?.id;
+    const userId = (request as any).user?.userId;
     const items = await slotsService.searchAvailable(parsed.data, userId);
     return reply.send(successResponse(items));
   }

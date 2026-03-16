@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { venueSchedulesApi } from '@api/venueSchedules.api';
+import { slotKeys } from './useSlots';
 
 export const venueScheduleKeys = {
   all: ['venue-schedules'] as const,
@@ -30,6 +31,7 @@ export function useCreateVenueSchedule() {
       venueSchedulesApi.createVenueSchedule(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -42,6 +44,7 @@ export function useUpdateVenueSchedule() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -52,6 +55,7 @@ export function useDeleteVenueSchedule() {
     mutationFn: (id: string) => venueSchedulesApi.deleteVenueSchedule(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -64,6 +68,7 @@ export function useGenerateSlots() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: venueScheduleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: slotKeys.all });
     },
   });
 }

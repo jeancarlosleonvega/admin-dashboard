@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useCreateUserMembership } from '@/hooks/queries/useUserMemberships';
 import { useMembershipPlans } from '@/hooks/queries/useMembershipPlans';
 import { useUsers } from '@/hooks/queries/useUsers';
+import { useRolesList } from '@/hooks/queries/useRoles';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
@@ -26,7 +27,11 @@ export default function UserMembershipCreatePage() {
   usePageHeader({ subtitle: 'Asignar membresía a socio' });
 
   const createMembership = useCreateUserMembership();
-  const { data: usersData, isLoading: usersLoading } = useUsers({ limit: 200 });
+  const { data: rolesData } = useRolesList();
+  const clienteRoleId = rolesData?.find((r) => r.name === 'Cliente')?.id;
+  const { data: usersData, isLoading: usersLoading } = useUsers(
+    clienteRoleId ? { limit: 100, roleId: clienteRoleId } : { limit: 100 },
+  );
   const { data: plansData, isLoading: plansLoading } = useMembershipPlans({ active: 'true', limit: 100 });
 
   const users = usersData?.data ?? [];

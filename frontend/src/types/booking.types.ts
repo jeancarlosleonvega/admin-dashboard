@@ -1,5 +1,5 @@
 export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'NO_SHOW';
-export type PaymentMethod = 'MERCADOPAGO' | 'TRANSFER' | 'CASH';
+export type PaymentMethod = 'MERCADOPAGO' | 'TRANSFER' | 'CASH' | 'WALLET';
 export type PaymentStatus = 'PENDING_PROOF' | 'PENDING_VALIDATION' | 'APPROVED' | 'REJECTED' | 'REFUNDED' | 'PENDING_CASH';
 
 export interface SlotInfo {
@@ -44,6 +44,7 @@ export interface Booking {
   qrCode?: string | null;
   qrValidatedAt?: string | null;
   notes?: string | null;
+  numPlayers?: number | null;
   createdAt: string;
   slot: SlotInfo;
   payment?: Payment | null;

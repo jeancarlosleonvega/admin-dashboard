@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { revenueApi } from '@api/revenue.api';
+import { slotKeys } from './useSlots';
 import type { RevenueConfigInput, RevenueFactorType } from '@api/revenue.api';
 
 export const revenueKeys = {
@@ -39,6 +40,7 @@ export function useDeleteFactorType() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: revenueKeys.factorTypes });
       queryClient.invalidateQueries({ queryKey: revenueKeys.all });
+      queryClient.removeQueries({ queryKey: slotKeys.all });
     },
   });
 }
@@ -48,6 +50,9 @@ export function useUpsertRevenue() {
   return useMutation({
     mutationFn: ({ sportTypeId, data }: { sportTypeId: string; data: RevenueConfigInput }) =>
       revenueApi.upsert(sportTypeId, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: revenueKeys.all }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: revenueKeys.all });
+      queryClient.removeQueries({ queryKey: slotKeys.all });
+    },
   });
 }

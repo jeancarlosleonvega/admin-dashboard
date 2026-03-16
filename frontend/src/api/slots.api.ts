@@ -2,15 +2,19 @@ import { apiClient } from './client';
 import type { SlotAvailability, DayAvailability } from '@/types/venue-schedule.types';
 
 export const slotsApi = {
-  async getSlots(venueId: string, date: string): Promise<SlotAvailability[]> {
-    const response = await apiClient.get(`/slots?venueId=${venueId}&date=${date}`);
+  async getSlots(venueId: string, date: string, scheduleId?: string): Promise<SlotAvailability[]> {
+    const query = new URLSearchParams({ venueId, date });
+    if (scheduleId) query.set('scheduleId', scheduleId);
+    const response = await apiClient.get(`/slots?${query.toString()}`);
     return response.data.data;
   },
 
-  async getAvailability(venueId: string, startDate: string, endDate: string): Promise<DayAvailability[]> {
-    const response = await apiClient.get(
-      `/slots/availability?venueId=${venueId}&startDate=${startDate}&endDate=${endDate}`
-    );
+  async getAvailability(venueId: string, startDate: string, endDate: string, scheduleId?: string, openTime?: string, closeTime?: string): Promise<DayAvailability[]> {
+    const query = new URLSearchParams({ venueId, startDate, endDate });
+    if (scheduleId) query.set('scheduleId', scheduleId);
+    if (openTime) query.set('openTime', openTime);
+    if (closeTime) query.set('closeTime', closeTime);
+    const response = await apiClient.get(`/slots/availability?${query.toString()}`);
     return response.data.data;
   },
 

@@ -1,6 +1,7 @@
 import { membershipPlansRepository } from './membership-plans.repository.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateMembershipPlanInput, UpdateMembershipPlanInput, MembershipPlanFiltersInput } from './membership-plans.schema.js';
 import type { MembershipPlanWithSportType } from './membership-plans.types.js';
 
@@ -24,12 +25,19 @@ export class MembershipPlansService {
   }
 
   async update(id: string, data: UpdateMembershipPlanInput): Promise<MembershipPlanWithSportType> {
-    await this.findById(id);
+    const current = await this.findById(id);
     if (data.name) {
       const existing = await membershipPlansRepository.findByName(data.name);
       if (existing && existing.id !== id) throw new ValidationError('Ya existe un plan con ese nombre');
     }
-    return membershipPlansRepository.update(id, data);
+    const result = await membershipPlansRepository.update(id, data);
+    if (data.baseBookingPrice != null) {
+      const oldPrice = parseFloat((current as any).baseBookingPrice?.toString() ?? '0');
+      const newPrice = parseFloat(data.baseBookingPrice.toString());
+      const source = newPrice > oldPrice ? 'El precio subió' : newPrice < oldPrice ? 'El precio bajó' : 'El precio cambió';
+      broadcast('slots:invalidate', { source });
+    }
+    return result;
   }
 
   async findActive(): Promise<MembershipPlanWithSportType[]> {

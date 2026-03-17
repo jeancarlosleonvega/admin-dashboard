@@ -5,6 +5,7 @@ import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { mpService } from '../../shared/services/mp.service.js';
 import { membershipPlansService } from '../membership-plans/membership-plans.service.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../shared/utils/logger.js';
 import type { CreateUserMembershipInput, UpdateUserMembershipInput, UserMembershipFiltersInput } from './user-memberships.schema.js';
@@ -60,18 +61,22 @@ export class UserMembershipsService {
       }
     }
 
+    broadcast('slots:invalidate', { source: 'Membresía de socio actualizada' });
     return membership;
   }
 
   async update(id: string, data: UpdateUserMembershipInput) {
     await this.findById(id);
-    return userMembershipsRepository.update(id, data);
+    const result = await userMembershipsRepository.update(id, data);
+    broadcast('slots:invalidate', { source: 'Membresía de socio actualizada' });
+    return result;
   }
 
   async delete(id: string) {
     await this.findById(id);
     // Cancelar en lugar de borrar físicamente
     await userMembershipsRepository.update(id, { status: 'CANCELLED' });
+    broadcast('slots:invalidate', { source: 'Membresía de socio actualizada' });
   }
 
   async subscribe(userId: string, membershipPlanId: string): Promise<{ initPoint: string }> {

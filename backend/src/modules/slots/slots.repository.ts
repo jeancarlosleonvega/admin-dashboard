@@ -131,6 +131,42 @@ function calcularEspecificidad(schedule: {
   return rangoDias + rangoHoras; // menor = más específico
 }
 
+// ─── Resumen de condiciones de acceso ────────────────────────────────────────
+
+function buildConditionsSummary(
+  rules: Array<{
+    conditions: Array<{
+      conditionType: { key: string };
+      operator: string;
+      value: string;
+    }>;
+  }>,
+  planNames: Map<string, string>,
+): string | null {
+  if (rules.length === 0) return null;
+  const opLabel: Record<string, string> = { EQ: '=', NEQ: '≠', GT: '>', GTE: '≥', LT: '<', LTE: '≤' };
+  const parts: string[] = [];
+  for (const rule of rules) {
+    for (const cond of rule.conditions) {
+      const { key } = cond.conditionType;
+      const op = cond.operator;
+      const val = cond.value;
+      if (key === 'membership_plan') {
+        const name = planNames.get(val) ?? 'membresía';
+        parts.push(op === 'EQ' ? `Solo ${name}` : `Sin ${name}`);
+      } else if (key === 'sex') {
+        parts.push(val === 'MALE' ? 'Solo hombres' : 'Solo mujeres');
+      } else if (key === 'age') {
+        parts.push(`Edad ${opLabel[op] ?? op} ${val}`);
+      } else if (key === 'handicap') {
+        parts.push(`Handicap ${opLabel[op] ?? op} ${val}`);
+      }
+    }
+  }
+  const unique = Array.from(new Set(parts));
+  return unique.length > 0 ? unique.join(' · ') : null;
+}
+
 // ─── Precio base del plan de membresía ───────────────────────────────────────
 
 async function getMembershipBasePrice(userProfile: UserProfile): Promise<number | null> {
@@ -284,7 +320,10 @@ async function applyRuleFilter<T extends SlotBase>(
     // Sin schedule activo: incluir con precio base
     if (schedulesConHorario.length === 0) {
       const pps = slotVenue?.playersPerSlot ?? slotVenue?.sportType?.defaultPlayersPerSlot ?? null;
-      resultado.push({ ...slot, price: baseBookingPrice, playersPerSlot: pps, scheduleRule: null });
+      const nonMemberFallback = slotVenue?.sportType?.defaultNonMemberPrice != null
+        ? parseFloat(slotVenue.sportType.defaultNonMemberPrice.toString())
+        : null;
+      resultado.push({ ...slot, price: baseBookingPrice ?? nonMemberFallback, playersPerSlot: pps, scheduleRule: null });
       continue;
     }
 
@@ -293,7 +332,10 @@ async function applyRuleFilter<T extends SlotBase>(
     // Solo schedules sin reglas: abierto a todos
     if (schedulesConRules.length === 0) {
       const pps = schedulesConHorario[0].playersPerSlot ?? slotVenue?.playersPerSlot ?? slotVenue?.sportType?.defaultPlayersPerSlot ?? null;
-      resultado.push({ ...slot, price: baseBookingPrice, playersPerSlot: pps, scheduleRule: null });
+      const nonMemberFallback = slotVenue?.sportType?.defaultNonMemberPrice != null
+        ? parseFloat(slotVenue.sportType.defaultNonMemberPrice.toString())
+        : null;
+      resultado.push({ ...slot, price: baseBookingPrice ?? nonMemberFallback, playersPerSlot: pps, scheduleRule: null });
       continue;
     }
 
@@ -365,7 +407,8 @@ export class SlotsRepository {
           select: {
             id: true,
             name: true,
-            sportType: { select: { id: true, name: true } },
+            playersPerSlot: true,
+            sportType: { select: { id: true, name: true, defaultNonMemberPrice: true, defaultPlayersPerSlot: true } },
           },
         },
       },
@@ -404,7 +447,7 @@ export class SlotsRepository {
             id: true,
             name: true,
             playersPerSlot: true,
-            sportType: { select: { id: true, name: true, defaultPlayersPerSlot: true } },
+            sportType: { select: { id: true, name: true, defaultPlayersPerSlot: true, defaultNonMemberPrice: true } },
           },
         },
       },
@@ -429,6 +472,127 @@ export class SlotsRepository {
     return input.numPlayers && input.numPlayers > 0
       ? filtered.filter((s) => (s as any).playersPerSlot == null || (s as any).playersPerSlot <= input.numPlayers!)
       : filtered;
+  }
+
+  async getAgenda(date: string) {
+    const dateObj = new Date(date + 'T00:00:00.000Z');
+
+    // Preload plan names for condition labels
+    const plans = await prisma.membershipPlan.findMany({ select: { id: true, name: true } });
+    const planNames = new Map(plans.map((p) => [p.id, p.name]));
+
+    const slots = await prisma.slot.findMany({
+      where: { date: dateObj },
+      orderBy: [{ venue: { name: 'asc' } }, { startTime: 'asc' }],
+      include: {
+        venue: { select: { id: true, name: true } },
+        schedule: {
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            openTime: true,
+            closeTime: true,
+            rules: {
+              include: {
+                conditions: {
+                  include: { conditionType: { select: { key: true } } },
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+        },
+        booking: {
+          select: {
+            id: true,
+            numPlayers: true,
+            status: true,
+            user: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
+    });
+
+    // Build columns: 1 per unique venue
+    const venueMap = new Map<string, { venueId: string; venueName: string }>();
+    for (const slot of slots) {
+      if (!venueMap.has(slot.venueId)) {
+        venueMap.set(slot.venueId, { venueId: slot.venueId, venueName: slot.venue.name });
+      }
+    }
+    const columns = Array.from(venueMap.values()).sort((a, b) => a.venueName.localeCompare(b.venueName));
+
+    // Unique sorted hours
+    const hoursSet = new Set<string>();
+    for (const slot of slots) hoursSet.add(slot.startTime);
+    const hours = Array.from(hoursSet).sort();
+
+    // Group by (venueId, startTime) — pick "winning" slot per cell
+    const groups = new Map<string, (typeof slots)[number][]>();
+    for (const slot of slots) {
+      const key = `${slot.venueId}__${slot.startTime}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(slot);
+    }
+
+    const slotList = Array.from(groups.values()).map((group) => {
+      // Prefer slots whose schedule has rules (privileged); among those, most specific schedule wins
+      const withRules = group.filter((s) => s.schedule && s.schedule.rules.length > 0);
+      const candidates = withRules.length > 0 ? withRules : group;
+      const winner = candidates.sort((a, b) =>
+        calcularEspecificidad(a.schedule!) - calcularEspecificidad(b.schedule!),
+      )[0];
+
+      const conditions = buildConditionsSummary(winner.schedule?.rules ?? [], planNames);
+      const activeBooking =
+        winner.booking && ['CONFIRMED', 'PENDING_PAYMENT'].includes(winner.booking.status)
+          ? winner.booking
+          : null;
+
+      return {
+        id: winner.id,
+        venueId: winner.venueId,
+        startTime: winner.startTime,
+        endTime: winner.endTime,
+        status: winner.status,
+        scheduleName: winner.schedule?.name ?? null,
+        conditions,
+        booking: activeBooking
+          ? {
+              id: activeBooking.id,
+              userName: `${activeBooking.user.firstName} ${activeBooking.user.lastName}`,
+              numPlayers: activeBooking.numPlayers,
+            }
+          : null,
+      };
+    });
+
+    return { columns, hours, slots: slotList };
+  }
+
+  async getAgendaMonthAvailability(startDate: string, endDate: string) {
+    const start = new Date(startDate + 'T00:00:00.000Z');
+    const end = new Date(endDate + 'T00:00:00.000Z');
+
+    const results = await prisma.slot.groupBy({
+      by: ['date', 'status'],
+      where: { date: { gte: start, lte: end } },
+      _count: { id: true },
+    });
+
+    const dayMap = new Map<string, { available: number; booked: number; blocked: number }>();
+    for (const row of results) {
+      const ds = row.date.toISOString().split('T')[0];
+      if (!dayMap.has(ds)) dayMap.set(ds, { available: 0, booked: 0, blocked: 0 });
+      const entry = dayMap.get(ds)!;
+      if (row.status === 'AVAILABLE') entry.available += row._count.id;
+      else if (row.status === 'BOOKED') entry.booked += row._count.id;
+      else if (row.status === 'BLOCKED') entry.blocked += row._count.id;
+    }
+
+    return Array.from(dayMap.entries()).map(([date, counts]) => ({ date, ...counts }));
   }
 
   async findAvailabilityByVenueAndRange(venueId: string, startDate: string, endDate: string, scheduleId?: string, openTime?: string, closeTime?: string) {

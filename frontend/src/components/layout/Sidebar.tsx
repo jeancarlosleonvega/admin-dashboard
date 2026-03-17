@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, MapPin, CreditCard, Calendar,
   PlusCircle, BookOpen, DollarSign, UserCheck,
-  Wallet, Settings, Receipt,
+  Wallet, Settings, Receipt, CalendarDays,
 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -24,6 +24,7 @@ const adminNavGroups: NavGroup[] = [
     items: [
       { name: 'Instalaciones', href: '/instalaciones', icon: MapPin, permission: 'sport-types.view' },
       { name: 'Socios', href: '/socios', icon: UserCheck, permission: 'membership-plans.view' },
+      { name: 'Agenda', href: '/agenda', icon: CalendarDays, permission: 'slots.view' },
       { name: 'Reservas', href: '/reservas', icon: Calendar, permission: 'bookings.view' },
     ],
   },

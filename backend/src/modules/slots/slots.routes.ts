@@ -20,4 +20,14 @@ export async function slotsRoutes(fastify: FastifyInstance) {
     preHandler: [authorize('slots.view')],
     handler: slotsController.search.bind(slotsController),
   });
+
+  fastify.get('/agenda', {
+    preHandler: [authorize('slots.view')],
+    handler: slotsController.getAgenda.bind(slotsController),
+  });
+
+  fastify.get('/agenda-availability', {
+    preHandler: [authorize('slots.view')],
+    handler: slotsController.getAgendaMonthAvailability.bind(slotsController),
+  });
 }

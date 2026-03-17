@@ -54,6 +54,7 @@ import InstalacionesPage from '@features/instalaciones/pages/InstalacionesPage';
 import SociosPage from '@features/socios/pages/SociosPage';
 import SocioDetailPage from '@features/socios/pages/SocioDetailPage';
 import ReservasHubPage from '@features/bookings/pages/ReservasHubPage';
+import AgendaPage from '@features/agenda/pages/AgendaPage';
 
 // Route guards
 import ProtectedRoute from '@/routes/ProtectedRoute';
@@ -361,6 +362,16 @@ function App() {
           element={
             <PermissionRoute permission="blocked-periods.manage">
               <BlockedPeriodEditPage />
+            </PermissionRoute>
+          }
+        />
+
+        {/* Agenda global */}
+        <Route
+          path="/agenda"
+          element={
+            <PermissionRoute permission="slots.view">
+              <AgendaPage />
             </PermissionRoute>
           }
         />

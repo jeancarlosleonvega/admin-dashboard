@@ -30,6 +30,7 @@ import { conditionTypesRoutes } from './modules/condition-types/condition-types.
 import { walletRoutes } from './modules/wallet/wallet.routes.js';
 import { revenueRoutes } from './modules/revenue/revenue.routes.js';
 import { userSuspensionsRoutes } from './modules/user-suspensions/user-suspensions.routes.js';
+import { reportsRoutes } from './modules/reports/reports.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -84,6 +85,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     api.register(walletRoutes, { prefix: '/wallet' });
     api.register(revenueRoutes, { prefix: '/revenue' });
     api.register(userSuspensionsRoutes, { prefix: '/user-suspensions' });
+    api.register(reportsRoutes, { prefix: '/reports' });
   }, { prefix: '/api' });
 
   return app;

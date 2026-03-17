@@ -39,6 +39,14 @@ export class SlotsService {
     const userProfile = userId ? await buildUserProfile(userId) : undefined;
     return slotsRepository.searchAvailable(data, userProfile);
   }
+
+  async getAgenda(date: string) {
+    return slotsRepository.getAgenda(date);
+  }
+
+  async getAgendaMonthAvailability(startDate: string, endDate: string) {
+    return slotsRepository.getAgendaMonthAvailability(startDate, endDate);
+  }
 }
 
 export const slotsService = new SlotsService();

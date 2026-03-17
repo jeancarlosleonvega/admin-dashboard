@@ -3,6 +3,7 @@ import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { AuthorizationError } from '../../shared/errors/AuthorizationError.js';
 import { emailService } from '../../shared/services/email.service.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import { env } from '../../config/env.js';
 import type { TransferProofInput, ValidateTransferInput } from './payments.schema.js';
 
@@ -226,6 +227,7 @@ export class PaymentsService {
       }
     }
 
+    broadcast('slots:invalidate', { source: 'Reserva confirmada' });
     return prisma.payment.findUnique({
       where: { id: paymentId },
       include: {

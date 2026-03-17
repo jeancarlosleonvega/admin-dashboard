@@ -2,6 +2,7 @@ import { venueSchedulesRepository } from './venue-schedules.repository.js';
 import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateVenueScheduleInput, UpdateVenueScheduleInput, VenueScheduleFiltersInput } from './venue-schedules.schema.js';
 
 function timeToMinutes(time: string): number {
@@ -225,6 +226,7 @@ export class VenueSchedulesService {
 
     await generateSlots(item.id, generateUntil);
 
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
     return venueSchedulesRepository.findById(item.id);
   }
 
@@ -259,6 +261,7 @@ export class VenueSchedulesService {
       console.error('[VenueSchedules] Error al regenerar slots tras update:', err);
     }
 
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
     return venueSchedulesRepository.findById(id);
   }
 
@@ -279,6 +282,7 @@ export class VenueSchedulesService {
     }
 
     await venueSchedulesRepository.delete(id);
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
   }
 
   async generateSlotsManually(id: string, until: string) {
@@ -296,6 +300,7 @@ export class VenueSchedulesService {
     await venueSchedulesRepository.updateGeneratedUntil(id, null);
 
     await generateSlots(id, generateUntil);
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
     return venueSchedulesRepository.findById(id);
   }
 }

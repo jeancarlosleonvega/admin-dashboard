@@ -1,13 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
-import { DollarSign, TrendingUp } from 'lucide-react';
+import { DollarSign, TrendingUp, BarChart2 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import PaymentsPage from '@features/payments/pages/PaymentsPage';
 import RevenueConfigPage from '@features/revenue/pages/RevenueConfigPage';
+import ReportesPage from '@features/reportes/pages/ReportesPage';
 
 const navItems = [
   { id: 'pagos', label: 'Pagos', icon: DollarSign, permission: 'payments.view', subtitle: null },
   { id: 'motor-precios', label: 'Motor de Precios', icon: TrendingUp, permission: 'revenue.view', subtitle: null },
+  { id: 'reportes', label: 'Reportes', icon: BarChart2, permission: 'reports.view', subtitle: null },
 ];
 
 export default function FinanzasPage() {
@@ -45,6 +47,7 @@ export default function FinanzasPage() {
       <div className="flex-1 min-w-0">
         {activeTab === 'pagos' && <PaymentsPage />}
         {activeTab === 'motor-precios' && <RevenueConfigPage />}
+        {activeTab === 'reportes' && <ReportesPage />}
       </div>
     </div>
   );

@@ -73,6 +73,9 @@ const permissions = [
   // Revenue Management
   { resource: 'revenue', action: 'view', description: 'Ver configuración motor de precios' },
   { resource: 'revenue', action: 'manage', description: 'Gestionar motor de precios' },
+
+  // Reports
+  { resource: 'reports', action: 'view', description: 'Ver reportes del club' },
 ];
 
 const roles = [
@@ -117,6 +120,7 @@ const roles = [
       'wallet.view',
       'revenue.view',
       'revenue.manage',
+      'reports.view',
     ],
   },
   {

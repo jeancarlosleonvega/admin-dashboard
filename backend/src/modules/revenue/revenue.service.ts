@@ -1,6 +1,7 @@
 import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { UpsertRevenueConfigInput, CreateFactorTypeInput, UpdateFactorTypeInput } from './revenue.schema.js';
 
 export class RevenueService {
@@ -28,7 +29,9 @@ export class RevenueService {
     const ft = await prisma.revenueFactorType.findUnique({ where: { id } });
     if (!ft) throw new NotFoundError('Tipo de factor');
     if (ft.isSystem) throw new ValidationError('No se pueden eliminar factores del sistema');
-    return prisma.revenueFactorType.update({ where: { id }, data: { active: false } });
+    const result = await prisma.revenueFactorType.update({ where: { id }, data: { active: false } });
+    broadcast('slots:invalidate', { source: 'El precio cambió' });
+    return result;
   }
 
   // ─── Config por SportType ────────────────────────────────────
@@ -111,6 +114,7 @@ export class RevenueService {
       });
     });
 
+    broadcast('slots:invalidate', { source: 'El precio cambió' });
     return this.findBySportType(sportTypeId);
   }
 }

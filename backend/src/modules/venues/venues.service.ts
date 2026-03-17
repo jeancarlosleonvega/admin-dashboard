@@ -2,6 +2,7 @@ import { venuesRepository } from './venues.repository.js';
 import { sportTypesRepository } from '../sport-types/sport-types.repository.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateVenueInput, UpdateVenueInput, VenueFiltersInput } from './venues.schema.js';
 import type { VenueWithSportType, ResolvedVenue } from './venues.types.js';
 
@@ -58,6 +59,7 @@ export class VenuesService {
       if (!sportType) throw new ValidationError('Tipo de deporte no encontrado');
     }
     const item = await venuesRepository.update(id, data);
+    broadcast('slots:invalidate', { source: 'El precio cambió' });
     return resolveVenue(item);
   }
 

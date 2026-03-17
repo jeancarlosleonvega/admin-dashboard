@@ -1,6 +1,7 @@
 import { blockedPeriodsRepository } from './blocked-periods.repository.js';
 import { prisma } from '../../infrastructure/database/client.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateBlockedPeriodInput, UpdateBlockedPeriodInput, BlockedPeriodFiltersInput } from './blocked-periods.schema.js';
 
 async function applyBlockedPeriodToSlots(
@@ -85,6 +86,7 @@ export class BlockedPeriodsService {
       );
     }
 
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
     return item;
   }
 
@@ -116,6 +118,7 @@ export class BlockedPeriodsService {
       );
     }
 
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
     return updated;
   }
 
@@ -135,6 +138,7 @@ export class BlockedPeriodsService {
     }
 
     await blockedPeriodsRepository.delete(id);
+    broadcast('slots:invalidate', { source: 'Horarios actualizados' });
   }
 }
 

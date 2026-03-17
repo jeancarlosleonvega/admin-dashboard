@@ -1,6 +1,7 @@
 import { sportTypesRepository } from './sport-types.repository.js';
 import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
+import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateSportTypeInput, UpdateSportTypeInput, SportTypeFiltersInput } from './sport-types.schema.js';
 import type { SportType } from './sport-types.types.js';
 
@@ -24,12 +25,19 @@ export class SportTypesService {
   }
 
   async update(id: string, data: UpdateSportTypeInput): Promise<SportType> {
-    await this.findById(id);
+    const current = await this.findById(id);
     if (data.name) {
       const existing = await sportTypesRepository.findByName(data.name);
       if (existing && existing.id !== id) throw new ValidationError('Ya existe un tipo de deporte con ese nombre');
     }
-    return sportTypesRepository.update(id, data);
+    const result = await sportTypesRepository.update(id, data);
+    if (data.defaultNonMemberPrice != null) {
+      const oldPrice = parseFloat((current as any).defaultNonMemberPrice?.toString() ?? '0');
+      const newPrice = parseFloat(data.defaultNonMemberPrice.toString());
+      const source = newPrice > oldPrice ? 'El precio subió' : newPrice < oldPrice ? 'El precio bajó' : 'El precio cambió';
+      broadcast('slots:invalidate', { source });
+    }
+    return result;
   }
 
   async delete(id: string): Promise<void> {

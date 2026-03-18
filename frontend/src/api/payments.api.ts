@@ -37,8 +37,12 @@ export const paymentsApi = {
     return response.data.data;
   },
 
-  async uploadTransferProof(id: string, proofUrl: string): Promise<PaymentWithBooking> {
-    const response = await apiClient.post(`/payments/${id}/transfer-proof`, { proofUrl });
+  async uploadTransferProof(id: string, file: File): Promise<PaymentWithBooking> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/payments/${id}/transfer-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data.data;
   },
 

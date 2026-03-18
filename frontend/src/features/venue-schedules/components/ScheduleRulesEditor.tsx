@@ -2,6 +2,7 @@ import { useConditionTypes } from '@/hooks/queries/useConditionTypes';
 import { useMembershipPlans } from '@/hooks/queries/useMembershipPlans';
 import { Plus, Trash2 } from 'lucide-react';
 import { Spinner } from '@components/ui/Spinner';
+import { OPERATOR_DISPLAY } from '@lib/operatorLabels';
 
 export interface RuleConditionFormValue {
   conditionTypeId: string;
@@ -13,7 +14,7 @@ export interface RuleConditionFormValue {
 
 export interface RuleFormValue {
   canBook: boolean;
-  basePrice: number;
+  priceOverride: number | null;
   revenueManagementEnabled: boolean;
   conditions: RuleConditionFormValue[];
 }
@@ -23,19 +24,6 @@ interface Props {
   onChange: (rules: RuleFormValue[]) => void;
 }
 
-const OPERATOR_LABELS: Record<string, string> = {
-  EQ: '= igual a',
-  NEQ: '≠ distinto de',
-  GT: '> mayor que',
-  GTE: '>= mayor o igual que',
-  LT: '< menor que',
-  LTE: '<= menor o igual que',
-};
-
-const SEX_OPTIONS = [
-  { value: 'MALE', label: 'Masculino' },
-  { value: 'FEMALE', label: 'Femenino' },
-];
 
 export default function ScheduleRulesEditor({ rules, onChange }: Props) {
   const { data: conditionTypesData, isLoading: ctLoading } = useConditionTypes({ active: 'true', limit: 100 });
@@ -49,7 +37,7 @@ export default function ScheduleRulesEditor({ rules, onChange }: Props) {
       ...rules,
       {
         canBook: true,
-        basePrice: 0,
+        priceOverride: null,
         revenueManagementEnabled: false,
         conditions: [
           { conditionTypeId: '', operator: 'EQ', value: '', logicalOperator: '', order: 0 },
@@ -110,11 +98,11 @@ export default function ScheduleRulesEditor({ rules, onChange }: Props) {
       );
     }
 
-    if (ct.key === 'sex') {
+    if (ct.dataType === 'ENUM' && ct.allowedValues && ct.allowedValues.length > 0) {
       return (
         <select className="input" value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">Seleccioná...</option>
-          {SEX_OPTIONS.map((o) => (
+          {ct.allowedValues.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </select>
@@ -177,14 +165,15 @@ export default function ScheduleRulesEditor({ rules, onChange }: Props) {
               </label>
             </div>
             <div>
-              <label className="label text-xs">Precio base ($)</label>
+              <label className="label text-xs">Override de precio ($) <span className="text-gray-400 font-normal">(opcional)</span></label>
               <input
                 type="number"
                 min={0}
                 step={0.01}
                 className="input"
-                value={rule.basePrice}
-                onChange={(e) => updateRule(ruleIdx, { basePrice: parseFloat(e.target.value) || 0 })}
+                value={rule.priceOverride ?? ''}
+                placeholder="Sin override — usa precio del plan"
+                onChange={(e) => updateRule(ruleIdx, { priceOverride: e.target.value !== '' ? parseFloat(e.target.value) : null })}
               />
             </div>
             <div>
@@ -238,7 +227,7 @@ export default function ScheduleRulesEditor({ rules, onChange }: Props) {
                     onChange={(e) => updateCondition(ruleIdx, condIdx, { operator: e.target.value })}
                   >
                     {allowedOps.map((op) => (
-                      <option key={op} value={op}>{OPERATOR_LABELS[op] ?? op}</option>
+                      <option key={op} value={op}>{OPERATOR_DISPLAY[op] ?? op}</option>
                     ))}
                   </select>
 

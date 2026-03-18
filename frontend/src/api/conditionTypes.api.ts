@@ -1,11 +1,18 @@
 import { apiClient } from './client';
 
+export interface AllowedValueItem {
+  value: string;
+  label: string;
+}
+
 export interface ConditionType {
   id: string;
   name: string;
   key: string;
   dataType: 'NUMBER' | 'STRING' | 'UUID' | 'ENUM';
   allowedOperators: string[];
+  allowedValues: AllowedValueItem[] | null;
+  isSystem: boolean;
   description: string | null;
   active: boolean;
   createdAt: string;
@@ -15,6 +22,9 @@ export interface ConditionType {
 export interface ConditionTypeFilters {
   search?: string;
   active?: 'true' | 'false';
+  dataType?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }

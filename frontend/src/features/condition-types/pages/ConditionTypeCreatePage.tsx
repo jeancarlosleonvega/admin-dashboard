@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useCreateConditionType } from '@/hooks/queries/useConditionTypes';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
@@ -16,7 +17,7 @@ const DATA_TYPES = [
   { value: 'ENUM', label: 'Enumerado' },
 ];
 
-const ALL_OPERATORS = ['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE'];
+import { OPERATOR_DISPLAY, ALL_OPERATORS } from '@lib/operatorLabels';
 
 const schema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
@@ -29,32 +30,54 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface EnumOption { value: string; label: string; }
+
 export default function ConditionTypeCreatePage() {
   const navigate = useNavigate();
   usePageHeader({ subtitle: 'Crear nuevo tipo de condición' });
 
   const createConditionType = useCreateConditionType();
+  const [enumOptions, setEnumOptions] = useState<EnumOption[]>([{ value: '', label: '' }]);
 
   const {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      allowedOperators: ['EQ', 'NEQ'],
-      active: true,
-    },
+    defaultValues: { allowedOperators: ['EQ', 'NEQ'], active: true },
   });
 
+  const dataType = watch('dataType');
+
+  const addOption = () => setEnumOptions((prev) => [...prev, { value: '', label: '' }]);
+  const removeOption = (i: number) => setEnumOptions((prev) => prev.filter((_, idx) => idx !== i));
+  const updateOption = (i: number, field: keyof EnumOption, val: string) => {
+    setEnumOptions((prev) => prev.map((o, idx) => idx === i ? { ...o, [field]: val } : o));
+  };
+
   const onSubmit = async (data: FormData) => {
+    if (data.dataType === 'ENUM') {
+      if (enumOptions.length === 0) {
+        toast.error('Agregá al menos un valor para el tipo enumerado');
+        return;
+      }
+      if (enumOptions.some((o) => !o.value.trim() || !o.label.trim())) {
+        toast.error('Completá el valor interno y la etiqueta de cada opción');
+        return;
+      }
+    }
+
     try {
       await createConditionType.mutateAsync({
         name: data.name,
         key: data.key,
         dataType: data.dataType,
         allowedOperators: data.allowedOperators,
+        allowedValues: data.dataType === 'ENUM' ? enumOptions.map((o) => ({ value: o.value.trim().toUpperCase(), label: o.label.trim() })) : null,
+        isSystem: false,
         description: data.description || null,
         active: data.active,
       });
@@ -87,7 +110,7 @@ export default function ConditionTypeCreatePage() {
                     id="name"
                     type="text"
                     className={`input ${errors.name ? 'input-error' : ''}`}
-                    placeholder="Ej: Tipo de membresía"
+                    placeholder="Ej: Categoría de socio"
                     {...register('name')}
                   />
                   {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
@@ -98,7 +121,7 @@ export default function ConditionTypeCreatePage() {
                     id="key"
                     type="text"
                     className={`input font-mono ${errors.key ? 'input-error' : ''}`}
-                    placeholder="Ej: membership_plan"
+                    placeholder="Ej: categoria_socio"
                     {...register('key')}
                   />
                   {errors.key && <p className="mt-1 text-sm text-red-600">{errors.key.message}</p>}
@@ -117,6 +140,69 @@ export default function ConditionTypeCreatePage() {
                   </select>
                   {errors.dataType && <p className="mt-1 text-sm text-red-600">{errors.dataType.message}</p>}
                 </div>
+
+                {dataType === 'ENUM' && (
+                  <div>
+                    <label className="label">Valores permitidos</label>
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Valor interno</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Etiqueta visible</th>
+                            <th className="w-10" />
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {enumOptions.map((opt, i) => (
+                            <tr key={i}>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  className="input font-mono text-xs"
+                                  placeholder="Ej: JUNIOR"
+                                  value={opt.value}
+                                  onChange={(e) => updateOption(i, 'value', e.target.value)}
+                                />
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  className="input text-xs"
+                                  placeholder="Ej: Junior"
+                                  value={opt.label}
+                                  onChange={(e) => updateOption(i, 'label', e.target.value)}
+                                />
+                              </td>
+                              <td className="px-2 py-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => removeOption(i)}
+                                  className="p-1 text-gray-400 hover:text-red-500"
+                                  disabled={enumOptions.length === 1}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="px-3 py-2 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={addOption}
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Agregar valor
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-400">El valor interno se guarda tal cual en las condiciones — debe ser consistente y no cambiarse una vez en uso.</p>
+                  </div>
+                )}
+
                 <div>
                   <label className="label">Operadores permitidos</label>
                   <Controller
@@ -131,15 +217,11 @@ export default function ConditionTypeCreatePage() {
                               checked={field.value?.includes(op)}
                               onChange={(e) => {
                                 const current = field.value ?? [];
-                                if (e.target.checked) {
-                                  field.onChange([...current, op]);
-                                } else {
-                                  field.onChange(current.filter((o) => o !== op));
-                                }
+                                field.onChange(e.target.checked ? [...current, op] : current.filter((o) => o !== op));
                               }}
                               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <span className="text-sm font-mono text-gray-700">{op}</span>
+                            <span className="text-sm text-gray-700">{OPERATOR_DISPLAY[op] ?? op}</span>
                           </label>
                         ))}
                       </div>
@@ -151,7 +233,7 @@ export default function ConditionTypeCreatePage() {
                   <label htmlFor="description" className="label">Descripción <span className="text-gray-400 font-normal">(opcional)</span></label>
                   <textarea
                     id="description"
-                    rows={3}
+                    rows={2}
                     className="input"
                     placeholder="Descripción del tipo de condición..."
                     {...register('description')}

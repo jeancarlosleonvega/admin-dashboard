@@ -15,16 +15,10 @@ import StatusBadge from '@components/shared/StatusBadge';
 import toast from 'react-hot-toast';
 import { formatDate } from '@lib/formatDate';
 
-const DAY_NAMES: Record<number, string> = {
-  1: 'L', 2: 'M', 3: 'X', 4: 'J', 5: 'V', 6: 'S', 7: 'D',
-};
-
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Nombre', sortable: false, filterable: true, type: 'text' },
   { key: 'venue', label: 'Espacio', sortable: false, filterable: false },
-  { key: 'days', label: 'Días', sortable: false, filterable: false },
-  { key: 'schedule', label: 'Horario', sortable: false, filterable: false },
-  { key: 'interval', label: 'Intervalo', sortable: false, filterable: false },
+  { key: 'timeRanges', label: 'Bloques', sortable: false, filterable: false },
   { key: 'generated', label: 'Generado hasta', sortable: false, filterable: false },
   {
     key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
@@ -133,14 +127,8 @@ export default function VenueSchedulesPage() {
                   {visibleColumns.includes('venue') && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Espacio</th>
                   )}
-                  {visibleColumns.includes('days') && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días</th>
-                  )}
-                  {visibleColumns.includes('schedule') && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                  )}
-                  {visibleColumns.includes('interval') && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intervalo</th>
+                  {visibleColumns.includes('timeRanges') && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bloques</th>
                   )}
                   {visibleColumns.includes('generated') && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Generado hasta</th>
@@ -166,34 +154,11 @@ export default function VenueSchedulesPage() {
                           : '-'}
                       </td>
                     )}
-                    {visibleColumns.includes('days') && (
-                      <td className="px-6 py-4">
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                            <span
-                              key={d}
-                              className={`inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded-full ${
-                                schedule.daysOfWeek.includes(d)
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-100 text-gray-400'
-                              }`}
-                            >
-                              {DAY_NAMES[d]}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                    )}
-                    {visibleColumns.includes('schedule') && (
+                    {visibleColumns.includes('timeRanges') && (
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {schedule.openTime && schedule.closeTime
-                          ? `${schedule.openTime} - ${schedule.closeTime}`
-                          : 'Por defecto'}
-                      </td>
-                    )}
-                    {visibleColumns.includes('interval') && (
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {schedule.intervalMinutes ? `${schedule.intervalMinutes} min` : 'Por defecto'}
+                        {schedule.timeRanges && schedule.timeRanges.length > 0
+                          ? `${schedule.timeRanges.length} bloque${schedule.timeRanges.length !== 1 ? 's' : ''}`
+                          : <span className="text-gray-400">Sin bloques</span>}
                       </td>
                     )}
                     {visibleColumns.includes('generated') && (

@@ -3,7 +3,7 @@ import type { CreateConditionTypeInput, UpdateConditionTypeInput } from './condi
 import type { ConditionType } from './condition-types.types.js';
 
 export class ConditionTypesRepository {
-  async findAll(filters: { search?: string; active?: string }, page: number, limit: number) {
+  async findAll(filters: { search?: string; active?: string; dataType?: string; sortBy?: string; sortDirection?: string }, page: number, limit: number) {
     const where: any = {};
     if (filters.search) {
       where.OR = [
@@ -15,9 +15,16 @@ export class ConditionTypesRepository {
     if (filters.active !== undefined) {
       where.active = filters.active === 'true';
     }
+    if (filters.dataType) {
+      where.dataType = filters.dataType;
+    }
+
+    const orderBy: any = filters.sortBy
+      ? { [filters.sortBy]: filters.sortDirection ?? 'asc' }
+      : { name: 'asc' };
 
     const [items, total] = await Promise.all([
-      prisma.conditionType.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy: { name: 'asc' } }),
+      prisma.conditionType.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy }),
       prisma.conditionType.count({ where }),
     ]);
     return { items, total };

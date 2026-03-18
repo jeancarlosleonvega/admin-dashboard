@@ -193,7 +193,7 @@ export class BookingsService {
       where: { id: data.slotId },
       include: {
         venue: { include: { sportType: true } },
-        schedule: {
+        timeRange: {
           include: {
             rules: {
               include: {
@@ -207,10 +207,10 @@ export class BookingsService {
     if (!slot) throw new NotFoundError('Slot');
     if (slot.status !== 'AVAILABLE') throw new ValidationError('Slot no disponible');
 
-    const schedule = slot.schedule;
-    const maxPlayers = schedule?.playersPerSlot ?? slot.venue.playersPerSlot ?? slot.venue.sportType.defaultPlayersPerSlot;
+    const timeRange = slot.timeRange;
+    const maxPlayers = timeRange?.playersPerSlot ?? null;
 
-    if (data.numPlayers > maxPlayers) {
+    if (maxPlayers !== null && data.numPlayers > maxPlayers) {
       throw new ValidationError(`El máximo de jugadores por turno es ${maxPlayers}`);
     }
 
@@ -242,9 +242,9 @@ export class BookingsService {
       activeMembership.reservationsUsedMonth = 0;
     }
 
-    // Evaluar reglas del horario si existen
-    const scheduleRules = schedule?.rules ?? [];
-    if (scheduleRules.length > 0) {
+    // Evaluar reglas del timeRange si existen
+    const timeRangeRules = timeRange?.rules ?? [];
+    if (timeRangeRules.length > 0) {
       const userForRules: UserForRules = {
         sex: user.sex,
         birthDate: user.birthDate,
@@ -252,7 +252,7 @@ export class BookingsService {
         activeMembershipPlanIds: activeMembership ? [activeMembership.membershipPlanId] : [],
       };
 
-      const matchingRule = scheduleRules.find((rule) => evaluateRule(rule, userForRules));
+      const matchingRule = timeRangeRules.find((rule: any) => evaluateRule(rule, userForRules));
 
       if (!matchingRule) {
         throw new ValidationError('No cumplís los requisitos para reservar en este horario');
@@ -261,7 +261,9 @@ export class BookingsService {
         throw new ValidationError('No tenés permiso para reservar en este horario');
       }
 
-      precio = parseFloat(matchingRule.basePrice.toString());
+      precio = matchingRule.priceOverride != null
+        ? parseFloat(matchingRule.priceOverride.toString())
+        : 0;
       isMemberPrice = !!activeMembership;
       membershipPlanId = activeMembership?.membershipPlanId ?? null;
     } else if (activeMembership) {
@@ -276,17 +278,27 @@ export class BookingsService {
         }
       }
 
-      precio = parseFloat(plan.baseBookingPrice.toString());
+      // Buscar precio del plan para el deporte
+      const sportPrice = await prisma.membershipPlanSportPrice.findUnique({
+        where: {
+          membershipPlanId_sportTypeId: {
+            membershipPlanId: activeMembership.membershipPlanId,
+            sportTypeId: slot.venue.sportTypeId,
+          },
+        },
+      });
+      precio = sportPrice ? parseFloat(sportPrice.baseBookingPrice.toString()) : 0;
       isMemberPrice = true;
       membershipPlanId = activeMembership.membershipPlanId;
     } else {
-      precio = parseFloat(slot.venue.sportType.defaultNonMemberPrice.toString());
+      // Sin membresía y sin reglas: precio 0 (el sistema no tiene defaultNonMemberPrice)
+      precio = 0;
       isMemberPrice = false;
       membershipPlanId = null;
     }
 
-    // Verificar límite mensual cuando se usaron reglas del horario
-    if (scheduleRules.length > 0 && activeMembership) {
+    // Verificar límite mensual cuando se usaron reglas del timeRange
+    if (timeRangeRules.length > 0 && activeMembership) {
       const plan = activeMembership.membershipPlan;
       if (plan.monthlyReservationLimit !== null && activeMembership.reservationsUsedMonth >= plan.monthlyReservationLimit) {
         throw new ValidationError(

@@ -5,11 +5,11 @@ import type { VenueWithSportType } from './venues.types.js';
 const sportTypeSelect = {
   id: true,
   name: true,
-  defaultIntervalMinutes: true,
-  defaultPlayersPerSlot: true,
-  defaultOpenTime: true,
-  defaultCloseTime: true,
-  defaultEnabledDays: true,
+};
+
+const venueInclude = {
+  sportType: { select: sportTypeSelect },
+  operatingHours: true,
 };
 
 export class VenuesRepository {
@@ -30,7 +30,7 @@ export class VenuesRepository {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: [{ sportType: { name: 'asc' } }, { name: 'asc' }],
-        include: { sportType: { select: sportTypeSelect } },
+        include: venueInclude,
       }),
       prisma.venue.count({ where }),
     ]);
@@ -40,23 +40,53 @@ export class VenuesRepository {
   async findById(id: string): Promise<VenueWithSportType | null> {
     return prisma.venue.findUnique({
       where: { id },
-      include: { sportType: { select: sportTypeSelect } },
-    });
+      include: venueInclude,
+    }) as any;
   }
 
   async create(data: CreateVenueInput): Promise<VenueWithSportType> {
-    return prisma.venue.create({
-      data,
-      include: { sportType: { select: sportTypeSelect } },
+    const { operatingHours, ...venueData } = data;
+    const venue = await prisma.venue.create({
+      data: venueData,
+      include: venueInclude,
     });
+
+    if (operatingHours && operatingHours.length > 0) {
+      await prisma.venueOperatingHours.createMany({
+        data: operatingHours.map((oh) => ({
+          venueId: venue.id,
+          daysOfWeek: oh.daysOfWeek,
+          openTime: oh.openTime,
+          closeTime: oh.closeTime,
+        })),
+      });
+    }
+
+    return prisma.venue.findUnique({ where: { id: venue.id }, include: venueInclude }) as any;
   }
 
   async update(id: string, data: UpdateVenueInput): Promise<VenueWithSportType> {
-    return prisma.venue.update({
+    const { operatingHours, ...venueData } = data;
+    await prisma.venue.update({
       where: { id },
-      data,
-      include: { sportType: { select: sportTypeSelect } },
+      data: venueData,
     });
+
+    if (operatingHours !== undefined) {
+      await prisma.venueOperatingHours.deleteMany({ where: { venueId: id } });
+      if (operatingHours.length > 0) {
+        await prisma.venueOperatingHours.createMany({
+          data: operatingHours.map((oh) => ({
+            venueId: id,
+            daysOfWeek: oh.daysOfWeek,
+            openTime: oh.openTime,
+            closeTime: oh.closeTime,
+          })),
+        });
+      }
+    }
+
+    return prisma.venue.findUnique({ where: { id }, include: venueInclude }) as any;
   }
 
   async delete(id: string): Promise<void> {

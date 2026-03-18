@@ -1,4 +1,8 @@
 import Fastify, { FastifyInstance } from 'fastify';
+import fastifyMultipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
 import { env } from './config/env.js';
 import { logger } from './shared/utils/logger.js';
 import { errorHandler } from './shared/middlewares/errorHandler.js';
@@ -10,6 +14,8 @@ import {
   registerRateLimit,
   registerCookie,
 } from './shared/plugins/index.js';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { usersRoutes } from './modules/users/users.routes.js';
 import { rolesRoutes } from './modules/roles/roles.routes.js';
@@ -45,6 +51,13 @@ export async function buildApp(): Promise<FastifyInstance> {
   await registerHelmet(app);
   await registerCookie(app);
   await registerRateLimit(app);
+
+  // Multipart (file uploads) — límite 10 MB por archivo
+  await app.register(fastifyMultipart, { limits: { fileSize: 10 * 1024 * 1024 } });
+
+  // Archivos estáticos desde la carpeta uploads/
+  const uploadsDir = join(__dirname, '..', 'uploads');
+  await app.register(fastifyStatic, { root: uploadsDir, prefix: '/uploads/' });
 
   // Register Swagger only in development
   if (env.NODE_ENV !== 'production') {

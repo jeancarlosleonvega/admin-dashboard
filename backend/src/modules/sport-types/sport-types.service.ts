@@ -31,12 +31,7 @@ export class SportTypesService {
       if (existing && existing.id !== id) throw new ValidationError('Ya existe un tipo de deporte con ese nombre');
     }
     const result = await sportTypesRepository.update(id, data);
-    if (data.defaultNonMemberPrice != null) {
-      const oldPrice = parseFloat((current as any).defaultNonMemberPrice?.toString() ?? '0');
-      const newPrice = parseFloat(data.defaultNonMemberPrice.toString());
-      const source = newPrice > oldPrice ? 'El precio subió' : newPrice < oldPrice ? 'El precio bajó' : 'El precio cambió';
-      broadcast('slots:invalidate', { source });
-    }
+    broadcast('slots:invalidate', { source: 'Tipo de deporte actualizado' });
     return result;
   }
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
@@ -9,26 +9,9 @@ import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
 import toast from 'react-hot-toast';
 
-const DAYS = [
-  { value: 1, label: 'Lunes' },
-  { value: 2, label: 'Martes' },
-  { value: 3, label: 'Miércoles' },
-  { value: 4, label: 'Jueves' },
-  { value: 5, label: 'Viernes' },
-  { value: 6, label: 'Sábado' },
-  { value: 7, label: 'Domingo' },
-];
-
 const schema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(100),
   description: z.string().max(500).optional(),
-  defaultIntervalMinutes: z.coerce.number().int().min(5, 'Mínimo 5 minutos').max(120, 'Máximo 120 minutos'),
-  defaultPlayersPerSlot: z.coerce.number().int().min(1, 'Mínimo 1 jugador').max(20, 'Máximo 20 jugadores'),
-  defaultMemberPrice: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
-  defaultNonMemberPrice: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
-  defaultOpenTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
-  defaultCloseTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM requerido'),
-  defaultEnabledDays: z.array(z.coerce.number().int().min(1).max(7)).min(1, 'Seleccioná al menos un día'),
   active: z.boolean(),
 });
 
@@ -42,18 +25,10 @@ export default function SportTypeCreatePage() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      defaultIntervalMinutes: 10,
-      defaultPlayersPerSlot: 4,
-      defaultMemberPrice: 0,
-      defaultNonMemberPrice: 0,
-      defaultOpenTime: '08:00',
-      defaultCloseTime: '18:00',
-      defaultEnabledDays: [1, 2, 3, 4, 5, 6, 7],
       active: true,
     },
   });
@@ -82,7 +57,7 @@ export default function SportTypeCreatePage() {
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="px-6">
-            <DetailSection title="Información general" description="Nombre e identificación del tipo de deporte">
+            <DetailSection title="Información general" description="Nombre e identificación del tipo de deporte" noBorder>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="name" className="label">Nombre</label>
@@ -105,124 +80,7 @@ export default function SportTypeCreatePage() {
                     {...register('description')}
                   />
                 </div>
-              </div>
-            </DetailSection>
-
-            <DetailSection title="Configuración por defecto" description="Valores que se heredarán en los espacios de este tipo">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="defaultIntervalMinutes" className="label">Intervalo (minutos)</label>
-                    <input
-                      id="defaultIntervalMinutes"
-                      type="number"
-                      min={5}
-                      max={120}
-                      className={`input ${errors.defaultIntervalMinutes ? 'input-error' : ''}`}
-                      {...register('defaultIntervalMinutes')}
-                    />
-                    {errors.defaultIntervalMinutes && <p className="mt-1 text-sm text-red-600">{errors.defaultIntervalMinutes.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="defaultPlayersPerSlot" className="label">Jugadores por turno</label>
-                    <input
-                      id="defaultPlayersPerSlot"
-                      type="number"
-                      min={1}
-                      max={20}
-                      className={`input ${errors.defaultPlayersPerSlot ? 'input-error' : ''}`}
-                      {...register('defaultPlayersPerSlot')}
-                    />
-                    {errors.defaultPlayersPerSlot && <p className="mt-1 text-sm text-red-600">{errors.defaultPlayersPerSlot.message}</p>}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="defaultMemberPrice" className="label">Precio para socios</label>
-                    <input
-                      id="defaultMemberPrice"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className={`input ${errors.defaultMemberPrice ? 'input-error' : ''}`}
-                      {...register('defaultMemberPrice')}
-                    />
-                    {errors.defaultMemberPrice && <p className="mt-1 text-sm text-red-600">{errors.defaultMemberPrice.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="defaultNonMemberPrice" className="label">Precio para no socios</label>
-                    <input
-                      id="defaultNonMemberPrice"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      className={`input ${errors.defaultNonMemberPrice ? 'input-error' : ''}`}
-                      {...register('defaultNonMemberPrice')}
-                    />
-                    {errors.defaultNonMemberPrice && <p className="mt-1 text-sm text-red-600">{errors.defaultNonMemberPrice.message}</p>}
-                  </div>
-                </div>
-              </div>
-            </DetailSection>
-
-            <DetailSection title="Horario por defecto" description="Horario de apertura y cierre para este tipo de deporte">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="defaultOpenTime" className="label">Hora de apertura</label>
-                  <input
-                    id="defaultOpenTime"
-                    type="time"
-                    className={`input ${errors.defaultOpenTime ? 'input-error' : ''}`}
-                    {...register('defaultOpenTime')}
-                  />
-                  {errors.defaultOpenTime && <p className="mt-1 text-sm text-red-600">{errors.defaultOpenTime.message}</p>}
-                </div>
-                <div>
-                  <label htmlFor="defaultCloseTime" className="label">Hora de cierre</label>
-                  <input
-                    id="defaultCloseTime"
-                    type="time"
-                    className={`input ${errors.defaultCloseTime ? 'input-error' : ''}`}
-                    {...register('defaultCloseTime')}
-                  />
-                  {errors.defaultCloseTime && <p className="mt-1 text-sm text-red-600">{errors.defaultCloseTime.message}</p>}
-                </div>
-              </div>
-            </DetailSection>
-
-            <DetailSection title="Días habilitados por defecto" description="Días de la semana en que este tipo de deporte opera" noBorder>
-              <div>
-                <Controller
-                  name="defaultEnabledDays"
-                  control={control}
-                  render={({ field }) => (
-                    <div className="flex flex-wrap gap-2">
-                      {DAYS.map((day) => {
-                        const checked = field.value?.includes(day.value);
-                        return (
-                          <label key={day.value} className="flex items-center gap-1.5 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => {
-                                const current = field.value ?? [];
-                                if (checked) {
-                                  field.onChange(current.filter((d) => d !== day.value));
-                                } else {
-                                  field.onChange([...current, day.value].sort());
-                                }
-                              }}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">{day.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                />
-                {errors.defaultEnabledDays && <p className="mt-1 text-sm text-red-600">{errors.defaultEnabledDays.message}</p>}
-                <div className="mt-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"

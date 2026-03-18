@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const sportPriceSchema = z.object({
+  sportTypeId: z.string().uuid(),
+  baseBookingPrice: z.number().min(0),
+});
+
 export const createMembershipPlanSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
@@ -7,10 +12,10 @@ export const createMembershipPlanSchema = z.object({
   monthlyReservationLimit: z.number().int().min(1).optional().nullable(),
   sportTypeId: z.string().uuid().optional().nullable(),
   active: z.boolean().default(true),
-  baseBookingPrice: z.number().min(0).default(0),
   walletCreditEnabled: z.boolean().default(false),
   walletCreditAmount: z.number().min(0).optional().nullable(),
   walletPaymentEnabled: z.boolean().default(false),
+  sportPrices: z.array(sportPriceSchema).optional(),
 });
 
 export const updateMembershipPlanSchema = createMembershipPlanSchema.partial();

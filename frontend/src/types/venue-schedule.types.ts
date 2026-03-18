@@ -11,33 +11,50 @@ export interface ScheduleRuleCondition {
     key: string;
     dataType: 'NUMBER' | 'STRING' | 'UUID' | 'ENUM';
     allowedOperators: string[];
+    allowedValues?: { value: string; label: string }[] | null;
+    isSystem?: boolean;
   };
 }
 
 export interface ScheduleRule {
   id: string;
   canBook: boolean;
-  basePrice: number;
+  priceOverride?: number | null;
   revenueManagementEnabled: boolean;
   conditions: ScheduleRuleCondition[];
+}
+
+export interface ScheduleTimeRange {
+  id: string;
+  scheduleId: string;
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  intervalMinutes: number;
+  playersPerSlot: number;
+  active: boolean;
+  rules?: ScheduleRule[];
+}
+
+export interface VenueOperatingHours {
+  id: string;
+  venueId: string;
+  daysOfWeek: number[];
+  openTime: string;
+  closeTime: string;
 }
 
 export interface VenueSchedule {
   id: string;
   venueId: string;
   name: string;
-  startDate: string;
+  startDate?: string | null;
   endDate?: string | null;
-  daysOfWeek: number[];
-  openTime?: string | null;
-  closeTime?: string | null;
-  intervalMinutes?: number | null;
-  playersPerSlot?: number | null;
   generatedUntil?: string | null;
   active: boolean;
   createdAt: string;
-  venue?: { id: string; name: string; playersPerSlot?: number | null; sportType: { id: string; name: string; defaultPlayersPerSlot?: number } };
-  rules?: ScheduleRule[];
+  venue?: { id: string; name: string; sportType: { id: string; name: string }; operatingHours?: VenueOperatingHours[] };
+  timeRanges?: ScheduleTimeRange[];
 }
 
 export interface SlotAvailability {
@@ -52,14 +69,13 @@ export interface SlotAvailability {
   scheduleRule?: {
     ruleId: string;
     canBook: boolean;
-    basePrice: number;
+    priceOverride?: number | null;
     revenueManagementEnabled: boolean;
   } | null;
   venue?: {
     id: string;
     name: string;
-    playersPerSlot?: number | null;
-    sportType: { id: string; name: string; defaultPlayersPerSlot?: number };
+    sportType: { id: string; name: string };
   };
 }
 

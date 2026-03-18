@@ -11,16 +11,18 @@ interface PaginatedResponse {
   };
 }
 
-type VenueInput = {
+export interface OperatingHoursInput {
+  daysOfWeek: number[];
+  openTime: string;
+  closeTime: string;
+}
+
+export type VenueInput = {
   sportTypeId: string;
   name: string;
   description?: string;
-  intervalMinutes?: number | null;
-  playersPerSlot?: number | null;
-  openTime?: string | null;
-  closeTime?: string | null;
-  enabledDays?: number[];
   active?: boolean;
+  operatingHours?: OperatingHoursInput[];
 };
 
 export const venuesApi = {

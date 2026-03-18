@@ -32,8 +32,8 @@ export function useMyPayments() {
 export function useUploadTransferProof() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, proofUrl }: { id: string; proofUrl: string }) =>
-      paymentsApi.uploadTransferProof(id, proofUrl),
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      paymentsApi.uploadTransferProof(id, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: paymentKeys.all });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });

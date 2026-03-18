@@ -11,9 +11,19 @@ export interface ScheduleRuleConditionInput {
 
 export interface ScheduleRuleInput {
   canBook: boolean;
-  basePrice: number;
+  priceOverride?: number | null;
   revenueManagementEnabled: boolean;
   conditions: ScheduleRuleConditionInput[];
+}
+
+export interface ScheduleTimeRangeInput {
+  daysOfWeek: number[];
+  startTime: string;
+  endTime: string;
+  intervalMinutes: number;
+  playersPerSlot: number;
+  active?: boolean;
+  rules?: ScheduleRuleInput[];
 }
 
 interface PaginatedResponse {
@@ -39,15 +49,10 @@ export const venueSchedulesApi = {
   async createVenueSchedule(data: {
     venueId: string;
     name: string;
-    startDate: string;
+    startDate?: string | null;
     endDate?: string | null;
-    daysOfWeek: number[];
-    openTime?: string | null;
-    closeTime?: string | null;
-    intervalMinutes?: number | null;
-    playersPerSlot?: number | null;
     active?: boolean;
-    rules?: ScheduleRuleInput[];
+    timeRanges: ScheduleTimeRangeInput[];
   }): Promise<VenueSchedule> {
     const response = await apiClient.post('/venue-schedules', data);
     return response.data.data;
@@ -56,15 +61,10 @@ export const venueSchedulesApi = {
   async updateVenueSchedule(id: string, data: Partial<{
     venueId: string;
     name: string;
-    startDate: string;
+    startDate: string | null;
     endDate: string | null;
-    daysOfWeek: number[];
-    openTime: string | null;
-    closeTime: string | null;
-    intervalMinutes: number | null;
-    playersPerSlot: number | null;
     active: boolean;
-    rules: ScheduleRuleInput[];
+    timeRanges: ScheduleTimeRangeInput[];
   }>): Promise<VenueSchedule> {
     const response = await apiClient.put(`/venue-schedules/${id}`, data);
     return response.data.data;

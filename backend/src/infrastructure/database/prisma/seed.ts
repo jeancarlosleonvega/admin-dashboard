@@ -257,11 +257,6 @@ async function main() {
     create: {
       name: 'Golf',
       description: 'Campo de golf del club',
-      defaultIntervalMinutes: 10,
-      defaultPlayersPerSlot: 4,
-      defaultOpenTime: '07:00',
-      defaultCloseTime: '18:00',
-      defaultEnabledDays: [1, 2, 3, 4, 5, 6, 7],
       active: true,
     },
   });
@@ -318,6 +313,7 @@ async function main() {
       key: 'membership_plan',
       dataType: 'UUID' as const,
       allowedOperators: ['EQ', 'NEQ'],
+      isSystem: true,
       description: 'Filtra por plan de membresía del socio',
     },
     {
@@ -325,13 +321,19 @@ async function main() {
       key: 'sex',
       dataType: 'ENUM' as const,
       allowedOperators: ['EQ', 'NEQ'],
-      description: 'Filtra por sexo del socio (MALE / FEMALE)',
+      allowedValues: [
+        { value: 'MALE', label: 'Masculino' },
+        { value: 'FEMALE', label: 'Femenino' },
+      ],
+      isSystem: true,
+      description: 'Filtra por sexo del socio. Valores fijos del sistema.',
     },
     {
       name: 'Edad',
       key: 'age',
       dataType: 'NUMBER' as const,
       allowedOperators: ['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE'],
+      isSystem: true,
       description: 'Filtra por edad del socio en años',
     },
     {
@@ -339,6 +341,7 @@ async function main() {
       key: 'handicap',
       dataType: 'NUMBER' as const,
       allowedOperators: ['EQ', 'NEQ', 'GT', 'GTE', 'LT', 'LTE'],
+      isSystem: true,
       description: 'Filtra por handicap del socio',
     },
   ];
@@ -346,7 +349,7 @@ async function main() {
   for (const ct of conditionTypes) {
     await prisma.conditionType.upsert({
       where: { key: ct.key },
-      update: {},
+      update: { isSystem: ct.isSystem, allowedValues: ct.allowedValues ?? undefined },
       create: ct,
     });
   }

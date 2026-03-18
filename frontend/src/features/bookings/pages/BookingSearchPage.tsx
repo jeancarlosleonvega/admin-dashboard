@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
 import { useSearchSlots } from '@/hooks/queries/useSlots';
 import { useVenues } from '@/hooks/queries/useVenues';
-import { useAdditionalServices } from '@/hooks/queries/useAdditionalServices';
-import { useCreateBooking } from '@/hooks/queries/useBookings';
 import { Spinner } from '@components/ui/Spinner';
 import {
   LayoutGrid,
@@ -11,20 +10,9 @@ import {
   Clock,
   Users,
   MapPin,
-  CheckCircle,
-  X,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import type { SlotAvailability } from '@/types/venue-schedule.types';
-import type { Booking, PaymentMethod } from '@/types/booking.types';
 import { formatDateLong, formatDateShort } from '@lib/formatDate';
-
-const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  MERCADOPAGO: 'MercadoPago (inmediato)',
-  TRANSFER: 'Transferencia bancaria',
-  CASH: 'Efectivo en el club',
-  WALLET: 'Wallet',
-};
 
 function toISODate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -36,247 +24,12 @@ function addDays(dateStr: string, days: number): string {
   return toISODate(d);
 }
 
-// ─── Booking modal ────────────────────────────────────────────────────────────
-
-interface BookingModalProps {
-  slot: SlotAvailability;
-  numPlayers: number;
-  onClose: () => void;
-}
-
-function BookingModal({ slot, numPlayers: initialPlayers, onClose }: BookingModalProps) {
-  const { data: servicesData } = useAdditionalServices({ active: true, limit: 100 });
-  const services = servicesData?.data ?? [];
-
-  const maxPlayers = slot.playersPerSlot ?? slot.venue?.playersPerSlot ?? slot.venue?.sportType?.defaultPlayersPerSlot ?? 10;
-
-  const [players, setPlayers] = useState(Math.min(initialPlayers, maxPlayers));
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MERCADOPAGO');
-  const [notes, setNotes] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
-  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
-
-  const createBooking = useCreateBooking();
-
-  const toggleService = (id: string) => {
-    setSelectedServiceIds((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
-    );
-  };
-
-  const handleConfirm = async () => {
-    try {
-      const booking = await createBooking.mutateAsync({
-        slotId: slot.id,
-        numPlayers: players,
-        serviceIds: selectedServiceIds.length > 0 ? selectedServiceIds : undefined,
-        paymentMethod,
-        notes: notes || undefined,
-      });
-      setConfirmedBooking(booking);
-      setConfirmed(true);
-    } catch (err: unknown) {
-      const message = (err as { response?: { data?: { error?: { message?: string } } } })
-        ?.response?.data?.error?.message;
-      toast.error(message ?? 'Error al crear la reserva');
-    }
-  };
-
-  const dateLabel = formatDateLong(slot.date.slice(0, 10));
-
-  if (confirmed && confirmedBooking) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center space-y-5">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {paymentMethod === 'MERCADOPAGO' ? '¡Reserva confirmada!' : 'Reserva creada'}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {slot.venue?.name} · {dateLabel}
-            </p>
-            <p className="text-sm text-gray-500">
-              {slot.startTime} — {slot.endTime}
-            </p>
-          </div>
-          {paymentMethod === 'TRANSFER' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left">
-              <p className="text-sm font-medium text-yellow-800 mb-1">Pago por transferencia</p>
-              <p className="text-sm text-yellow-700">
-                Monto:{' '}
-                <strong>
-                  ${confirmedBooking.price.toLocaleString()}
-                </strong>
-                . Tenés 24hs para cargar el comprobante.
-              </p>
-            </div>
-          )}
-          {paymentMethod === 'CASH' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
-              Abonás{' '}
-              <strong>
-                ${confirmedBooking.price.toLocaleString()}
-              </strong>{' '}
-              el día de la reserva.
-            </div>
-          )}
-          <button onClick={onClose} className="btn-primary w-full">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Confirmar reserva</h2>
-            <p className="text-sm text-gray-500">
-              {slot.venue?.name} · {dateLabel} · {slot.startTime} — {slot.endTime}
-            </p>
-            {slot.price != null && (
-              <p className="text-lg font-bold text-emerald-600 mt-0.5">
-                ${slot.price.toLocaleString('es-AR')}
-              </p>
-            )}
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-5">
-          {/* Jugadores */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cantidad de jugadores{' '}
-              <span className="text-xs text-gray-400 font-normal">(máx. {maxPlayers})</span>
-            </label>
-            <select
-              value={players}
-              onChange={(e) => setPlayers(Number(e.target.value))}
-              className="input"
-            >
-              {Array.from({ length: maxPlayers }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {n} {n === 1 ? 'jugador' : 'jugadores'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Servicios */}
-          {services.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Servicios adicionales{' '}
-                <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-              </label>
-              <div className="space-y-2">
-                {services.map((service) => (
-                  <label
-                    key={service.id}
-                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedServiceIds.includes(service.id)}
-                      onChange={() => toggleService(service.id)}
-                      className="rounded border-gray-300 text-primary-600"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{service.name}</p>
-                      {service.description && (
-                        <p className="text-xs text-gray-500 truncate">{service.description}</p>
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 shrink-0">
-                      ${parseFloat(service.price.toString()).toLocaleString()}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Método de pago */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago</label>
-            <div className="space-y-2">
-              {(['MERCADOPAGO', 'TRANSFER', 'CASH'] as PaymentMethod[]).map((method) => (
-                <label
-                  key={method}
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={method}
-                    checked={paymentMethod === method}
-                    onChange={() => setPaymentMethod(method)}
-                    className="text-primary-600"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    {PAYMENT_LABELS[method]}
-                  </span>
-                </label>
-              ))}
-            </div>
-            {paymentMethod === 'TRANSFER' && (
-              <p className="mt-2 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
-                Transferir a CBU XXXX a nombre del Club. Tenés 24hs para cargar el comprobante.
-              </p>
-            )}
-          </div>
-
-          {/* Notas */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notas <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Alguna indicación especial..."
-              className="input"
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
-          <button onClick={onClose} className="btn-secondary flex-1">
-            Cancelar
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={createBooking.isPending}
-            className="btn-primary flex-1 flex items-center justify-center gap-2"
-          >
-            {createBooking.isPending && <Spinner size="sm" className="text-white" />}
-            Confirmar reserva
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function BookingSearchPage() {
   usePageHeader({ subtitle: 'Nueva reserva' });
 
+  const navigate = useNavigate();
   const today = toISODate(new Date());
 
   // Toolbar state
@@ -288,8 +41,9 @@ export default function BookingSearchPage() {
   const [numPlayers, setNumPlayers] = useState(4);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
-  // Booking modal
-  const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
+  const handleSelectSlot = (slot: SlotAvailability) => {
+    navigate('/reservas/nueva/confirmar', { state: { slot, numPlayers } });
+  };
 
   const { data: venuesData } = useVenues({ active: 'true', limit: 100 });
   const venues = venuesData?.data ?? [];
@@ -538,11 +292,11 @@ export default function BookingSearchPage() {
                           </div>
                           <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                             {venueSlots.map((slot) => {
-                              const pps = slot.playersPerSlot ?? slot.venue?.playersPerSlot ?? slot.venue?.sportType?.defaultPlayersPerSlot;
+                              const pps = slot.playersPerSlot;
                               return (
                                 <button
                                   key={slot.id}
-                                  onClick={() => setSelectedSlot(slot)}
+                                  onClick={() => handleSelectSlot(slot)}
                                   className="flex flex-col items-center justify-center gap-0.5 border border-gray-200 rounded-xl py-3 px-2 hover:border-primary-400 hover:bg-primary-50 transition-colors group"
                                 >
                                   <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-700">
@@ -599,11 +353,7 @@ export default function BookingSearchPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {(slotsData ?? []).map((slot) => {
-                    const maxP =
-                      slot.playersPerSlot ??
-                      slot.venue?.playersPerSlot ??
-                      slot.venue?.sportType?.defaultPlayersPerSlot ??
-                      '—';
+                    const maxP = slot.playersPerSlot ?? '—';
                     return (
                       <tr key={slot.id} className="hover:bg-gray-50">
                         {isRange && (
@@ -627,7 +377,7 @@ export default function BookingSearchPage() {
                         </td>
                         <td className="px-5 py-3 text-right">
                           <button
-                            onClick={() => setSelectedSlot(slot)}
+                            onClick={() => handleSelectSlot(slot)}
                             className="btn-primary py-1.5 px-4 text-sm"
                           >
                             Reservar
@@ -642,14 +392,6 @@ export default function BookingSearchPage() {
           )}
       </div>
 
-      {/* Booking modal */}
-      {selectedSlot && (
-        <BookingModal
-          slot={selectedSlot}
-          numPlayers={numPlayers}
-          onClose={() => setSelectedSlot(null)}
-        />
-      )}
     </div>
   );
 }

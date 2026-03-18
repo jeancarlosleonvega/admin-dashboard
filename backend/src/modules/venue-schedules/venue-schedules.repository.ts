@@ -6,29 +6,22 @@ const scheduleInclude = {
     select: {
       id: true,
       name: true,
-      intervalMinutes: true,
-      playersPerSlot: true,
-      openTime: true,
-      closeTime: true,
       sportType: {
-        select: {
-          id: true,
-          name: true,
-          defaultIntervalMinutes: true,
-          defaultPlayersPerSlot: true,
-          defaultOpenTime: true,
-          defaultCloseTime: true,
-        },
+        select: { id: true, name: true },
       },
+      operatingHours: true,
     },
   },
-  rules: {
+  timeRanges: {
     include: {
-      conditions: {
+      rules: {
         include: {
-          conditionType: true,
+          conditions: {
+            include: { conditionType: true },
+            orderBy: { order: 'asc' as const },
+          },
         },
-        orderBy: { order: 'asc' as const },
+        orderBy: { createdAt: 'asc' as const },
       },
     },
     orderBy: { createdAt: 'asc' as const },
@@ -62,77 +55,118 @@ export class VenueSchedulesRepository {
   }
 
   async create(data: CreateVenueScheduleInput) {
-    const schedule = await prisma.venueSchedule.create({
-      data: {
-        venueId: data.venueId,
-        name: data.name,
-        startDate: new Date(data.startDate),
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        daysOfWeek: data.daysOfWeek,
-        openTime: data.openTime ?? null,
-        closeTime: data.closeTime ?? null,
-        intervalMinutes: data.intervalMinutes ?? null,
-        playersPerSlot: data.playersPerSlot ?? null,
-        active: data.active,
-      },
-      include: scheduleInclude,
+    return prisma.$transaction(async (tx) => {
+      const schedule = await tx.venueSchedule.create({
+        data: {
+          venueId: data.venueId,
+          name: data.name,
+          startDate: data.startDate ? new Date(data.startDate) : null,
+          endDate: data.endDate ? new Date(data.endDate) : null,
+          active: data.active ?? true,
+        },
+      });
+
+      for (const tr of data.timeRanges) {
+        const timeRange = await tx.scheduleTimeRange.create({
+          data: {
+            scheduleId: schedule.id,
+            daysOfWeek: tr.daysOfWeek,
+            startTime: tr.startTime,
+            endTime: tr.endTime,
+            intervalMinutes: tr.intervalMinutes,
+            playersPerSlot: tr.playersPerSlot,
+            active: tr.active ?? true,
+          },
+        });
+
+        if (tr.rules && tr.rules.length > 0) {
+          for (const rule of tr.rules) {
+            await tx.scheduleRule.create({
+              data: {
+                timeRangeId: timeRange.id,
+                canBook: rule.canBook,
+                priceOverride: rule.priceOverride ?? null,
+                revenueManagementEnabled: rule.revenueManagementEnabled,
+                conditions: {
+                  create: rule.conditions.map((c) => ({
+                    conditionTypeId: c.conditionTypeId,
+                    operator: c.operator,
+                    value: c.value,
+                    logicalOperator: c.logicalOperator ?? null,
+                    order: c.order,
+                  })),
+                },
+              },
+            });
+          }
+        }
+      }
+
+      return tx.venueSchedule.findUnique({
+        where: { id: schedule.id },
+        include: scheduleInclude,
+      });
     });
-
-    if (data.rules && data.rules.length > 0) {
-      await this.upsertRules(schedule.id, data.rules);
-    }
-
-    return prisma.venueSchedule.findUnique({ where: { id: schedule.id }, include: scheduleInclude });
   }
 
   async update(id: string, data: UpdateVenueScheduleInput) {
-    await prisma.venueSchedule.update({
-      where: { id },
-      data: {
-        venueId: data.venueId,
-        name: data.name,
-        startDate: data.startDate ? new Date(data.startDate) : undefined,
-        endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
-        daysOfWeek: data.daysOfWeek,
-        openTime: data.openTime !== undefined ? (data.openTime ?? null) : undefined,
-        closeTime: data.closeTime !== undefined ? (data.closeTime ?? null) : undefined,
-        intervalMinutes: data.intervalMinutes !== undefined ? (data.intervalMinutes ?? null) : undefined,
-        playersPerSlot: data.playersPerSlot !== undefined ? (data.playersPerSlot ?? null) : undefined,
-        active: data.active,
-      },
-    });
-
-    if (data.rules !== undefined) {
-      await this.upsertRules(id, data.rules ?? []);
-    }
-
-    return prisma.venueSchedule.findUnique({ where: { id }, include: scheduleInclude });
-  }
-
-  private async upsertRules(scheduleId: string, rules: NonNullable<CreateVenueScheduleInput['rules']>) {
-    // Delete existing rules (cascade deletes conditions)
-    await prisma.scheduleRule.deleteMany({ where: { scheduleId } });
-
-    // Re-create
-    for (const rule of rules) {
-      await prisma.scheduleRule.create({
+    return prisma.$transaction(async (tx) => {
+      await tx.venueSchedule.update({
+        where: { id },
         data: {
-          scheduleId,
-          canBook: rule.canBook,
-          basePrice: rule.basePrice,
-          revenueManagementEnabled: rule.revenueManagementEnabled,
-          conditions: {
-            create: rule.conditions.map((c) => ({
-              conditionTypeId: c.conditionTypeId,
-              operator: c.operator,
-              value: c.value,
-              logicalOperator: c.logicalOperator ?? null,
-              order: c.order,
-            })),
-          },
+          name: data.name,
+          startDate: data.startDate !== undefined ? (data.startDate ? new Date(data.startDate) : null) : undefined,
+          endDate: data.endDate !== undefined ? (data.endDate ? new Date(data.endDate) : null) : undefined,
+          active: data.active,
         },
       });
-    }
+
+      if (data.timeRanges !== undefined) {
+        // Delete all existing timeRanges (cascade deletes rules + conditions)
+        await tx.scheduleTimeRange.deleteMany({ where: { scheduleId: id } });
+
+        for (const tr of data.timeRanges) {
+          const timeRange = await tx.scheduleTimeRange.create({
+            data: {
+              scheduleId: id,
+              daysOfWeek: tr.daysOfWeek,
+              startTime: tr.startTime,
+              endTime: tr.endTime,
+              intervalMinutes: tr.intervalMinutes,
+              playersPerSlot: tr.playersPerSlot,
+              active: tr.active ?? true,
+            },
+          });
+
+          if (tr.rules && tr.rules.length > 0) {
+            for (const rule of tr.rules) {
+              await tx.scheduleRule.create({
+                data: {
+                  timeRangeId: timeRange.id,
+                  canBook: rule.canBook,
+                  priceOverride: rule.priceOverride ?? null,
+                  revenueManagementEnabled: rule.revenueManagementEnabled,
+                  conditions: {
+                    create: rule.conditions.map((c) => ({
+                      conditionTypeId: c.conditionTypeId,
+                      operator: c.operator,
+                      value: c.value,
+                      logicalOperator: c.logicalOperator ?? null,
+                      order: c.order,
+                    })),
+                  },
+                },
+              });
+            }
+          }
+        }
+      }
+
+      return tx.venueSchedule.findUnique({
+        where: { id },
+        include: scheduleInclude,
+      });
+    });
   }
 
   async updateGeneratedUntil(id: string, generatedUntil: Date | null) {

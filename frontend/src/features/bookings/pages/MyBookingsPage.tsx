@@ -26,7 +26,7 @@ export default function MyBookingsPage() {
 
   const allBookings = data?.data ?? [];
   const bookings = allBookings.filter((b) => {
-    const slotDate = new Date(b.slot.date);
+    const slotDate = new Date(b.slot.date.slice(0, 10) + 'T12:00:00');
     slotDate.setHours(0, 0, 0, 0);
     if (activeTab === 'upcoming') return b.status !== 'CANCELLED' && slotDate >= today;
     if (activeTab === 'past') return b.status !== 'CANCELLED' && slotDate < today;

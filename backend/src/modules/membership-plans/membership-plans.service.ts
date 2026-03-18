@@ -25,24 +25,20 @@ export class MembershipPlansService {
   }
 
   async update(id: string, data: UpdateMembershipPlanInput): Promise<MembershipPlanWithSportType> {
-    const current = await this.findById(id);
+    const existing = await membershipPlansRepository.findByName(data.name ?? '');
     if (data.name) {
-      const existing = await membershipPlansRepository.findByName(data.name);
       if (existing && existing.id !== id) throw new ValidationError('Ya existe un plan con ese nombre');
     }
     const result = await membershipPlansRepository.update(id, data);
-    if (data.baseBookingPrice != null) {
-      const oldPrice = parseFloat((current as any).baseBookingPrice?.toString() ?? '0');
-      const newPrice = parseFloat(data.baseBookingPrice.toString());
-      const source = newPrice > oldPrice ? 'El precio subió' : newPrice < oldPrice ? 'El precio bajó' : 'El precio cambió';
-      broadcast('slots:invalidate', { source });
+    if (data.sportPrices !== undefined) {
+      broadcast('slots:invalidate', { source: 'Precios de planes actualizados' });
     }
     return result;
   }
 
   async findActive(): Promise<MembershipPlanWithSportType[]> {
     const { items } = await membershipPlansRepository.findAll({ active: 'true' }, 1, 100);
-    return items;
+    return items as MembershipPlanWithSportType[];
   }
 
   async delete(id: string): Promise<void> {

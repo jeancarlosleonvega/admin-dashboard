@@ -1,27 +1,21 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePageHeader } from '@/hooks/usePageHeader';
-import { ArrowLeft, Ban, ChevronLeft, ChevronRight, Clock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Ban, ChevronLeft, ChevronRight, Clock, Pencil, ShieldCheck } from 'lucide-react';
 import { useVenueSchedule } from '@/hooks/queries/useVenueSchedules';
 import { useSlots, useSlotAvailability } from '@/hooks/queries/useSlots';
 import { useBlockedPeriods } from '@/hooks/queries/useBlockedPeriods';
 import { useMembershipPlans } from '@/hooks/queries/useMembershipPlans';
 import { Spinner } from '@components/ui/Spinner';
 import { formatDate, formatDateLong } from '@lib/formatDate';
-import type { ScheduleRule } from '@/types/venue-schedule.types';
-
-const DAY_NAMES: Record<number, string> = {
-  1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo',
-};
+import type { ScheduleTimeRange } from '@/types/venue-schedule.types';
 
 const MONTH_NAMES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-const OPERATOR_LABELS: Record<string, string> = {
-  EQ: '=', NEQ: '≠', GT: '>', GTE: '≥', LT: '<', LTE: '≤',
-};
+import { OPERATOR_LABELS } from '@lib/operatorLabels';
 
 const STATUS_LABEL: Record<string, string> = {
   AVAILABLE: 'Disponible',
@@ -131,8 +125,22 @@ export default function SlotsViewPage() {
     return <div className="text-center py-20 text-gray-400"><p>No se encontró el horario.</p></div>;
   }
 
-  // Jugadores efectivos: schedule → venue → sportType
-  const effectivePlayers = schedule.playersPerSlot ?? schedule.venue?.playersPerSlot ?? schedule.venue?.sportType?.defaultPlayersPerSlot;
+  // Jugadores efectivos: tomar del primer timeRange activo
+  const firstActiveTimeRange = schedule.timeRanges?.find((tr) => tr.active);
+  const effectivePlayers = firstActiveTimeRange?.playersPerSlot ?? null;
+
+  // Mapear cada slot al timeRange correspondiente según su startTime
+  const slotTimeRangeMap = useMemo(() => {
+    if (!schedule?.timeRanges || !slots) return {} as Record<string, { tr: ScheduleTimeRange; index: number }>;
+    const result: Record<string, { tr: ScheduleTimeRange; index: number }> = {};
+    for (const slot of slots) {
+      const idx = schedule.timeRanges.findIndex(
+        (tr) => slot.startTime >= tr.startTime && slot.startTime < tr.endTime,
+      );
+      if (idx !== -1) result[slot.id] = { tr: schedule.timeRanges[idx], index: idx };
+    }
+    return result;
+  }, [schedule?.timeRanges, slots]);
 
   return (
     <div>
@@ -145,130 +153,123 @@ export default function SlotsViewPage() {
       </button>
 
       {/* Detalle del horario */}
-      <div className="card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{schedule.name}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+      <div className="card px-5 py-3 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold text-gray-900">{schedule.name}</h2>
+          <button
+            onClick={() => navigate(`/horarios/${scheduleId}/editar`)}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
+            <Pencil className="w-4 h-4" />
+            Editar horario
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-x-8 gap-y-2">
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Espacio</p>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Espacio</p>
             <p className="text-sm text-gray-900">{schedule.venue?.name ?? '—'}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Deporte</p>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Deporte</p>
             <p className="text-sm text-gray-900">{schedule.venue?.sportType?.name ?? '—'}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Estado</p>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Estado</p>
+            <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
               {schedule.active ? 'Activo' : 'Inactivo'}
             </span>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Jugadores por turno</p>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Jugadores / turno</p>
+            <p className="text-sm text-gray-900">{effectivePlayers ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Bloques</p>
             <p className="text-sm text-gray-900">
-              {effectivePlayers ?? '—'}
-              {schedule.playersPerSlot == null && effectivePlayers != null && (
-                <span className="ml-1 text-xs text-gray-400">(heredado)</span>
-              )}
+              {schedule.timeRanges && schedule.timeRanges.length > 0
+                ? `${schedule.timeRanges.length} bloque${schedule.timeRanges.length !== 1 ? 's' : ''}`
+                : '—'}
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Horario</p>
-            <p className="text-sm text-gray-900">
-              {schedule.openTime && schedule.closeTime ? `${schedule.openTime} — ${schedule.closeTime}` : 'Por defecto'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Intervalo</p>
-            <p className="text-sm text-gray-900">
-              {schedule.intervalMinutes ? `${schedule.intervalMinutes} min` : 'Por defecto'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Generado hasta</p>
-            <p className="text-sm text-gray-900">
-              {formatDate(schedule.generatedUntil)}
-            </p>
-          </div>
-          <div className="col-span-2 sm:col-span-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Días</p>
-            <div className="flex flex-wrap gap-1">
-              {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                <span
-                  key={d}
-                  className={`px-1.5 py-0.5 text-xs font-medium rounded ${
-                    schedule.daysOfWeek.includes(d) ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
-                  }`}
-                >
-                  {DAY_NAMES[d].slice(0, 2)}
-                </span>
-              ))}
-            </div>
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Generado hasta</p>
+            <p className="text-sm text-gray-900">{formatDate(schedule.generatedUntil)}</p>
           </div>
         </div>
       </div>
 
-      {/* Condiciones de acceso */}
-      {schedule.rules && schedule.rules.length > 0 && (
-        <div className="card p-6 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ShieldCheck className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-semibold text-gray-900">Condiciones de acceso</h3>
+      {/* Condiciones de acceso por bloque */}
+      {schedule.timeRanges && schedule.timeRanges.some((tr) => (tr.rules ?? []).length > 0) && (
+        <div className="card p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-900">Condiciones de acceso por bloque</h3>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-700">✓ Puede</span>
+                <span>= puede reservar</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-flex px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700">RM</span>
+                <span>= precio dinámico</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-flex px-1.5 py-0.5 text-xs rounded bg-yellow-50 text-yellow-700 border border-yellow-200">$N</span>
+                <span>= precio override</span>
+              </span>
+            </div>
           </div>
-          <div className="space-y-3">
-            {schedule.rules.map((rule: ScheduleRule, idx: number) => (
-              <div key={rule.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-gray-700">Regla {idx + 1}</span>
-                  <div className="flex items-center gap-3">
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${rule.canBook ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {rule.canBook ? 'Puede reservar' : 'No puede reservar'}
-                    </span>
-                    {rule.revenueManagementEnabled && (
-                      <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">
-                        Revenue management
-                      </span>
-                    )}
+          <div className="divide-y divide-gray-100">
+            {schedule.timeRanges.map((tr, trIdx) => {
+              const rules = tr.rules ?? [];
+              if (rules.length === 0) return null;
+              return (
+                <div key={tr.id} className="py-2.5 flex gap-4 items-start">
+                  <div className="shrink-0 w-32 pt-0.5">
+                    <p className="text-xs font-semibold text-gray-700">B{trIdx + 1} <span className="font-normal text-gray-400">{tr.startTime}–{tr.endTime}</span></p>
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    {rules.map((rule, rIdx) => (
+                      <div key={rule.id} className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-xs text-gray-400 shrink-0">R{rIdx + 1}</span>
+                        <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded ${rule.canBook ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {rule.canBook ? '✓ Puede' : '✗ No puede'}
+                        </span>
+                        {rule.priceOverride != null && (
+                          <span className="inline-flex px-1.5 py-0.5 text-xs rounded bg-yellow-50 text-yellow-700 border border-yellow-200">
+                            ${rule.priceOverride.toLocaleString()}
+                          </span>
+                        )}
+                        {rule.revenueManagementEnabled && (
+                          <span className="inline-flex px-1.5 py-0.5 text-xs rounded bg-purple-100 text-purple-700">RM</span>
+                        )}
+                        {rule.conditions.map((cond, cIdx) => {
+                          const valueLabel = cond.conditionType.key === 'membership_plan'
+                            ? (membershipPlans.find((p) => p.id === cond.value)?.name ?? cond.value)
+                            : (cond.conditionType.allowedValues ?? []).find((av) => av.value === cond.value)?.label ?? cond.value;
+                          return (
+                            <span key={cIdx} className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-700 rounded px-1.5 py-0.5">
+                              {cIdx > 0 && <span className="text-blue-500 font-semibold">{cond.logicalOperator}</span>}
+                              <span>{cond.conditionType.name}</span>
+                              <span className="text-gray-400">{OPERATOR_LABELS[cond.operator] ?? cond.operator}</span>
+                              <span className="font-medium">{valueLabel}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-6 mb-3">
-                  <div>
-                    <p className="text-xs text-gray-500">Precio base</p>
-                    <p className="text-sm font-medium text-gray-900">${rule.basePrice.toLocaleString()}</p>
-                  </div>
-                </div>
-                {rule.conditions.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Condiciones</p>
-                    <div className="space-y-1">
-                      {rule.conditions.map((cond, condIdx) => {
-                        const valueLabel = cond.conditionType.key === 'membership_plan'
-                          ? (membershipPlans.find((p) => p.id === cond.value)?.name ?? cond.value)
-                          : cond.conditionType.key === 'sex'
-                          ? (cond.value === 'MALE' ? 'Masculino' : cond.value === 'FEMALE' ? 'Femenino' : cond.value)
-                          : cond.value;
-                        return (
-                          <div key={condIdx} className="flex items-center gap-2 text-sm text-gray-700">
-                            {condIdx > 0 && (
-                              <span className="text-xs font-semibold text-blue-600 w-8">{cond.logicalOperator}</span>
-                            )}
-                            {condIdx === 0 && <span className="w-8" />}
-                            <span className="font-medium">{cond.conditionType.name}</span>
-                            <span className="text-gray-400">{OPERATOR_LABELS[cond.operator] ?? cond.operator}</span>
-                            <span className="text-gray-900">{valueLabel}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Calendario + Slots */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_1.4fr)] gap-6">
 
         {/* Calendario */}
         <div className="card p-4">
@@ -302,7 +303,7 @@ export default function SlotsViewPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {Array.from({ length: calendarDays.startPad }).map((_, i) => (
               <div key={`pad-${i}`} />
             ))}
@@ -319,7 +320,7 @@ export default function SlotsViewPage() {
                 <button
                   key={day}
                   onClick={() => setSelectedDate(dateStr)}
-                  className={`relative flex flex-col items-center justify-center rounded-lg py-1.5 text-sm transition-colors ${
+                  className={`relative flex flex-col items-center justify-center rounded py-1 text-xs transition-colors ${
                     isSelected
                       ? isFullDay
                         ? 'bg-red-600 text-white'
@@ -333,12 +334,12 @@ export default function SlotsViewPage() {
                   title={isFullDay ? fullBlockedMap[dateStr] : undefined}
                 >
                   <span className="font-medium leading-none">{day}</span>
-                  {isFullDay && !isSelected && <Ban className="w-2.5 h-2.5 mt-0.5 text-red-400" />}
+                  {isFullDay && !isSelected && <Ban className="w-2 h-2 mt-0.5 text-red-400" />}
                   {isPartial && !isFullDay && (
-                    <span className="w-1.5 h-1.5 mt-0.5 rounded-full bg-orange-400 inline-block" />
+                    <span className="w-1 h-1 mt-0.5 rounded-full bg-orange-400 inline-block" />
                   )}
                   {!isFullDay && !isPartial && count != null && (
-                    <span className={`text-[10px] mt-0.5 leading-none font-medium ${isSelected ? 'text-primary-100' : 'text-green-600'}`}>
+                    <span className={`text-[9px] mt-0.5 leading-none font-medium ${isSelected ? 'text-primary-100' : 'text-green-600'}`}>
                       {count}
                     </span>
                   )}
@@ -402,23 +403,40 @@ export default function SlotsViewPage() {
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bloque</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {slots.map((slot) => (
-                        <tr key={slot.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                            {slot.startTime} — {slot.endTime}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                              {STATUS_LABEL[slot.status] ?? slot.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {slots.map((slot) => {
+                        const match = slotTimeRangeMap[slot.id];
+                        const hasRules = (match?.tr.rules ?? []).length > 0;
+                        return (
+                          <tr key={slot.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2.5 text-sm font-medium text-gray-900">
+                              {slot.startTime} — {slot.endTime}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${STATUS_CLASS[slot.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                {STATUS_LABEL[slot.status] ?? slot.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {match ? (
+                                <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                                  <span className="font-semibold">B{match.index + 1}</span>
+                                  {hasRules && (
+                                    <ShieldCheck className="w-3 h-3 text-blue-500" title={`${match.tr.rules!.length} regla${match.tr.rules!.length !== 1 ? 's' : ''}`} />
+                                  )}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-300">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

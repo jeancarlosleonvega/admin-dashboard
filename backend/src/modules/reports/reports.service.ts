@@ -419,6 +419,338 @@ export class ReportsService {
       services,
     };
   }
+
+  async getRevenueDetail(filters: {
+    from: Date; to: Date; venueId?: string; sportTypeId?: string;
+    search?: string; page: number; limit: number;
+    sortBy?: string; sortDirection?: 'asc' | 'desc';
+  }) {
+    const { from, to, venueId, sportTypeId, search, page, limit, sortBy, sortDirection } = filters;
+
+    const where: any = { status: 'APPROVED', createdAt: { gte: from, lte: to } };
+
+    const bookingFilter: any = {};
+    if (venueId) bookingFilter.slot = { venueId };
+    if (sportTypeId) bookingFilter.slot = { ...(bookingFilter.slot ?? {}), venue: { sportTypeId } };
+
+    if (search) {
+      bookingFilter.user = {
+        OR: [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    if (Object.keys(bookingFilter).length > 0) where.booking = bookingFilter;
+
+    const validSortFields: Record<string, any> = {
+      date: { createdAt: sortDirection ?? 'desc' },
+      amount: { amount: sortDirection ?? 'desc' },
+      method: { method: sortDirection ?? 'asc' },
+    };
+    const orderBy = sortBy && validSortFields[sortBy] ? validSortFields[sortBy] : { createdAt: 'desc' };
+
+    const [items, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+        include: {
+          booking: {
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true, email: true } },
+              slot: {
+                include: {
+                  venue: { include: { sportType: { select: { id: true, name: true } } } },
+                },
+              },
+            },
+          },
+        },
+      }),
+      prisma.payment.count({ where }),
+    ]);
+
+    const METHOD_LABELS: Record<string, string> = {
+      TRANSFER: 'Transferencia', CASH: 'Efectivo', MERCADOPAGO: 'MercadoPago', WALLET: 'Wallet',
+    };
+
+    return {
+      items: items.map((p) => ({
+        id: p.id,
+        date: p.createdAt.toISOString(),
+        amount: Number(p.amount),
+        method: p.method,
+        methodLabel: METHOD_LABELS[p.method] ?? p.method,
+        status: p.status,
+        userId: p.booking.user.id,
+        userName: `${p.booking.user.firstName} ${p.booking.user.lastName}`,
+        userEmail: p.booking.user.email,
+        venueName: p.booking.slot?.venue?.name ?? '',
+        sportTypeName: (p.booking.slot?.venue as any)?.sportType?.name ?? '',
+        bookingId: p.bookingId,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getOccupancyDetail(filters: {
+    from: Date; to: Date; venueId?: string;
+    search?: string; page: number; limit: number;
+    sortBy?: string; sortDirection?: 'asc' | 'desc';
+  }) {
+    const { from, to, venueId, search, page, limit, sortBy, sortDirection } = filters;
+
+    const where: any = { date: { gte: from, lte: to } };
+    if (venueId) where.venueId = venueId;
+    if (search) where.venue = { name: { contains: search, mode: 'insensitive' } };
+
+    const validSortFields: Record<string, any> = {
+      date: [{ date: sortDirection ?? 'asc' }, { startTime: 'asc' }],
+      startTime: { startTime: sortDirection ?? 'asc' },
+      venueName: { venue: { name: sortDirection ?? 'asc' } },
+      status: { status: sortDirection ?? 'asc' },
+    };
+    const orderBy = sortBy && validSortFields[sortBy] ? validSortFields[sortBy] : [{ date: 'asc' }, { startTime: 'asc' }];
+
+    const [items, total] = await Promise.all([
+      prisma.slot.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+        include: { venue: { select: { id: true, name: true } } },
+      }),
+      prisma.slot.count({ where }),
+    ]);
+
+    const STATUS_LABELS: Record<string, string> = {
+      AVAILABLE: 'Disponible', BOOKED: 'Reservado', BLOCKED: 'Bloqueado',
+    };
+
+    return {
+      items: items.map((s) => ({
+        id: s.id,
+        date: s.date.toISOString().slice(0, 10),
+        startTime: s.startTime,
+        endTime: s.endTime,
+        status: s.status,
+        statusLabel: STATUS_LABELS[s.status] ?? s.status,
+        venueId: s.venueId,
+        venueName: s.venue.name,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getBookingsDetail(filters: {
+    from: Date; to: Date;
+    search?: string; page: number; limit: number;
+    sortBy?: string; sortDirection?: 'asc' | 'desc';
+    status?: string;
+  }) {
+    const { from, to, search, page, limit, sortBy, sortDirection, status } = filters;
+
+    const where: any = { createdAt: { gte: from, lte: to } };
+    if (status) where.status = status;
+    if (search) {
+      where.user = {
+        OR: [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const validSortFields: Record<string, any> = {
+      createdAt: { createdAt: sortDirection ?? 'desc' },
+      status: { status: sortDirection ?? 'asc' },
+      slotDate: { slot: { date: sortDirection ?? 'asc' } },
+    };
+    const orderBy = sortBy && validSortFields[sortBy] ? validSortFields[sortBy] : { createdAt: 'desc' };
+
+    const [items, total] = await Promise.all([
+      prisma.booking.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          slot: { include: { venue: { select: { id: true, name: true } } } },
+        },
+      }),
+      prisma.booking.count({ where }),
+    ]);
+
+    const STATUS_LABELS: Record<string, string> = {
+      CONFIRMED: 'Confirmada', CANCELLED: 'Cancelada', NO_SHOW: 'Ausente',
+      PENDING_PAYMENT: 'Pend. pago', COMPLETED: 'Completada',
+    };
+
+    return {
+      items: items.map((b) => ({
+        id: b.id,
+        createdAt: b.createdAt.toISOString(),
+        status: b.status,
+        statusLabel: STATUS_LABELS[b.status] ?? b.status,
+        userId: b.user.id,
+        userName: `${b.user.firstName} ${b.user.lastName}`,
+        userEmail: b.user.email,
+        venueName: b.slot?.venue?.name ?? '',
+        slotDate: b.slot?.date ? b.slot.date.toISOString().slice(0, 10) : '',
+        startTime: b.slot?.startTime ?? '',
+        endTime: b.slot?.endTime ?? '',
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getMembershipsDetail(filters: {
+    from: Date; to: Date;
+    search?: string; page: number; limit: number;
+    sortBy?: string; sortDirection?: 'asc' | 'desc';
+    status?: string;
+  }) {
+    const { from, to, search, page, limit, sortBy, sortDirection, status } = filters;
+
+    const where: any = { createdAt: { gte: from, lte: to } };
+    if (status) where.status = status;
+    if (search) {
+      where.user = {
+        OR: [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    const validSortFields: Record<string, any> = {
+      createdAt: { createdAt: sortDirection ?? 'desc' },
+      status: { status: sortDirection ?? 'asc' },
+      startDate: { startDate: sortDirection ?? 'desc' },
+      endDate: { endDate: sortDirection ?? 'desc' },
+    };
+    const orderBy = sortBy && validSortFields[sortBy] ? validSortFields[sortBy] : { createdAt: 'desc' };
+
+    const [items, total] = await Promise.all([
+      prisma.userMembership.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+          membershipPlan: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.userMembership.count({ where }),
+    ]);
+
+    const STATUS_LABELS: Record<string, string> = {
+      ACTIVE: 'Activa', INACTIVE: 'Inactiva', CANCELLED: 'Cancelada', SUSPENDED: 'Suspendida',
+    };
+
+    return {
+      items: items.map((m) => ({
+        id: m.id,
+        status: m.status,
+        statusLabel: STATUS_LABELS[m.status] ?? m.status,
+        createdAt: m.createdAt.toISOString(),
+        startDate: m.startDate ? m.startDate.toISOString().slice(0, 10) : null,
+        endDate: m.endDate ? m.endDate.toISOString().slice(0, 10) : null,
+        userId: m.user.id,
+        userName: `${m.user.firstName} ${m.user.lastName}`,
+        userEmail: m.user.email,
+        planId: m.membershipPlan.id,
+        planName: m.membershipPlan.name,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getServicesDetail(filters: {
+    from: Date; to: Date;
+    search?: string; page: number; limit: number;
+    sortBy?: string; sortDirection?: 'asc' | 'desc';
+  }) {
+    const { from, to, search, page, limit, sortBy, sortDirection } = filters;
+
+    const where: any = { booking: { createdAt: { gte: from, lte: to } } };
+    if (search) {
+      where.OR = [
+        { service: { name: { contains: search, mode: 'insensitive' } } },
+        { booking: { user: { firstName: { contains: search, mode: 'insensitive' } } } },
+        { booking: { user: { lastName: { contains: search, mode: 'insensitive' } } } },
+      ];
+    }
+
+    const orderBy: any = sortBy === 'price'
+      ? { price: sortDirection ?? 'desc' }
+      : sortBy === 'serviceName'
+      ? { service: { name: sortDirection ?? 'asc' } }
+      : { booking: { createdAt: 'desc' } };
+
+    const [items, total] = await Promise.all([
+      prisma.bookingService.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+        include: {
+          service: { select: { id: true, name: true } },
+          booking: {
+            include: {
+              user: { select: { id: true, firstName: true, lastName: true, email: true } },
+              slot: { include: { venue: { select: { name: true } } } },
+            },
+          },
+        },
+      }),
+      prisma.bookingService.count({ where }),
+    ]);
+
+    const STATUS_LABELS: Record<string, string> = {
+      CONFIRMED: 'Confirmada', CANCELLED: 'Cancelada', NO_SHOW: 'Ausente',
+      PENDING_PAYMENT: 'Pend. pago', COMPLETED: 'Completada',
+    };
+
+    return {
+      items: items.map((bs) => ({
+        id: bs.id,
+        serviceName: bs.service.name,
+        price: Number(bs.price),
+        bookingStatus: bs.booking.status,
+        bookingStatusLabel: STATUS_LABELS[bs.booking.status] ?? bs.booking.status,
+        userId: bs.booking.user.id,
+        userName: `${bs.booking.user.firstName} ${bs.booking.user.lastName}`,
+        userEmail: bs.booking.user.email,
+        venueName: bs.booking.slot?.venue?.name ?? '',
+        bookingDate: bs.booking.createdAt.toISOString().slice(0, 10),
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
 
 export const reportsService = new ReportsService();

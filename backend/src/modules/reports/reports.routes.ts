@@ -10,4 +10,9 @@ export async function reportsRoutes(app: FastifyInstance) {
   app.get('/bookings', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getBookings);
   app.get('/memberships', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getMemberships);
   app.get('/services', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getServices);
+  app.get('/revenue/detail', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getRevenueDetail);
+  app.get('/occupancy/detail', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getOccupancyDetail);
+  app.get('/bookings/detail', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getBookingsDetail);
+  app.get('/memberships/detail', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getMembershipsDetail);
+  app.get('/services/detail', { preHandler: [authenticate, authorize(['reports.view'])] }, reportsController.getServicesDetail);
 }

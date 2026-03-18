@@ -16,10 +16,6 @@ function formatMinutes(minutes: number): string {
   return `${h}:${m}`;
 }
 
-function dateToISOString(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
 function isTimeOverlapping(
   slotStart: string,
   slotEnd: string,
@@ -34,27 +30,26 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
   if (!schedule) throw new NotFoundError('Schedule');
 
   const venue = schedule.venue as any;
-  const sportType = venue.sportType;
+  const timeRanges = (schedule as any).timeRanges as Array<{
+    id: string;
+    daysOfWeek: number[];
+    startTime: string;
+    endTime: string;
+    intervalMinutes: number;
+    playersPerSlot: number;
+    active: boolean;
+  }>;
 
-  // Resolver valores: schedule override → venue override → sportType default
-  const intervalMinutes =
-    schedule.intervalMinutes ?? venue.intervalMinutes ?? sportType.defaultIntervalMinutes;
-  const openTime =
-    schedule.openTime ?? venue.openTime ?? sportType.defaultOpenTime;
-  const closeTime =
-    schedule.closeTime ?? venue.closeTime ?? sportType.defaultCloseTime;
+  const activeTimeRanges = timeRanges.filter((tr) => tr.active);
+  if (activeTimeRanges.length === 0) return;
 
-  // Trabajar solo con strings YYYY-MM-DD para evitar cualquier problema de timezone.
-  // generateUntil viene como UTC midnight desde el frontend (date-only → UTC en JS),
-  // por lo que la parte de fecha en UTC es siempre la fecha exacta que eligió el usuario.
-  const endDateStr = generateUntil.toISOString().split('T')[0]; // "2026-03-31"
-
-  // today en UTC
+  const endDateStr = generateUntil.toISOString().split('T')[0];
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // startDate del schedule: se guardó como UTC midnight → la parte UTC es la fecha correcta
-  const startDateStr = schedule.startDate.toISOString().split('T')[0];
-
+  // startDate del schedule es opcional: si null, empezar desde hoy
+  const startDateStr = schedule.startDate
+    ? schedule.startDate.toISOString().split('T')[0]
+    : todayStr;
   const startFromStr = startDateStr > todayStr ? startDateStr : todayStr;
 
   if (startFromStr > endDateStr) {
@@ -70,7 +65,7 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
       endDate: { gte: new Date(startFromStr + 'T00:00:00.000Z') },
       OR: [
         { venueId: venue.id },
-        { sportTypeId: sportType.id },
+        { sportTypeId: venue.sportType.id },
         { sportTypeId: null, venueId: null },
       ],
     },
@@ -79,40 +74,38 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
   const slotsToCreate: {
     venueId: string;
     scheduleId: string;
+    timeRangeId: string;
     date: Date;
     startTime: string;
     endTime: string;
     status: 'AVAILABLE';
   }[] = [];
 
-  const openMinutes = timeToMinutes(openTime);
-  const closeMinutes = timeToMinutes(closeTime);
-
-  // Loop sobre strings de fecha: comparación pura de strings YYYY-MM-DD, sin timestamps
   let currentDateStr = startFromStr;
   while (currentDateStr <= endDateStr) {
     const dateStr = currentDateStr;
     const dayDate = new Date(dateStr + 'T00:00:00.000Z');
-    // isoDay: 1=Lunes, 7=Domingo
-    const tempDate = new Date(dateStr + 'T12:00:00.000Z'); // mediodía UTC evita cualquier desfase
+    const tempDate = new Date(dateStr + 'T12:00:00.000Z');
     const isoDay = tempDate.getUTCDay() === 0 ? 7 : tempDate.getUTCDay();
 
-    if (schedule.daysOfWeek.includes(isoDay)) {
+    // Verificar si el día completo está bloqueado
+    const dayBlocked = blockedPeriods.some((bp) => {
+      const bpStartStr = bp.startDate.toISOString().split('T')[0];
+      const bpEndStr = bp.endDate.toISOString().split('T')[0];
+      return !bp.startTime && dateStr >= bpStartStr && dateStr <= bpEndStr;
+    });
 
-      // Verificar si el día completo está bloqueado
-      const dayBlocked = blockedPeriods.some((bp) => {
-        const bpStartStr = bp.startDate.toISOString().split('T')[0];
-        const bpEndStr = bp.endDate.toISOString().split('T')[0];
-        return !bp.startTime && dateStr >= bpStartStr && dateStr <= bpEndStr;
-      });
+    if (!dayBlocked) {
+      for (const tr of activeTimeRanges) {
+        if (!tr.daysOfWeek.includes(isoDay)) continue;
 
-      if (!dayBlocked) {
-        // Generar slots
-        for (let start = openMinutes; start + intervalMinutes <= closeMinutes; start += intervalMinutes) {
+        const openMinutes = timeToMinutes(tr.startTime);
+        const closeMinutes = timeToMinutes(tr.endTime);
+
+        for (let start = openMinutes; start + tr.intervalMinutes <= closeMinutes; start += tr.intervalMinutes) {
           const slotStart = formatMinutes(start);
-          const slotEnd = formatMinutes(start + intervalMinutes);
+          const slotEnd = formatMinutes(start + tr.intervalMinutes);
 
-          // Verificar si la franja está bloqueada
           const timeBlocked = blockedPeriods.some((bp) => {
             if (!bp.startTime || !bp.endTime) return false;
             const bpStartStr = bp.startDate.toISOString().split('T')[0];
@@ -124,6 +117,7 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
             slotsToCreate.push({
               venueId: venue.id,
               scheduleId,
+              timeRangeId: tr.id,
               date: dayDate,
               startTime: slotStart,
               endTime: slotEnd,
@@ -134,13 +128,11 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
       }
     }
 
-    // Avanzar al siguiente día como string
     const next = new Date(currentDateStr + 'T12:00:00.000Z');
     next.setUTCDate(next.getUTCDate() + 1);
     currentDateStr = next.toISOString().split('T')[0];
   }
 
-  // Insertar en lotes, ignorar duplicados
   if (slotsToCreate.length > 0) {
     await prisma.slot.createMany({
       data: slotsToCreate,
@@ -148,8 +140,7 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
     });
   }
 
-  // Re-aplicar períodos bloqueados activos sobre slots recién generados
-  // (por si existían períodos bloqueados antes de generar)
+  // Re-aplicar períodos bloqueados
   for (const bp of blockedPeriods) {
     const bpStartStr = bp.startDate.toISOString().split('T')[0];
     const bpEndStr = bp.endDate.toISOString().split('T')[0];
@@ -172,7 +163,6 @@ export async function generateSlots(scheduleId: string, generateUntil: Date) {
     await prisma.slot.updateMany({ where, data: { status: 'BLOCKED' } });
   }
 
-  // Eliminar slots AVAILABLE que queden más allá de la nueva fecha límite
   await prisma.slot.deleteMany({
     where: {
       scheduleId,
@@ -205,21 +195,9 @@ export class VenueSchedulesService {
     });
     if (!venue) throw new ValidationError('Venue no encontrado');
 
-    // Copiar valores del venue (que a su vez ya heredó del sportType) si no se especificaron
-    const st = venue.sportType as { defaultOpenTime: string; defaultCloseTime: string; defaultIntervalMinutes: number; defaultPlayersPerSlot: number };
-    const resolved = {
-      ...data,
-      openTime: data.openTime ?? venue.openTime ?? st.defaultOpenTime,
-      closeTime: data.closeTime ?? venue.closeTime ?? st.defaultCloseTime,
-      intervalMinutes: data.intervalMinutes ?? venue.intervalMinutes ?? st.defaultIntervalMinutes,
-      playersPerSlot: data.playersPerSlot ?? venue.playersPerSlot ?? st.defaultPlayersPerSlot,
-      rules: data.rules,
-    };
-
-    const item = await venueSchedulesRepository.create(resolved);
+    const item = await venueSchedulesRepository.create(data);
     if (!item) throw new ValidationError('Error al crear el schedule');
 
-    // Si tiene fecha de fin usar esa; si no, generar 60 días adelante
     const today = new Date();
     const defaultUntil = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
     const generateUntil = item.endDate ?? defaultUntil;
@@ -239,7 +217,7 @@ export class VenueSchedulesService {
     const updated = await venueSchedulesRepository.update(id, data);
     if (!updated) throw new ValidationError('Error al actualizar el schedule');
 
-    // Borrar todos los slots AVAILABLE futuros de este schedule (horario, días o fechas cambiaron)
+    // Borrar todos los slots AVAILABLE futuros de este schedule
     const todayDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
     await prisma.slot.deleteMany({
       where: {
@@ -252,7 +230,6 @@ export class VenueSchedulesService {
     // Resetear generatedUntil para forzar regeneración completa
     await venueSchedulesRepository.updateGeneratedUntil(id, null);
 
-    // Regenerar desde cero con la nueva configuración
     const defaultUntilStr = new Date(new Date().getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const newEndStr = updated.endDate ? updated.endDate.toISOString().split('T')[0] : defaultUntilStr;
     try {
@@ -268,7 +245,6 @@ export class VenueSchedulesService {
   async delete(id: string) {
     await this.findById(id);
 
-    // Verificar que no haya reservas activas en slots de este horario
     const activeBookings = await prisma.booking.count({
       where: {
         slot: { scheduleId: id },
@@ -281,6 +257,10 @@ export class VenueSchedulesService {
       );
     }
 
+    await prisma.booking.deleteMany({
+      where: { slot: { scheduleId: id } },
+    });
+
     await venueSchedulesRepository.delete(id);
     broadcast('slots:invalidate', { source: 'Horarios actualizados' });
   }
@@ -289,10 +269,8 @@ export class VenueSchedulesService {
     await this.findById(id);
     const generateUntil = new Date(until);
 
-    // Actualizar endDate del schedule
     await venueSchedulesRepository.update(id, { endDate: until });
 
-    // Borrar todos los slots AVAILABLE futuros y regenerar desde cero
     const todayDate = new Date(new Date().toISOString().split('T')[0] + 'T00:00:00.000Z');
     await prisma.slot.deleteMany({
       where: { scheduleId: id, status: 'AVAILABLE', date: { gte: todayDate } },

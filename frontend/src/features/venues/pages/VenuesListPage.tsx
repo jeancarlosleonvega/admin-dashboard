@@ -18,8 +18,7 @@ import toast from 'react-hot-toast';
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Nombre', sortable: true, filterable: true, type: 'text' },
   { key: 'sportType', label: 'Tipo de Deporte', sortable: false, filterable: false },
-  { key: 'players', label: 'Jugadores/turno', sortable: false, filterable: false },
-  { key: 'schedule', label: 'Horario', sortable: false, filterable: false },
+  { key: 'operatingHours', label: 'Horarios de operación', sortable: false, filterable: false },
   {
     key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
       { label: 'Activo', value: 'true' },
@@ -123,8 +122,7 @@ export default function VenuesListPage() {
           const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
             if (c.key === 'name') return item.name;
             if (c.key === 'sportType') return item.sportType.name;
-            if (c.key === 'players') return String(item.playersPerSlot);
-            if (c.key === 'schedule') return `${item.openTime} - ${item.closeTime}`;
+            if (c.key === 'operatingHours') return item.operatingHours?.map((oh) => `${oh.openTime}-${oh.closeTime}`).join(', ') ?? '';
             if (c.key === 'status') return item.active ? 'Activo' : 'Inactivo';
             return '';
           }));
@@ -158,11 +156,8 @@ export default function VenuesListPage() {
                     {visibleColumns.includes('sportType') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Deporte</th>
                     )}
-                    {visibleColumns.includes('players') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jugadores/turno</th>
-                    )}
-                    {visibleColumns.includes('schedule') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                    {visibleColumns.includes('operatingHours') && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horarios de operación</th>
                     )}
                     {visibleColumns.includes('status') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -192,14 +187,11 @@ export default function VenuesListPage() {
                           </span>
                         </td>
                       )}
-                      {visibleColumns.includes('players') && (
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {item.playersPerSlot}
-                        </td>
-                      )}
-                      {visibleColumns.includes('schedule') && (
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {item.openTime} - {item.closeTime}
+                      {visibleColumns.includes('operatingHours') && (
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {item.operatingHours && item.operatingHours.length > 0
+                            ? `${item.operatingHours.length} franja${item.operatingHours.length !== 1 ? 's' : ''}`
+                            : <span className="text-gray-400">Sin horario</span>}
                         </td>
                       )}
                       {visibleColumns.includes('status') && (

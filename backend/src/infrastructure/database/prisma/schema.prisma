@@ -202,75 +202,89 @@ model SystemConfig {
 // ─── Sport Types & Venues ────────────────────────────────────────────────────
 
 model SportType {
-  id                     String   @id @default(uuid())
-  name                   String   @unique
-  description            String?
-  defaultIntervalMinutes Int      @default(10) @map("default_interval_minutes")
-  defaultPlayersPerSlot  Int      @default(4) @map("default_players_per_slot")
-  defaultOpenTime        String   @default("08:00") @map("default_open_time")
-  defaultCloseTime       String   @default("18:00") @map("default_close_time")
-  defaultEnabledDays     Int[]    @default([1, 2, 3, 4, 5, 6, 7]) @map("default_enabled_days")
-  defaultMemberPrice     Decimal  @default(0) @db.Decimal(10, 2) @map("default_member_price")
-  defaultNonMemberPrice  Decimal  @default(0) @db.Decimal(10, 2) @map("default_non_member_price")
-  active                 Boolean  @default(true)
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   venues             Venue[]
   membershipPlans    MembershipPlan[]
   blockedPeriods     BlockedPeriod[]
   pricingConfigs     PricingConfig[]
   additionalServices AdditionalService[]
+  sportPrices        MembershipPlanSportPrice[]
 
   @@map("sport_types")
 }
 
 model Venue {
-  id              String   @id @default(uuid())
-  sportTypeId     String   @map("sport_type_id")
-  name            String
-  description     String?
-  intervalMinutes Int?     @map("interval_minutes")
-  playersPerSlot  Int?     @map("players_per_slot")
-  openTime        String?  @map("open_time")
-  closeTime       String?  @map("close_time")
-  enabledDays     Int[]    @default([]) @map("enabled_days")
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  sportTypeId String   @map("sport_type_id")
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  sportType      SportType      @relation(fields: [sportTypeId], references: [id])
+  sportType      SportType             @relation(fields: [sportTypeId], references: [id])
   schedules      VenueSchedule[]
   slots          Slot[]
   blockedPeriods BlockedPeriod[]
+  operatingHours VenueOperatingHours[]
 
   @@map("venues")
+}
+
+model VenueOperatingHours {
+  id         String @id @default(uuid())
+  venueId    String @map("venue_id")
+  daysOfWeek Int[]  @map("days_of_week")
+  openTime   String @map("open_time")
+  closeTime  String @map("close_time")
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@map("venue_operating_hours")
 }
 
 // ─── Memberships ──────────────────────────────────────────────────────────────
 
 model MembershipPlan {
-  id                    String   @id @default(uuid())
-  name                  String   @unique
-  description           String?
-  price                 Decimal  @db.Decimal(10, 2)
-  monthlyReservationLimit Int?   @map("monthly_reservation_limit")
-  sportTypeId           String?  @map("sport_type_id")
-  active                Boolean  @default(true)
-  // Precio base al momento de reservar (fallback cuando no hay regla específica)
-  baseBookingPrice      Decimal  @default(0) @db.Decimal(10, 2) @map("base_booking_price")
+  id                      String   @id @default(uuid())
+  name                    String   @unique
+  description             String?
+  price                   Decimal  @db.Decimal(10, 2)
+  monthlyReservationLimit Int?     @map("monthly_reservation_limit")
+  sportTypeId             String?  @map("sport_type_id")
+  active                  Boolean  @default(true)
   // Wallet: acreditación al pagar mensualidad
-  walletCreditEnabled   Boolean  @default(false) @map("wallet_credit_enabled")
-  walletCreditAmount    Decimal? @db.Decimal(10, 2) @map("wallet_credit_amount")
+  walletCreditEnabled     Boolean  @default(false) @map("wallet_credit_enabled")
+  walletCreditAmount      Decimal? @db.Decimal(10, 2) @map("wallet_credit_amount")
   // Wallet: uso como medio de pago al reservar
-  walletPaymentEnabled  Boolean  @default(false) @map("wallet_payment_enabled")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  walletPaymentEnabled    Boolean  @default(false) @map("wallet_payment_enabled")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
 
-  sportType       SportType?       @relation(fields: [sportTypeId], references: [id])
+  sportType       SportType?                 @relation(fields: [sportTypeId], references: [id])
   userMemberships UserMembership[]
+  sportPrices     MembershipPlanSportPrice[]
 
   @@map("membership_plans")
+}
+
+model MembershipPlanSportPrice {
+  id               String  @id @default(uuid())
+  membershipPlanId String  @map("membership_plan_id")
+  sportTypeId      String  @map("sport_type_id")
+  baseBookingPrice Decimal @db.Decimal(10, 2) @map("base_booking_price")
+
+  membershipPlan MembershipPlan @relation(fields: [membershipPlanId], references: [id], onDelete: Cascade)
+  sportType      SportType      @relation(fields: [sportTypeId], references: [id])
+
+  @@unique([membershipPlanId, sportTypeId])
+  @@map("membership_plan_sport_prices")
 }
 
 model UserMembership {
@@ -330,6 +344,8 @@ model ConditionType {
   key              String            @unique
   dataType         ConditionDataType
   allowedOperators String[]          @map("allowed_operators")
+  allowedValues    Json?             @map("allowed_values")
+  isSystem         Boolean           @default(false) @map("is_system")
   description      String?
   active           Boolean           @default(true)
   createdAt        DateTime          @default(now()) @map("created_at")
@@ -362,38 +378,51 @@ model BlockedPeriod {
 }
 
 model VenueSchedule {
-  id              String    @id @default(uuid())
-  venueId         String    @map("venue_id")
-  name            String
-  startDate       DateTime  @map("start_date")
-  endDate         DateTime? @map("end_date")
-  daysOfWeek      Int[]     @map("days_of_week")
-  openTime        String?   @map("open_time")
-  closeTime       String?   @map("close_time")
-  intervalMinutes Int?      @map("interval_minutes")
-  playersPerSlot  Int?      @map("players_per_slot")
-  generatedUntil  DateTime? @map("generated_until")
-  active          Boolean   @default(true)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  venueId        String    @map("venue_id")
+  name           String
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  generatedUntil DateTime? @map("generated_until")
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  venue Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  slots Slot[]
-  rules ScheduleRule[]
+  venue      Venue               @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  slots      Slot[]
+  timeRanges ScheduleTimeRange[]
 
   @@map("venue_schedules")
 }
 
+model ScheduleTimeRange {
+  id              String   @id @default(uuid())
+  scheduleId      String   @map("schedule_id")
+  daysOfWeek      Int[]    @map("days_of_week")
+  startTime       String   @map("start_time")
+  endTime         String   @map("end_time")
+  intervalMinutes Int      @map("interval_minutes")
+  playersPerSlot  Int      @map("players_per_slot")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  schedule VenueSchedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  rules    ScheduleRule[]
+  slots    Slot[]
+
+  @@map("schedule_time_ranges")
+}
+
 model ScheduleRule {
   id                       String   @id @default(uuid())
-  scheduleId               String   @map("schedule_id")
+  timeRangeId              String   @map("time_range_id")
   canBook                  Boolean  @default(true) @map("can_book")
-  basePrice                Decimal  @db.Decimal(10, 2) @map("base_price")
+  priceOverride            Decimal? @db.Decimal(10, 2) @map("price_override")
   revenueManagementEnabled Boolean  @default(false) @map("revenue_management_enabled")
   createdAt                DateTime @default(now()) @map("created_at")
   updatedAt                DateTime @updatedAt @map("updated_at")
 
-  schedule   VenueSchedule          @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  timeRange  ScheduleTimeRange      @relation(fields: [timeRangeId], references: [id], onDelete: Cascade)
   conditions ScheduleRuleCondition[]
 
   @@map("schedule_rules")
@@ -416,18 +445,20 @@ model ScheduleRuleCondition {
 }
 
 model Slot {
-  id         String     @id @default(uuid())
-  venueId    String     @map("venue_id")
-  scheduleId String     @map("schedule_id")
-  date       DateTime   @map("date") @db.Date
-  startTime  String     @map("start_time")
-  endTime    String     @map("end_time")
-  status     SlotStatus @default(AVAILABLE)
-  createdAt  DateTime   @default(now()) @map("created_at")
+  id          String     @id @default(uuid())
+  venueId     String     @map("venue_id")
+  scheduleId  String     @map("schedule_id")
+  timeRangeId String?    @map("time_range_id")
+  date        DateTime   @map("date") @db.Date
+  startTime   String     @map("start_time")
+  endTime     String     @map("end_time")
+  status      SlotStatus @default(AVAILABLE)
+  createdAt   DateTime   @default(now()) @map("created_at")
 
-  venue    Venue         @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  schedule VenueSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  booking  Booking?
+  venue     Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  schedule  VenueSchedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  timeRange ScheduleTimeRange? @relation(fields: [timeRangeId], references: [id], onDelete: SetNull)
+  booking   Booking?
 
   // Permitir múltiples slots por (venue, fecha, hora) de distintos schedules
   @@unique([venueId, date, startTime, scheduleId])

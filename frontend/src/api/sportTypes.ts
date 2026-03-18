@@ -11,16 +11,9 @@ interface PaginatedResponse {
   };
 }
 
-type SportTypeInput = {
+export type SportTypeInput = {
   name: string;
   description?: string | null;
-  defaultIntervalMinutes: number;
-  defaultPlayersPerSlot: number;
-  defaultMemberPrice: number;
-  defaultNonMemberPrice: number;
-  defaultOpenTime: string;
-  defaultCloseTime: string;
-  defaultEnabledDays: number[];
   active: boolean;
 };
 

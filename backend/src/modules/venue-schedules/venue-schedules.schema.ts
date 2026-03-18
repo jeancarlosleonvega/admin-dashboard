@@ -10,26 +10,33 @@ const scheduleRuleConditionSchema = z.object({
 
 const scheduleRuleSchema = z.object({
   canBook: z.boolean().default(true),
-  basePrice: z.number().min(0),
+  priceOverride: z.number().min(0).optional().nullable(),
   revenueManagementEnabled: z.boolean().default(false),
   conditions: z.array(scheduleRuleConditionSchema).min(1),
+});
+
+const scheduleTimeRangeSchema = z.object({
+  daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  intervalMinutes: z.number().int().min(5).max(240),
+  playersPerSlot: z.number().int().min(1).max(100),
+  active: z.boolean().default(true),
+  rules: z.array(scheduleRuleSchema).optional(),
 });
 
 export const createVenueScheduleSchema = z.object({
   venueId: z.string().uuid(),
   name: z.string().min(1).max(100),
-  startDate: z.string().datetime(),
+  startDate: z.string().datetime().optional().nullable(),
   endDate: z.string().datetime().optional().nullable(),
-  daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1),
-  openTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
-  closeTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
-  intervalMinutes: z.number().int().min(5).max(240).optional().nullable(),
-  playersPerSlot: z.number().int().min(1).max(100).optional().nullable(),
   active: z.boolean().default(true),
-  rules: z.array(scheduleRuleSchema).optional(),
+  timeRanges: z.array(scheduleTimeRangeSchema).min(1),
 });
 
-export const updateVenueScheduleSchema = createVenueScheduleSchema.partial();
+export const updateVenueScheduleSchema = createVenueScheduleSchema.partial().extend({
+  timeRanges: z.array(scheduleTimeRangeSchema).min(1).optional(),
+});
 
 export const venueScheduleFiltersSchema = z.object({
   venueId: z.string().uuid().optional(),

@@ -4,12 +4,11 @@ import { usePageHeader } from '@/hooks/usePageHeader';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useCreateVenue } from '@/hooks/queries/useVenues';
 import { useSportTypes } from '@/hooks/queries/useSportTypes';
 import { Spinner } from '@components/ui/Spinner';
 import { DetailSection } from '@components/ui/DetailSection';
-import type { SportType } from '@/types/sport-type.types';
 import toast from 'react-hot-toast';
 
 const DAYS = [
@@ -22,15 +21,16 @@ const DAYS = [
   { value: 7, label: 'Domingo' },
 ];
 
+interface OperatingHoursBlock {
+  daysOfWeek: number[];
+  openTime: string;
+  closeTime: string;
+}
+
 const schema = z.object({
   sportTypeId: z.string().uuid('Seleccioná un tipo de deporte'),
   name: z.string().min(1, 'El nombre es obligatorio').max(100),
   description: z.string().max(500).optional(),
-  intervalMinutes: z.coerce.number().int().min(5).max(120).optional().or(z.literal('')),
-  playersPerSlot: z.coerce.number().int().min(1).max(20).optional().or(z.literal('')),
-  openTime: z.string().regex(/^\d{2}:\d{2}$/).optional().or(z.literal('')),
-  closeTime: z.string().regex(/^\d{2}:\d{2}$/).optional().or(z.literal('')),
-  enabledDays: z.array(z.coerce.number().int().min(1).max(7)).optional(),
   active: z.boolean(),
 });
 
@@ -41,7 +41,7 @@ export default function VenueCreatePage() {
   usePageHeader({ subtitle: 'Crear nuevo espacio' });
   const createVenue = useCreateVenue();
   const { data: sportTypesData } = useSportTypes({ active: 'true', limit: 100 });
-  const [selectedSportType, setSelectedSportType] = useState<SportType | null>(null);
+  const [operatingHours, setOperatingHours] = useState<OperatingHoursBlock[]>([]);
 
   const sportTypes = sportTypesData?.data ?? [];
 
@@ -49,34 +49,49 @@ export default function VenueCreatePage() {
     register,
     handleSubmit,
     control,
-    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       active: true,
-      enabledDays: [],
     },
   });
 
-  const handleSportTypeChange = (id: string) => {
-    setValue('sportTypeId', id);
-    const st = sportTypes.find((s) => s.id === id) ?? null;
-    setSelectedSportType(st);
+  const addBlock = () => {
+    setOperatingHours([...operatingHours, { daysOfWeek: [], openTime: '08:00', closeTime: '18:00' }]);
+  };
+
+  const removeBlock = (idx: number) => {
+    setOperatingHours(operatingHours.filter((_, i) => i !== idx));
+  };
+
+  const updateBlock = (idx: number, partial: Partial<OperatingHoursBlock>) => {
+    setOperatingHours(operatingHours.map((b, i) => (i === idx ? { ...b, ...partial } : b)));
+  };
+
+  const toggleDay = (idx: number, day: number) => {
+    const block = operatingHours[idx];
+    const current = block.daysOfWeek;
+    const updated = current.includes(day) ? current.filter((d) => d !== day) : [...current, day].sort();
+    updateBlock(idx, { daysOfWeek: updated });
   };
 
   const onSubmit = async (data: FormData) => {
+    // Validar bloques de horario
+    for (const block of operatingHours) {
+      if (block.daysOfWeek.length === 0) {
+        toast.error('Cada bloque de horario debe tener al menos un día seleccionado');
+        return;
+      }
+    }
+
     try {
       await createVenue.mutateAsync({
         sportTypeId: data.sportTypeId,
         name: data.name,
         active: data.active,
         ...(data.description ? { description: data.description } : {}),
-        ...(data.intervalMinutes ? { intervalMinutes: Number(data.intervalMinutes) } : {}),
-        ...(data.playersPerSlot ? { playersPerSlot: Number(data.playersPerSlot) } : {}),
-        ...(data.openTime && data.openTime !== '' ? { openTime: data.openTime } : {}),
-        ...(data.closeTime && data.closeTime !== '' ? { closeTime: data.closeTime } : {}),
-        ...(data.enabledDays && data.enabledDays.length > 0 ? { enabledDays: data.enabledDays } : {}),
+        ...(operatingHours.length > 0 ? { operatingHours } : {}),
       });
       toast.success('Espacio creado exitosamente');
       navigate('/espacios');
@@ -111,10 +126,7 @@ export default function VenueCreatePage() {
                         id="sportTypeId"
                         className={`input ${errors.sportTypeId ? 'input-error' : ''}`}
                         value={field.value ?? ''}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          handleSportTypeChange(e.target.value);
-                        }}
+                        onChange={(e) => field.onChange(e.target.value)}
                       >
                         <option value="">Seleccioná...</option>
                         {sportTypes.map((st) => (
@@ -124,9 +136,6 @@ export default function VenueCreatePage() {
                     )}
                   />
                   {errors.sportTypeId && <p className="mt-1 text-sm text-red-600">{errors.sportTypeId.message}</p>}
-                  {selectedSportType && (
-                    <p className="mt-1 text-xs text-blue-600">Los campos vacíos usarán los valores del tipo de deporte seleccionado</p>
-                  )}
                 </div>
                 <div>
                   <label htmlFor="name" className="label">Nombre</label>
@@ -149,114 +158,6 @@ export default function VenueCreatePage() {
                     {...register('description')}
                   />
                 </div>
-              </div>
-            </DetailSection>
-
-            <DetailSection title="Configuración (opcional)" description="Sobreescribí los valores heredados del tipo de deporte" noBorder>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="intervalMinutes" className="label">
-                      Intervalo (min)
-                      {selectedSportType && (
-                        <span className="ml-1 text-xs text-gray-400">por defecto: {selectedSportType.defaultIntervalMinutes}</span>
-                      )}
-                    </label>
-                    <input
-                      id="intervalMinutes"
-                      type="number"
-                      min={5}
-                      max={120}
-                      placeholder={selectedSportType ? String(selectedSportType.defaultIntervalMinutes) : ''}
-                      className="input"
-                      {...register('intervalMinutes')}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="playersPerSlot" className="label">
-                      Jugadores por turno
-                      {selectedSportType && (
-                        <span className="ml-1 text-xs text-gray-400">por defecto: {selectedSportType.defaultPlayersPerSlot}</span>
-                      )}
-                    </label>
-                    <input
-                      id="playersPerSlot"
-                      type="number"
-                      min={1}
-                      max={20}
-                      placeholder={selectedSportType ? String(selectedSportType.defaultPlayersPerSlot) : ''}
-                      className="input"
-                      {...register('playersPerSlot')}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="openTime" className="label">
-                      Hora de apertura
-                      {selectedSportType && (
-                        <span className="ml-1 text-xs text-gray-400">por defecto: {selectedSportType.defaultOpenTime}</span>
-                      )}
-                    </label>
-                    <input
-                      id="openTime"
-                      type="time"
-                      className="input"
-                      {...register('openTime')}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="closeTime" className="label">
-                      Hora de cierre
-                      {selectedSportType && (
-                        <span className="ml-1 text-xs text-gray-400">por defecto: {selectedSportType.defaultCloseTime}</span>
-                      )}
-                    </label>
-                    <input
-                      id="closeTime"
-                      type="time"
-                      className="input"
-                      {...register('closeTime')}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="label">
-                    Días habilitados
-                    {selectedSportType && (
-                      <span className="ml-1 text-xs text-gray-400">(vacío = hereda del tipo de deporte)</span>
-                    )}
-                  </label>
-                  <Controller
-                    name="enabledDays"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {DAYS.map((day) => {
-                          const checked = field.value?.includes(day.value);
-                          return (
-                            <label key={day.value} className="flex items-center gap-1.5 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => {
-                                  const current = field.value ?? [];
-                                  if (checked) {
-                                    field.onChange(current.filter((d) => d !== day.value));
-                                  } else {
-                                    field.onChange([...current, day.value].sort());
-                                  }
-                                }}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700">{day.label}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                  />
-                </div>
-
                 <div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -267,6 +168,78 @@ export default function VenueCreatePage() {
                     <span className="text-sm font-medium text-gray-700">Activo</span>
                   </label>
                 </div>
+              </div>
+            </DetailSection>
+
+            <DetailSection title="Horarios operativos" description="Definí los bloques de horario para este espacio" noBorder>
+              <div className="space-y-3">
+                {operatingHours.length === 0 && (
+                  <p className="text-sm text-gray-400 italic">Sin horarios definidos — se configurarán en los schedules.</p>
+                )}
+
+                {operatingHours.map((block, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Bloque {idx + 1}</span>
+                      <button type="button" onClick={() => removeBlock(idx)} className="p-1 text-gray-400 hover:text-red-500">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="label text-xs">Días</label>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {DAYS.map((day) => {
+                            const selected = block.daysOfWeek.includes(day.value);
+                            return (
+                              <button
+                                key={day.value}
+                                type="button"
+                                onClick={() => toggleDay(idx, day.value)}
+                                className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                  selected ? 'bg-blue-600 text-white' : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="label text-xs">Apertura</label>
+                          <input
+                            type="time"
+                            className="input"
+                            value={block.openTime}
+                            onChange={(e) => updateBlock(idx, { openTime: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="label text-xs">Cierre</label>
+                          <input
+                            type="time"
+                            className="input"
+                            value={block.closeTime}
+                            onChange={(e) => updateBlock(idx, { closeTime: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addBlock}
+                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar bloque de horario
+                </button>
               </div>
             </DetailSection>
           </div>

@@ -44,6 +44,12 @@ const adminNavGroups: NavGroup[] = [
 
 const baseClientNavGroups: NavGroup[] = [
   {
+    label: 'General',
+    items: [
+      { name: 'Inicio', href: '/inicio', icon: LayoutDashboard },
+    ],
+  },
+  {
     label: 'Reservas',
     items: [
       { name: 'Nueva Reserva', href: '/reservas/nueva', icon: PlusCircle },

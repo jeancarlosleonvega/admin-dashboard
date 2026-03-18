@@ -61,6 +61,88 @@ export interface ServicesReport {
   services: { id: string; name: string; count: number; revenue: number }[];
 }
 
+export interface DetailFilters {
+  from: string;
+  to: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+export interface PaginatedDetail<T> {
+  data: T[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface RevenueDetailItem {
+  id: string;
+  date: string;
+  amount: number;
+  method: string;
+  methodLabel: string;
+  status: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  venueName: string;
+  sportTypeName: string;
+  bookingId: string;
+}
+
+export interface OccupancyDetailItem {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  statusLabel: string;
+  venueId: string;
+  venueName: string;
+}
+
+export interface BookingDetailItem {
+  id: string;
+  createdAt: string;
+  status: string;
+  statusLabel: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  venueName: string;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface MembershipDetailItem {
+  id: string;
+  status: string;
+  statusLabel: string;
+  createdAt: string;
+  startDate: string | null;
+  endDate: string | null;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  planId: string;
+  planName: string;
+}
+
+export interface ServiceDetailItem {
+  id: string;
+  serviceName: string;
+  price: number;
+  bookingStatus: string;
+  bookingStatusLabel: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  venueName: string;
+  bookingDate: string;
+}
+
 export const reportsApi = {
   async getDashboard(): Promise<DashboardReport> {
     const res = await apiClient.get('/reports/dashboard');
@@ -98,5 +180,65 @@ export const reportsApi = {
     const params = new URLSearchParams({ from: filters.from, to: filters.to });
     const res = await apiClient.get(`/reports/services?${params}`);
     return res.data.data;
+  },
+
+  async getRevenueDetail(filters: DetailFilters & { venueId?: string; sportTypeId?: string }): Promise<PaginatedDetail<RevenueDetailItem>> {
+    const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+    if (filters.venueId) params.append('venueId', filters.venueId);
+    if (filters.sportTypeId) params.append('sportTypeId', filters.sportTypeId);
+    const res = await apiClient.get(`/reports/revenue/detail?${params}`);
+    return { data: res.data.data, meta: res.data.meta };
+  },
+
+  async getOccupancyDetail(filters: DetailFilters & { venueId?: string }): Promise<PaginatedDetail<OccupancyDetailItem>> {
+    const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+    if (filters.venueId) params.append('venueId', filters.venueId);
+    const res = await apiClient.get(`/reports/occupancy/detail?${params}`);
+    return { data: res.data.data, meta: res.data.meta };
+  },
+
+  async getBookingsDetail(filters: DetailFilters & { status?: string }): Promise<PaginatedDetail<BookingDetailItem>> {
+    const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+    if (filters.status) params.append('status', filters.status);
+    const res = await apiClient.get(`/reports/bookings/detail?${params}`);
+    return { data: res.data.data, meta: res.data.meta };
+  },
+
+  async getMembershipsDetail(filters: DetailFilters & { status?: string }): Promise<PaginatedDetail<MembershipDetailItem>> {
+    const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+    if (filters.status) params.append('status', filters.status);
+    const res = await apiClient.get(`/reports/memberships/detail?${params}`);
+    return { data: res.data.data, meta: res.data.meta };
+  },
+
+  async getServicesDetail(filters: DetailFilters): Promise<PaginatedDetail<ServiceDetailItem>> {
+    const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+    const res = await apiClient.get(`/reports/services/detail?${params}`);
+    return { data: res.data.data, meta: res.data.meta };
   },
 };

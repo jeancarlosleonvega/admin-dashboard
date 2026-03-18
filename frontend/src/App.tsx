@@ -14,6 +14,7 @@ import ResetPasswordPage from '@features/auth/pages/ResetPasswordPage';
 
 // Protected pages
 import DashboardPage from '@features/dashboard/pages/DashboardPage';
+import ClientDashboardPage from '@features/dashboard/pages/ClientDashboardPage';
 import UserCreatePage from '@features/users/pages/UserCreatePage';
 import UserDetailPage from '@features/users/pages/UserDetailPage';
 import UserEditPage from '@features/users/pages/UserEditPage';
@@ -39,6 +40,7 @@ import BlockedPeriodEditPage from '@features/blocked-periods/pages/BlockedPeriod
 import AdditionalServiceCreatePage from '@features/additional-services/pages/AdditionalServiceCreatePage';
 import AdditionalServiceEditPage from '@features/additional-services/pages/AdditionalServiceEditPage';
 import BookingSearchPage from '@features/bookings/pages/BookingSearchPage';
+import BookingCreatePage from '@features/bookings/pages/BookingCreatePage';
 import MyBookingsPage from '@features/bookings/pages/MyBookingsPage';
 import UserMembershipCreatePage from '@features/user-memberships/pages/UserMembershipCreatePage';
 import ConditionTypeCreatePage from '@features/condition-types/pages/ConditionTypeCreatePage';
@@ -70,6 +72,11 @@ import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 function RealtimeUpdater() {
   useRealtimeUpdates();
   return null;
+}
+
+function InicioRoute() {
+  const { can } = useAuthStore();
+  return can('dashboard.view') ? <DashboardPage /> : <ClientDashboardPage />;
 }
 
 function App() {
@@ -120,11 +127,7 @@ function App() {
       >
         <Route
           path="/inicio"
-          element={
-            <PermissionRoute permission="dashboard.view">
-              <DashboardPage />
-            </PermissionRoute>
-          }
+          element={<InicioRoute />}
         />
         {/* Users CRUD */}
         <Route
@@ -412,6 +415,14 @@ function App() {
           element={
             <BookingRoute>
               <BookingSearchPage />
+            </BookingRoute>
+          }
+        />
+        <Route
+          path="/reservas/nueva/confirmar"
+          element={
+            <BookingRoute>
+              <BookingCreatePage />
             </BookingRoute>
           }
         />

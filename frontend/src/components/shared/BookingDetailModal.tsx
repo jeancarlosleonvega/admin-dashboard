@@ -36,7 +36,7 @@ export default function BookingDetailModal({ booking, onClose, isAdmin = false }
   const uploadProof = useUploadTransferProof();
 
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const [proofUrl, setProofUrl] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [showProofForm, setShowProofForm] = useState(false);
 
   const venue = booking.slot.venue;
@@ -56,11 +56,12 @@ export default function BookingDetailModal({ booking, onClose, isAdmin = false }
   };
 
   const handleUploadProof = async () => {
-    if (!booking.payment?.id || !proofUrl) return;
+    if (!booking.payment?.id || !proofFile) return;
     try {
-      await uploadProof.mutateAsync({ id: booking.payment.id, proofUrl });
+      await uploadProof.mutateAsync({ id: booking.payment.id, file: proofFile });
       toast.success('Comprobante enviado correctamente');
       setShowProofForm(false);
+      setProofFile(null);
     } catch {
       toast.error('Error al enviar comprobante');
     }
@@ -167,19 +168,26 @@ export default function BookingDetailModal({ booking, onClose, isAdmin = false }
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <input
-                    type="url"
-                    value={proofUrl}
-                    onChange={(e) => setProofUrl(e.target.value)}
-                    placeholder="URL del comprobante"
-                    className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm"
-                  />
+                  <label className="block">
+                    <span className="text-xs text-yellow-700 mb-1 block">
+                      JPG, PNG, WEBP o PDF · máx. 10 MB
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                      className="block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-yellow-100 file:text-yellow-800 hover:file:bg-yellow-200 cursor-pointer"
+                    />
+                  </label>
+                  {proofFile && (
+                    <p className="text-xs text-gray-500 truncate">Seleccionado: {proofFile.name}</p>
+                  )}
                   <button
                     onClick={handleUploadProof}
-                    disabled={!proofUrl || uploadProof.isPending}
+                    disabled={!proofFile || uploadProof.isPending}
                     className="w-full py-1.5 bg-blue-600 text-white text-sm rounded disabled:opacity-50"
                   >
-                    Enviar
+                    {uploadProof.isPending ? 'Enviando...' : 'Enviar comprobante'}
                   </button>
                 </div>
               )}

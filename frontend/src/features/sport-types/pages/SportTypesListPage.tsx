@@ -16,9 +16,7 @@ import toast from 'react-hot-toast';
 
 const columns: ColumnDef[] = [
   { key: 'name', label: 'Nombre', sortable: true, filterable: true, type: 'text' },
-  { key: 'interval', label: 'Intervalo por defecto', sortable: false, filterable: false },
-  { key: 'players', label: 'Jugadores/turno', sortable: false, filterable: false },
-  { key: 'schedule', label: 'Horario', sortable: false, filterable: false },
+  { key: 'description', label: 'Descripción', sortable: false, filterable: false },
   {
     key: 'status', label: 'Estado', sortable: false, filterable: true, type: 'select', options: [
       { label: 'Activo', value: 'true' },
@@ -113,9 +111,7 @@ export default function SportTypesListPage() {
           const headers = columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => c.label);
           const rows = items.map((item) => columns.filter((c) => c.key !== 'actions' && visibleColumns.includes(c.key)).map((c) => {
             if (c.key === 'name') return item.name;
-            if (c.key === 'interval') return `${item.defaultIntervalMinutes} min`;
-            if (c.key === 'players') return String(item.defaultPlayersPerSlot);
-            if (c.key === 'schedule') return `${item.defaultOpenTime} - ${item.defaultCloseTime}`;
+            if (c.key === 'description') return item.description ?? '';
             if (c.key === 'status') return item.active ? 'Activo' : 'Inactivo';
             return '';
           }));
@@ -146,14 +142,8 @@ export default function SportTypesListPage() {
                     {visibleColumns.includes('name') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                     )}
-                    {visibleColumns.includes('interval') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intervalo por defecto</th>
-                    )}
-                    {visibleColumns.includes('players') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jugadores/turno</th>
-                    )}
-                    {visibleColumns.includes('schedule') && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
+                    {visibleColumns.includes('description') && (
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                     )}
                     {visibleColumns.includes('status') && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -176,19 +166,9 @@ export default function SportTypesListPage() {
                           </div>
                         </td>
                       )}
-                      {visibleColumns.includes('interval') && (
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {item.defaultIntervalMinutes} min
-                        </td>
-                      )}
-                      {visibleColumns.includes('players') && (
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {item.defaultPlayersPerSlot}
-                        </td>
-                      )}
-                      {visibleColumns.includes('schedule') && (
-                        <td className="px-6 py-4 text-sm text-gray-700">
-                          {item.defaultOpenTime} - {item.defaultCloseTime}
+                      {visibleColumns.includes('description') && (
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {item.description ?? <span className="text-gray-300">—</span>}
                         </td>
                       )}
                       {visibleColumns.includes('status') && (

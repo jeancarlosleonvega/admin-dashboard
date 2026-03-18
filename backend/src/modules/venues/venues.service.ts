@@ -4,26 +4,14 @@ import { NotFoundError } from '../../shared/errors/NotFoundError.js';
 import { ValidationError } from '../../shared/errors/ValidationError.js';
 import { broadcast } from '../../shared/utils/wsBroadcast.js';
 import type { CreateVenueInput, UpdateVenueInput, VenueFiltersInput } from './venues.schema.js';
-import type { VenueWithSportType, ResolvedVenue } from './venues.types.js';
-
-function resolveVenue(venue: VenueWithSportType): ResolvedVenue {
-  const st = venue.sportType;
-  return {
-    ...venue,
-    intervalMinutes: venue.intervalMinutes ?? st.defaultIntervalMinutes,
-    playersPerSlot: venue.playersPerSlot ?? st.defaultPlayersPerSlot,
-    openTime: venue.openTime ?? st.defaultOpenTime,
-    closeTime: venue.closeTime ?? st.defaultCloseTime,
-    enabledDays: venue.enabledDays.length > 0 ? venue.enabledDays : st.defaultEnabledDays,
-  };
-}
+import type { VenueWithSportType } from './venues.types.js';
 
 export class VenuesService {
   async findAll(filters: VenueFiltersInput) {
     const { page, limit, ...rest } = filters;
     const { items, total } = await venuesRepository.findAll(rest, page, limit);
     return {
-      items: items.map(resolveVenue),
+      items,
       total,
       page,
       limit,
@@ -31,28 +19,20 @@ export class VenuesService {
     };
   }
 
-  async findById(id: string): Promise<ResolvedVenue> {
+  async findById(id: string): Promise<VenueWithSportType> {
     const item = await venuesRepository.findById(id);
     if (!item) throw new NotFoundError('Espacio');
-    return resolveVenue(item);
+    return item;
   }
 
-  async create(data: CreateVenueInput): Promise<ResolvedVenue> {
+  async create(data: CreateVenueInput): Promise<VenueWithSportType> {
     const sportType = await sportTypesRepository.findById(data.sportTypeId);
     if (!sportType) throw new ValidationError('Tipo de deporte no encontrado');
-    const resolved = {
-      ...data,
-      intervalMinutes: data.intervalMinutes ?? sportType.defaultIntervalMinutes,
-      playersPerSlot: data.playersPerSlot ?? sportType.defaultPlayersPerSlot,
-      openTime: data.openTime ?? sportType.defaultOpenTime,
-      closeTime: data.closeTime ?? sportType.defaultCloseTime,
-      enabledDays: data.enabledDays && data.enabledDays.length > 0 ? data.enabledDays : sportType.defaultEnabledDays,
-    };
-    const item = await venuesRepository.create(resolved);
-    return resolveVenue(item);
+    const item = await venuesRepository.create(data);
+    return item;
   }
 
-  async update(id: string, data: UpdateVenueInput): Promise<ResolvedVenue> {
+  async update(id: string, data: UpdateVenueInput): Promise<VenueWithSportType> {
     await this.findById(id);
     if (data.sportTypeId) {
       const sportType = await sportTypesRepository.findById(data.sportTypeId);
@@ -60,7 +40,7 @@ export class VenuesService {
     }
     const item = await venuesRepository.update(id, data);
     broadcast('slots:invalidate', { source: 'El precio cambió' });
-    return resolveVenue(item);
+    return item;
   }
 
   async delete(id: string): Promise<void> {

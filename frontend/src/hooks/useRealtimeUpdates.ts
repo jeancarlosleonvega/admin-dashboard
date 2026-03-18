@@ -25,6 +25,8 @@ export function useRealtimeUpdates() {
           const { event, payload } = JSON.parse(e.data);
           if (event === 'slots:invalidate') {
             queryClient.invalidateQueries({ queryKey: ['slots'] });
+            queryClient.invalidateQueries({ queryKey: ['reports', 'dashboard'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
             const message = payload?.source ?? 'Disponibilidad actualizada';
             toast(message, {
               icon: '🔄',

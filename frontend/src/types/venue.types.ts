@@ -1,25 +1,24 @@
+export interface VenueOperatingHours {
+  id: string;
+  venueId: string;
+  daysOfWeek: number[];
+  openTime: string;
+  closeTime: string;
+}
+
 export interface Venue {
   id: string;
   sportTypeId: string;
   name: string;
   description: string | null;
-  intervalMinutes: number;
-  playersPerSlot: number;
-  openTime: string;
-  closeTime: string;
-  enabledDays: number[];
   active: boolean;
   createdAt: string;
   updatedAt: string;
   sportType: {
     id: string;
     name: string;
-    defaultIntervalMinutes: number;
-    defaultPlayersPerSlot: number;
-    defaultOpenTime: string;
-    defaultCloseTime: string;
-    defaultEnabledDays: number[];
   };
+  operatingHours: VenueOperatingHours[];
 }
 
 export interface VenueFilters {

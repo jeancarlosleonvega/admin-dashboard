@@ -1,15 +1,17 @@
 import { z } from 'zod';
 
+const operatingHoursSchema = z.object({
+  daysOfWeek: z.array(z.number().int().min(1).max(7)).min(1),
+  openTime: z.string().regex(/^\d{2}:\d{2}$/),
+  closeTime: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
 export const createVenueSchema = z.object({
   sportTypeId: z.string().uuid(),
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
-  intervalMinutes: z.number().int().min(5).max(120).optional(),
-  playersPerSlot: z.number().int().min(1).max(20).optional(),
-  openTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  closeTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
-  enabledDays: z.array(z.number().int().min(1).max(7)).optional(),
   active: z.boolean().default(true),
+  operatingHours: z.array(operatingHoursSchema).optional(),
 });
 
 export const updateVenueSchema = createVenueSchema.partial();
